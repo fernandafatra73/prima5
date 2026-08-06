@@ -428,13 +428,21 @@ export function RadiologDuplikatPage() {
             <KesanRegioPicker onSelect={(teks) => setQuickEditKesan(teks)} />
           </div>
 
-          <div className="form-field form-grid--full">
+          <div className="form-field">
             <label htmlFor="rd-qe-nama">Nama pasien</label>
             <input
               id="rd-qe-nama"
               required
               value={quickEditNama}
               onChange={(e) => setQuickEditNama(e.target.value)}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="rd-qe-pemeriksaan">Pemeriksaan</label>
+            <input
+              id="rd-qe-pemeriksaan"
+              value={quickEditItem ? combinedPemeriksaan(quickEditItem) : ''}
+              disabled
             />
           </div>
           <div className="form-field form-grid--full">

@@ -179,6 +179,7 @@ export function PasienPage() {
   const [quickEditOpen, setQuickEditOpen] = useState(false);
   const [quickEditId, setQuickEditId] = useState<string | null>(null);
   const [quickEditNama, setQuickEditNama] = useState('');
+  const [quickEditPemeriksaan, setQuickEditPemeriksaan] = useState('');
   const [quickEditKesan, setQuickEditKesan] = useState('');
   const [quickEditSaving, setQuickEditSaving] = useState(false);
   const [quickEditError, setQuickEditError] = useState<string | null>(null);
@@ -546,6 +547,7 @@ export function PasienPage() {
       const res = await apiGet<{ item: PasienDetail }>(`/api/pasien/${id}`);
       setQuickEditId(res.item.id);
       setQuickEditNama(res.item.nama);
+      setQuickEditPemeriksaan(res.item.pemeriksaan.map((x) => x.nama).join(', ') || '—');
       setQuickEditKesan(res.item.kesan ?? '');
       setQuickEditOpen(true);
     } catch (err: unknown) {
@@ -1870,7 +1872,7 @@ export function PasienPage() {
             <KesanRegioPicker onSelect={(teks) => setQuickEditKesan(teks)} />
           </div>
 
-          <div className="form-field form-grid--full">
+          <div className="form-field">
             <label htmlFor="qe-nama">Nama pasien</label>
             <input
               id="qe-nama"
@@ -1878,6 +1880,10 @@ export function PasienPage() {
               value={quickEditNama}
               onChange={(e) => setQuickEditNama(e.target.value)}
             />
+          </div>
+          <div className="form-field">
+            <label htmlFor="qe-pemeriksaan">Pemeriksaan</label>
+            <input id="qe-pemeriksaan" value={quickEditPemeriksaan} disabled />
           </div>
           <div className="form-field form-grid--full">
             <label htmlFor="qe-kesan">Kesan</label>

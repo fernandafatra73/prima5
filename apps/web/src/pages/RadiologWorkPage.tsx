@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
@@ -118,6 +118,30 @@ function RadiologTarifSummary({
   );
 }
 
+type DateFilterMode = 'today' | 'week' | 'custom' | 'all';
+
+function pad2(n: number): string {
+  return String(n).padStart(2, '0');
+}
+
+function toDateInputValue(d: Date): string {
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function startOfWeek(d: Date): Date {
+  const day = d.getDay();
+  const diffToMonday = day === 0 ? 6 : day - 1;
+  const monday = new Date(d);
+  monday.setDate(d.getDate() - diffToMonday);
+  return monday;
+}
+
+function endOfWeek(d: Date): Date {
+  const sunday = startOfWeek(d);
+  sunday.setDate(sunday.getDate() + 6);
+  return sunday;
+}
+
 function combinedPemeriksaan(item: AntreanItem): string {
   const parsed = parseKlinisData(item.klinis);
   const list = [
@@ -130,8 +154,32 @@ function combinedPemeriksaan(item: AntreanItem): string {
 
 export function RadiologWorkPage() {
   const { search, setSearch } = useListSearch();
+  const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>('all');
+  const [customStart, setCustomStart] = useState('');
+  const [customEnd, setCustomEnd] = useState('');
+
+  const dateFilters = useMemo((): { startDate?: string; endDate?: string } => {
+    const now = new Date();
+    if (dateFilterMode === 'today') {
+      const t = toDateInputValue(now);
+      return { startDate: t, endDate: t };
+    }
+    if (dateFilterMode === 'week') {
+      return { startDate: toDateInputValue(startOfWeek(now)), endDate: toDateInputValue(endOfWeek(now)) };
+    }
+    if (dateFilterMode === 'custom') {
+      return { startDate: customStart || undefined, endDate: customEnd || undefined };
+    }
+    return {};
+  }, [dateFilterMode, customStart, customEnd]);
+
   const queryParams = useListQueryParams(
-    { modul: 'RADIOLOGI', hasilStatus: 'MENUNGGU_HASIL' },
+    {
+      modul: 'RADIOLOGI',
+      hasilStatus: 'MENUNGGU_HASIL',
+      ...(dateFilters.startDate ? { startDate: dateFilters.startDate } : {}),
+      ...(dateFilters.endDate ? { endDate: dateFilters.endDate } : {}),
+    },
     search,
   );
   const { items, pagination, setPage, loading, error, setError, reload: reloadList } =
@@ -338,6 +386,56 @@ export function RadiologWorkPage() {
     }
   }
 
+  const quickDateFilter = (
+    <div className="quickdate-group">
+      <button
+        type="button"
+        className={`quickdate-btn${dateFilterMode === 'today' ? ' quickdate-btn--active' : ''}`}
+        onClick={() => setDateFilterMode('today')}
+      >
+        Pasien hari ini
+      </button>
+      <button
+        type="button"
+        className={`quickdate-btn${dateFilterMode === 'week' ? ' quickdate-btn--active' : ''}`}
+        onClick={() => setDateFilterMode('week')}
+      >
+        Pasien minggu ini
+      </button>
+      <button
+        type="button"
+        className={`quickdate-btn${dateFilterMode === 'custom' ? ' quickdate-btn--active' : ''}`}
+        onClick={() => setDateFilterMode('custom')}
+      >
+        Custom
+      </button>
+      <button
+        type="button"
+        className={`quickdate-btn${dateFilterMode === 'all' ? ' quickdate-btn--active' : ''}`}
+        onClick={() => setDateFilterMode('all')}
+      >
+        Pasien semuanya
+      </button>
+      {dateFilterMode === 'custom' && (
+        <span className="quickdate-range">
+          <input
+            type="date"
+            aria-label="Dari tanggal"
+            value={customStart}
+            onChange={(e) => setCustomStart(e.target.value)}
+          />
+          <span>–</span>
+          <input
+            type="date"
+            aria-label="Sampai tanggal"
+            value={customEnd}
+            onChange={(e) => setCustomEnd(e.target.value)}
+          />
+        </span>
+      )}
+    </div>
+  );
+
   return (
     <>
       <ListPageShell
@@ -361,6 +459,7 @@ export function RadiologWorkPage() {
         searchValue={search}
         onSearchChange={setSearch}
         onRefresh={() => void reload()}
+        filterExtra={quickDateFilter}
         error={error}
         loading={loading}
         pagination={pagination}
@@ -668,13 +767,21 @@ export function RadiologWorkPage() {
             <KesanRegioPicker onSelect={(teks) => setQuickEditKesan(teks)} />
           </div>
 
-          <div className="form-field form-grid--full">
+          <div className="form-field">
             <label htmlFor="rw-qe-nama">Nama pasien</label>
             <input
               id="rw-qe-nama"
               required
               value={quickEditNama}
               onChange={(e) => setQuickEditNama(e.target.value)}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="rw-qe-pemeriksaan">Pemeriksaan</label>
+            <input
+              id="rw-qe-pemeriksaan"
+              value={quickEditItem ? combinedPemeriksaan(quickEditItem) : ''}
+              disabled
             />
           </div>
           <div className="form-field form-grid--full">
