@@ -76,7 +76,7 @@ export function AiRadiologiPage() {
   const [contrast, setContrast] = useState(0);
   const [detail, setDetail] = useState(0);
   const [adjustingPhoto, setAdjustingPhoto] = useState(false);
-  const [fotoZoomOpen, setFotoZoomOpen] = useState(false);
+  const [fotoZoomed, setFotoZoomed] = useState(false);
 
   useEffect(() => {
     if (!rawFotoDataUrl) return;
@@ -106,6 +106,7 @@ export function AiRadiologiPage() {
     setRawFotoDataUrl('');
     setContrast(0);
     setDetail(0);
+    setFotoZoomed(false);
     setCreateOpen(true);
   }
 
@@ -125,6 +126,7 @@ export function AiRadiologiPage() {
     setRawFotoDataUrl(item.fotoDataUrl);
     setContrast(0);
     setDetail(0);
+    setFotoZoomed(false);
     setEditing(item);
   }
 
@@ -141,6 +143,7 @@ export function AiRadiologiPage() {
       if (typeof reader.result === 'string') {
         setContrast(0);
         setDetail(0);
+        setFotoZoomed(false);
         setRawFotoDataUrl(reader.result);
         setForm((f) => ({ ...f, fotoDataUrl: reader.result as string }));
         setAnalyzeError(null);
@@ -340,156 +343,175 @@ export function AiRadiologiPage() {
           open={true}
           title={editing ? 'Ubah / Tinjau AI Radiologi' : 'Tambah AI Radiologi'}
           onClose={closeModal}
-          size="lg"
+          size="xl"
         >
           <form onSubmit={(e) => void handleSubmit(e)} className="form-grid">
-            <div className="form-field form-field--full">
-              <label htmlFor="ar-foto">Foto *</label>
-              {!form.fotoDataUrl ? (
-                <label htmlFor="ar-foto" className="aifoto-upload" style={{ cursor: 'pointer' }}>
-                  <span className="aifoto-upload__icon">📤</span>
-                  <strong>Klik untuk unggah foto</strong>
-                  <p className="aifoto-upload__hint">JPEG, PNG, GIF, atau WEBP</p>
-                </label>
-              ) : (
-                <div className="aifoto-preview aifoto-preview--lg">
-                  <img
-                    src={form.fotoDataUrl}
-                    alt="Preview foto — klik untuk perbesar"
-                    onClick={() => setFotoZoomOpen(true)}
-                    style={{ cursor: 'zoom-in', opacity: adjustingPhoto ? 0.6 : 1 }}
-                  />
-                  {adjustingPhoto && <p className="aifoto-upload__hint">Memproses foto…</p>}
-                </div>
-              )}
-              <input
-                id="ar-foto"
-                type="file"
-                accept="image/*"
-                onChange={handleFotoFileChange}
-                style={form.fotoDataUrl ? { marginTop: '0.5rem' } : { display: 'none' }}
-              />
-
-              {form.fotoDataUrl && (
-                <div className="aifoto-adjust">
-                  <div className="aifoto-adjust__row">
-                    <label htmlFor="ar-kontras">Kontras</label>
+            <div className="form-field form-grid--full" style={{ gap: 0 }}>
+              <div className="aifoto-layout">
+                <div className="aifoto-frame">
+                  <div className="aifoto-frame__titlebar">🩻 Foto Rontgen</div>
+                  <div className="aifoto-frame__body">
+                    <label htmlFor="ar-foto" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                      Foto *
+                    </label>
+                    {!form.fotoDataUrl ? (
+                      <label
+                        htmlFor="ar-foto"
+                        className="aifoto-upload aifoto-photo-box"
+                        style={{ cursor: 'pointer' }}
+                      >
+                        <span className="aifoto-upload__icon">📤</span>
+                        <strong>Klik untuk unggah foto</strong>
+                        <p className="aifoto-upload__hint">JPEG, PNG, GIF, atau WEBP</p>
+                      </label>
+                    ) : (
+                      <div
+                        className={`aifoto-photo-box aifoto-photo-box--filled${fotoZoomed ? ' aifoto-photo-box--zoomed' : ''}`}
+                        onClick={() => setFotoZoomed((z) => !z)}
+                        title="Klik untuk perbesar/perkecil 2x"
+                      >
+                        <img
+                          src={form.fotoDataUrl}
+                          alt="Preview foto — klik untuk perbesar"
+                          style={{ opacity: adjustingPhoto ? 0.6 : 1 }}
+                        />
+                        {adjustingPhoto && <p className="aifoto-upload__hint">Memproses foto…</p>}
+                      </div>
+                    )}
                     <input
-                      id="ar-kontras"
-                      type="range"
-                      min={-50}
-                      max={50}
-                      value={contrast}
-                      onChange={(e) => setContrast(Number(e.target.value))}
+                      id="ar-foto"
+                      type="file"
+                      accept="image/*"
+                      onChange={handleFotoFileChange}
+                      style={form.fotoDataUrl ? {} : { display: 'none' }}
                     />
-                    <span className="aifoto-adjust__value">{contrast}</span>
-                  </div>
-                  <div className="aifoto-adjust__row">
-                    <label htmlFor="ar-detail">Ketajaman</label>
-                    <input
-                      id="ar-detail"
-                      type="range"
-                      min={0}
-                      max={100}
-                      value={detail}
-                      onChange={(e) => setDetail(Number(e.target.value))}
-                    />
-                    <span className="aifoto-adjust__value">{detail}</span>
+
+                    {form.fotoDataUrl && (
+                      <div className="aifoto-adjust">
+                        <div className="aifoto-adjust__row">
+                          <label htmlFor="ar-kontras">Kontras</label>
+                          <input
+                            id="ar-kontras"
+                            type="range"
+                            min={-50}
+                            max={50}
+                            value={contrast}
+                            onChange={(e) => setContrast(Number(e.target.value))}
+                          />
+                          <span className="aifoto-adjust__value">{contrast}</span>
+                        </div>
+                        <div className="aifoto-adjust__row">
+                          <label htmlFor="ar-detail">Ketajaman</label>
+                          <input
+                            id="ar-detail"
+                            type="range"
+                            min={0}
+                            max={100}
+                            value={detail}
+                            onChange={(e) => setDetail(Number(e.target.value))}
+                          />
+                          <span className="aifoto-adjust__value">{detail}</span>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
-              )}
-            </div>
 
-            <div className="form-field">
-              <label htmlFor="ar-nama">Nama Pasien *</label>
-              <input
-                id="ar-nama"
-                required
-                value={form.namaPasien}
-                onChange={(e) => setForm((f) => ({ ...f, namaPasien: e.target.value }))}
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="ar-pemeriksaan">Nama Pemeriksaan</label>
-              <input
-                id="ar-pemeriksaan"
-                value={form.namaPemeriksaan}
-                onChange={(e) => setForm((f) => ({ ...f, namaPemeriksaan: e.target.value }))}
-                placeholder="Contoh: Thorax PA"
-              />
-            </div>
+                <div className="aifoto-frame">
+                  <div className="aifoto-frame__titlebar">📋 Data Pemeriksaan</div>
+                  <div className="aifoto-frame__body">
+                    <div className="form-field">
+                      <label htmlFor="ar-nama">Nama Pasien *</label>
+                      <input
+                        id="ar-nama"
+                        required
+                        value={form.namaPasien}
+                        onChange={(e) => setForm((f) => ({ ...f, namaPasien: e.target.value }))}
+                      />
+                    </div>
+                    <div className="form-field">
+                      <label htmlFor="ar-pemeriksaan">Nama Pemeriksaan</label>
+                      <input
+                        id="ar-pemeriksaan"
+                        value={form.namaPemeriksaan}
+                        onChange={(e) => setForm((f) => ({ ...f, namaPemeriksaan: e.target.value }))}
+                        placeholder="Contoh: Thorax PA"
+                      />
+                    </div>
+                    <div className="form-field">
+                      <label htmlFor="ar-radiolog">Nama Radiolog/Dokter</label>
+                      <input
+                        id="ar-radiolog"
+                        value={form.radiologNama}
+                        onChange={(e) => setForm((f) => ({ ...f, radiologNama: e.target.value }))}
+                      />
+                    </div>
 
-            <div className="form-field form-field--full">
-              <button
-                type="button"
-                className="aifoto-analyze-btn"
-                disabled={analyzing || !form.fotoDataUrl}
-                onClick={() => void handleStartAnalyze()}
-              >
-                {analyzing ? '⏳ Menganalisa foto...' : '✨ Start — Analisa Foto dengan AI Radiologi'}
-              </button>
-              {analyzeError && (
-                <p className="alert alert--error" style={{ marginTop: '0.5rem' }}>
-                  {analyzeError}
-                </p>
-              )}
-            </div>
+                    <button
+                      type="button"
+                      className="aifoto-analyze-btn"
+                      disabled={analyzing || !form.fotoDataUrl}
+                      onClick={() => void handleStartAnalyze()}
+                    >
+                      {analyzing ? '⏳ Menganalisa foto...' : '✨ Start — Analisa Foto dengan AI Radiologi'}
+                    </button>
+                    {analyzeError && (
+                      <p className="alert alert--error" style={{ margin: 0 }}>
+                        {analyzeError}
+                      </p>
+                    )}
 
-            {isDraftAi && (
-              <div className="form-field form-field--full aifoto-draft-banner">
-                <strong style={{ color: '#92400e' }}>⚠️ Draft AI — belum final.</strong>{' '}
-                <span style={{ color: '#78350f', fontSize: '0.85rem' }}>
-                  Bacaan dan kesan di bawah dihasilkan otomatis oleh AI dan WAJIB diperiksa ulang oleh
-                  radiolog sebelum dipakai. Periksa dan edit bila perlu, lalu centang konfirmasi berikut
-                  sebelum menyimpan sebagai hasil final.
-                </span>
-                <label
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.5rem',
-                    marginTop: '0.6rem',
-                    fontSize: '0.85rem',
-                    fontWeight: 600,
-                    color: '#78350f',
-                  }}
-                >
-                  <input
-                    type="checkbox"
-                    checked={confirmReviewed}
-                    onChange={(e) => setConfirmReviewed(e.target.checked)}
-                  />
-                  Saya (radiolog) sudah meninjau ulang hasil ini dan menyatakannya benar
-                </label>
+                    {isDraftAi && (
+                      <div className="aifoto-draft-banner">
+                        <strong style={{ color: '#92400e' }}>⚠️ Draft AI — belum final.</strong>{' '}
+                        <span style={{ color: '#78350f', fontSize: '0.85rem' }}>
+                          Bacaan dan kesan di bawah dihasilkan otomatis oleh AI dan WAJIB diperiksa ulang
+                          oleh radiolog sebelum dipakai. Periksa dan edit bila perlu, lalu centang
+                          konfirmasi berikut sebelum menyimpan sebagai hasil final.
+                        </span>
+                        <label
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '0.5rem',
+                            marginTop: '0.6rem',
+                            fontSize: '0.85rem',
+                            fontWeight: 600,
+                            color: '#78350f',
+                          }}
+                        >
+                          <input
+                            type="checkbox"
+                            checked={confirmReviewed}
+                            onChange={(e) => setConfirmReviewed(e.target.checked)}
+                          />
+                          Saya (radiolog) sudah meninjau ulang hasil ini dan menyatakannya benar
+                        </label>
+                      </div>
+                    )}
+
+                    <div className="form-field">
+                      <label htmlFor="ar-bacaan">Bacaan</label>
+                      <textarea
+                        id="ar-bacaan"
+                        rows={5}
+                        value={form.bacaan}
+                        onChange={(e) => setForm((f) => ({ ...f, bacaan: e.target.value }))}
+                        placeholder="Temuan detail per struktur..."
+                      />
+                    </div>
+                    <div className="form-field">
+                      <label htmlFor="ar-kesan">Kesan</label>
+                      <textarea
+                        id="ar-kesan"
+                        rows={3}
+                        value={form.kesan}
+                        onChange={(e) => setForm((f) => ({ ...f, kesan: e.target.value }))}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
-            )}
-
-            <div className="form-field form-field--full">
-              <label htmlFor="ar-bacaan">Bacaan</label>
-              <textarea
-                id="ar-bacaan"
-                rows={5}
-                value={form.bacaan}
-                onChange={(e) => setForm((f) => ({ ...f, bacaan: e.target.value }))}
-                placeholder="Temuan detail per struktur..."
-              />
-            </div>
-            <div className="form-field form-field--full">
-              <label htmlFor="ar-kesan">Kesan</label>
-              <textarea
-                id="ar-kesan"
-                rows={3}
-                value={form.kesan}
-                onChange={(e) => setForm((f) => ({ ...f, kesan: e.target.value }))}
-              />
-            </div>
-            <div className="form-field form-field--full">
-              <label htmlFor="ar-radiolog">Nama Radiolog/Dokter</label>
-              <input
-                id="ar-radiolog"
-                value={form.radiologNama}
-                onChange={(e) => setForm((f) => ({ ...f, radiologNama: e.target.value }))}
-              />
             </div>
 
             <ModalFormFooter
@@ -500,16 +522,6 @@ export function AiRadiologiPage() {
           </form>
         </Modal>
       )}
-
-      <Modal open={fotoZoomOpen} title="Foto" onClose={() => setFotoZoomOpen(false)} size="xl">
-        {form.fotoDataUrl && (
-          <img
-            src={form.fotoDataUrl}
-            alt="Foto diperbesar"
-            style={{ width: '100%', display: 'block', borderRadius: '8px' }}
-          />
-        )}
-      </Modal>
 
       <ConfirmModal
         open={deleting !== null}

@@ -1545,6 +1545,77 @@
   padding: 0.9rem 1.1rem;
 }
 
+/* AI Radiologi — layout dua panel ala jendela: foto di kiri, data pemeriksaan di kanan. */
+.aifoto-layout {
+  display: grid;
+  grid-template-columns: minmax(260px, 380px) 1fr;
+  align-items: start;
+  gap: 1.1rem;
+}
+
+@media (max-width: 860px) {
+  .aifoto-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.aifoto-frame {
+  border: 1px solid #1d4ed8;
+  border-radius: var(--radius-card);
+  background: #ffffff;
+  box-shadow: var(--shadow-card);
+}
+
+.aifoto-frame__titlebar {
+  padding: 0.5rem 0.85rem;
+  border-radius: var(--radius-card) var(--radius-card) 0 0;
+  background: linear-gradient(180deg, #3b82f6, #1d4ed8);
+  color: #ffffff;
+  font-size: 0.8rem;
+  font-weight: 700;
+}
+
+.aifoto-frame__body {
+  padding: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Kotak foto AI Radiologi — lebar penuh mengikuti panel, tinggi fisik 12cm (96dpi: 1cm ≈ 37.8px),
+   dipusatkan di panel. Klik untuk memperbesar 2x (transform, bukan modal) sehingga tidak ada popup ekstra. */
+.aifoto-photo-box {
+  width: 100%;
+  height: 454px;
+  margin: 0 auto;
+  align-self: center;
+}
+
+.aifoto-photo-box--filled {
+  position: relative;
+  overflow: hidden;
+  border-radius: 10px;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-surface);
+  box-shadow: var(--shadow-card);
+  cursor: zoom-in;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.aifoto-photo-box--filled img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.aifoto-photo-box--zoomed {
+  transform: scale(2);
+  z-index: 30;
+  cursor: zoom-out;
+  box-shadow: 0 24px 50px rgba(15, 23, 42, 0.38);
+}
+
 /* Pendaftaran Umum — kotak foto pasien ukuran fisik 10cm (lebar) x 12cm (tinggi), 96dpi: 1cm ≈ 37.8px. */
 .pendaftaran-foto-box {
   position: relative;
