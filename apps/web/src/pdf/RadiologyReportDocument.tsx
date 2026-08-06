@@ -203,12 +203,14 @@ const styles = StyleSheet.create({
   },
   kesanBlock: {
     width: '100%',
+    // Turunkan 4cm dari posisi tengah semula (4 * 28.3465 pt/cm).
+    marginTop: 113.4,
   },
   signatureWrap: {
     marginTop: 'auto',
     alignItems: 'flex-end',
-    // ~3 baris kosong (enter) di atas blok tanda tangan.
-    paddingTop: 48,
+    // ~3 baris kosong (enter) + 0.5cm (14.17pt) tambahan di atas blok tanda tangan.
+    paddingTop: 62.17,
   },
   signature: {
     width: 200,

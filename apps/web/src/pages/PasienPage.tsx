@@ -1350,7 +1350,6 @@ export function PasienPage() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>No. Reg</th>
               <th>Nama</th>
               <th>Umur</th>
               <th>Pengirim</th>
@@ -1366,12 +1365,11 @@ export function PasienPage() {
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={11}>Belum ada pasien.</td>
+                <td colSpan={10}>Belum ada pasien.</td>
               </tr>
             ) : (
               items.map((p) => (
                 <tr key={p.id}>
-                  <td>{p.regCode}</td>
                   <td>{p.nama}</td>
                   <td>{formatUmurDetail(p.tanggalLahir)}</td>
                   <td>{p.pengirim.nama}</td>
