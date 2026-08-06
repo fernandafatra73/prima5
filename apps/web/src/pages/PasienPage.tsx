@@ -201,7 +201,6 @@ export function PasienPage() {
   const [foto, setFoto] = useState('');
   const [hargaManual, setHargaManual] = useState('0');
   const [hargaMode, setHargaMode] = useState('custom');
-  const fotoInputRef = useRef<HTMLInputElement>(null);
   const [savedPasien, setSavedPasien] = useState<CetakALPasien | null>(null);
   const [cetakAL, setCetakAL] = useState<{ open: boolean; mode: 'amplop' | 'label' }>({
     open: false,
@@ -465,18 +464,6 @@ export function PasienPage() {
     setEditingId(null);
     setSelectedPendaftaranId('');
     setSavedPasien(null);
-  }
-
-  function handleFotoChange(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    const reader = new FileReader();
-    reader.onload = () => {
-      if (typeof reader.result === 'string') {
-        setFoto(reader.result);
-      }
-    };
-    reader.readAsDataURL(file);
   }
 
   function handleUmurManualChange(value: string) {
@@ -1189,41 +1176,6 @@ export function PasienPage() {
     </div>
   );
 
-  const fotoField = (
-    <div className="form-field">
-      <label>Foto Pasien</label>
-      <div className="legacy-photo-panel" style={{ alignItems: 'flex-start' }}>
-        {foto ? (
-          <div className="legacy-photo-box" style={{ width: '160px', height: '160px' }}>
-            <img src={foto} alt="Foto pasien" />
-            <button
-              type="button"
-              className="legacy-photo-box__remove"
-              onClick={() => setFoto('')}
-              title="Hapus foto"
-            >
-              ✕
-            </button>
-          </div>
-        ) : (
-          <div className="legacy-photo-box" style={{ width: '160px', height: '160px' }}>
-            <span className="legacy-photo-box__placeholder">📷</span>
-          </div>
-        )}
-        <button type="button" className="btn btn--ghost" onClick={() => fotoInputRef.current?.click()}>
-          Ambil Foto
-        </button>
-        <input
-          ref={fotoInputRef}
-          type="file"
-          accept="image/*"
-          onChange={handleFotoChange}
-          style={{ display: 'none' }}
-        />
-      </div>
-    </div>
-  );
-
   const displayError = error ?? mastersError;
 
   const metrics = summary
@@ -1828,7 +1780,6 @@ export function PasienPage() {
           {patientFields}
           {klinisField}
           {kesanField}
-          {fotoField}
           {jenisPemeriksaanField}
           <div
             className="form-grid--span-3"
