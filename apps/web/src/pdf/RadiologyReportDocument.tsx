@@ -52,7 +52,7 @@ const styles = StyleSheet.create({
     marginRight: 8,
   },
   headerText: {
-    width: 400,
+    flex: 1,
     paddingTop: 4,
   },
   clinicSmall: {
@@ -283,7 +283,8 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
 
   return (
     <Document>
-      <Page size="A4" style={styles.page}>
+      {/* 425.2 pt x 595.28 pt = 15cm x 21cm (28.3465 pt/cm) */}
+      <Page size={[425.2, 595.28]} style={styles.page}>
         <View style={styles.frame}>
           <View style={styles.headerRow}>
             <Image style={styles.logo} src={data.logoSrc} />
