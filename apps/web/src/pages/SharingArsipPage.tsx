@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
 import { ModalFormFooter } from '../components/ui/ModalFormFooter.tsx';
@@ -10,7 +11,7 @@ import {
 } from '../hooks/useListQueryParams.ts';
 import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
-import { apiGet, apiPatch } from '../lib/api.ts';
+import { apiDelete, apiGet, apiPatch } from '../lib/api.ts';
 import { formatDateShort, formatRupiah } from '../lib/format.ts';
 import type { PaginatedResponse } from '../lib/pagination.ts';
 import {
@@ -122,6 +123,24 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
     paymentStatus: 'BELUM_LUNAS' as 'BELUM_LUNAS' | 'LUNAS',
   });
   const [savingEdit, setSavingEdit] = useState(false);
+
+  const [deleteTarget, setDeleteTarget] = useState<ArsipPasienItem | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  async function handleDeleteConfirm() {
+    if (!deleteTarget) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await apiDelete(`/api/pasien-duplikat/${deleteTarget.id}`);
+      setDeleteTarget(null);
+      await reload();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Gagal menghapus arsip');
+    } finally {
+      setDeleting(false);
+    }
+  }
 
   function openEdit(item: ArsipPasienItem) {
     setEditForm({
@@ -547,6 +566,8 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
                       <TableRowActions
                         onEdit={() => openEdit(p)}
                         editLabel="Ubah data arsip"
+                        onDelete={() => setDeleteTarget(p)}
+                        deleteLabel="Hapus arsip"
                       />
                     </td>
                   </tr>
@@ -677,6 +698,15 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
           </form>
         </Modal>
       )}
+
+      <ConfirmModal
+        open={deleteTarget !== null}
+        title={`Hapus Arsip ${title}`}
+        message={`Yakin hapus permanen arsip "${deleteTarget?.nama ?? ''}" (${deleteTarget?.regCode ?? ''})? Tindakan ini tidak bisa dibatalkan.`}
+        loading={deleting}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={() => void handleDeleteConfirm()}
+      />
 
       <SharingPdfPreviewModal
         open={previewModalOpen}
