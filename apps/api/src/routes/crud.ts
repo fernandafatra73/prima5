@@ -7,6 +7,7 @@ import { nextPendaftaranUmumCode, nextRegCode } from '../lib/regCode.js';
 import { buildPaginationMeta, parsePagination } from '../lib/pagination.js';
 import {
   adminPendaftaranListWhere,
+  aiRadiologiGrupListWhere,
   dokterListWhere,
   hargaListWhere,
   jenisListWhere,
@@ -240,6 +241,40 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       return { item };
     },
   );
+
+  app.get<{ Querystring: ListQuery }>('/api/ai-radiologi-grup', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const where = aiRadiologiGrupListWhere(req.query.q);
+    const [total, items] = await Promise.all([
+      prisma.aiRadiologiGrup.count({ where }),
+      prisma.aiRadiologiGrup.findMany({ where, orderBy: { nama: 'asc' }, skip, take: limit }),
+    ]);
+    return { items, pagination: buildPaginationMeta(total, page, limit) };
+  });
+
+  app.post<{ Body: { nama: string } }>('/api/ai-radiologi-grup', async (req, reply) => {
+    if (!req.body.nama?.trim()) return badRequest(reply, 'nama wajib diisi');
+    const item = await prisma.aiRadiologiGrup.create({ data: { nama: req.body.nama.trim() } });
+    return reply.status(201).send({ item });
+  });
+
+  app.patch<{ Params: { id: string }; Body: { nama?: string } }>(
+    '/api/ai-radiologi-grup/:id',
+    async (req, reply) => {
+      const existing = await prisma.aiRadiologiGrup.findUnique({ where: { id: req.params.id } });
+      if (!existing) return reply.status(404).send({ error: 'Grup tidak ditemukan' });
+      const item = await prisma.aiRadiologiGrup.update({
+        where: { id: req.params.id },
+        data: { nama: req.body.nama?.trim() || existing.nama },
+      });
+      return { item };
+    },
+  );
+
+  app.delete<{ Params: { id: string } }>('/api/ai-radiologi-grup/:id', async (req) => {
+    await prisma.aiRadiologiGrup.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
 
   app.get<{ Querystring: ListQuery }>('/api/petugas-lab', async (req) => {
     const { page, limit, skip } = parsePagination(req.query);

@@ -197,6 +197,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'kalkulator', label: 'Kalkulator', shortLabel: 'Kalkulator' },
   { id: 'ai-gemini', label: 'AI Gemini', shortLabel: 'AI Gemini' },
   { id: 'ai-radiologi', label: 'AI Radiologi', shortLabel: 'AI Radiologi' },
+  { id: 'ai-radiologi-grup', label: 'Data Master AI Radiologi', shortLabel: 'Data Master AI Radiologi' },
   { id: 'tanda-tangan-elektronik', label: 'Tanda Tangan Elektronik', shortLabel: 'Tanda Tangan Elektronik' },
   { id: 'ai-foto', label: 'AI Foto', shortLabel: 'AI Foto' },
 ] as const;

@@ -264,6 +264,17 @@ export function Sidebar({ activeId, onNavigate, role }: SidebarProps) {
               <span className="app-sidebar__label">AI Radiologi</span>
             </button>
           </li>
+
+          <li>
+            <button
+              type="button"
+              className={`app-sidebar__link${activeId === 'ai-radiologi-grup' ? ' app-sidebar__link--active' : ''}`}
+              onClick={() => onNavigate('ai-radiologi-grup')}
+            >
+              <IconTag className="app-sidebar__icon" />
+              <span className="app-sidebar__label">Data Master AI Radiologi</span>
+            </button>
+          </li>
         </ul>
       </nav>
 
