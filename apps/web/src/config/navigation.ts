@@ -132,22 +132,6 @@ export const MAIN_NAV_CATEGORIES: readonly NavCategory[] = [
       { id: 'ai-foto', label: 'AI Foto', shortLabel: 'AI Foto' },
     ],
   },
-  {
-    id: 'data-terbesar',
-    label: 'Data Terbesar',
-    iconName: 'tag',
-    items: [
-      { id: 'pendaftaran-umum', label: 'Pendaftaran Umum', shortLabel: 'Daftar' },
-      { id: 'pasien', label: 'Data & Registrasi Radiologi', shortLabel: 'Radiologi' },
-      { id: 'lab', label: 'Registrasi Lab', shortLabel: 'Laboratorium' },
-      { id: 'farmasi-bhp', label: 'Manajemen Farmasi & BHP', shortLabel: 'Farmasy' },
-      { id: 'rawat-jalan', label: 'Rawat Jalan', shortLabel: 'Rawat Jalan' },
-      { id: 'rawat-inap', label: 'Rawat Inap', shortLabel: 'Rawat Inap' },
-      { id: 'hrd', label: 'HRD', shortLabel: 'HRD' },
-      { id: 'lengkap', label: 'Lengkap', shortLabel: 'Lengkap' },
-      { id: 'keuangan-pembukuan', label: 'Sistem Keuangan & Pembukuan', shortLabel: 'Keuangan' },
-    ],
-  },
 ];
 
 export const MAIN_NAV_ITEMS: readonly NavItem[] = [
@@ -214,6 +198,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'ai-gemini', label: 'AI Gemini', shortLabel: 'AI Gemini' },
   { id: 'ai-radiologi', label: 'AI Radiologi', shortLabel: 'AI Radiologi' },
   { id: 'ai-radiologi-grup', label: 'Data Master AI Radiologi', shortLabel: 'Data Master AI Radiologi' },
+  { id: 'data-terbesar', label: 'Data Terbesar', shortLabel: 'Data Terbesar' },
   { id: 'tanda-tangan-elektronik', label: 'Tanda Tangan Elektronik', shortLabel: 'Tanda Tangan Elektronik' },
   { id: 'ai-foto', label: 'AI Foto', shortLabel: 'AI Foto' },
   { id: 'rawat-jalan', label: 'Rawat Jalan', shortLabel: 'Rawat Jalan' },

@@ -74,6 +74,7 @@ import { PetugasAdminKlinikPage } from './pages/PetugasAdminKlinikPage.tsx';
 import { AdminPendaftaranPage } from './pages/AdminPendaftaranPage.tsx';
 import { LogoPerusahaanPage } from './pages/LogoPerusahaanPage.tsx';
 import { ComingSoonPage } from './pages/ComingSoonPage.tsx';
+import { DataTerbesarPage } from './pages/DataTerbesarPage.tsx';
 import { useState } from 'react';
 
 function AccessDenied({ viewId }: { readonly viewId: AppViewId }) {
@@ -139,6 +140,8 @@ function renderViewContent(
       return <AiRadiologiPage />;
     case 'ai-radiologi-grup':
       return <AiRadiologiGrupPage />;
+    case 'data-terbesar':
+      return <DataTerbesarPage onNavigate={navigate} />;
     case 'harga-pemeriksaan-lab':
       return <HargaPemeriksaanLabPage />;
     case 'lab':

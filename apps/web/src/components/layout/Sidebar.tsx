@@ -40,7 +40,6 @@ const CATEGORY_ICONS: Record<string, (props: { className?: string }) => JSX.Elem
   laboratorium: IconTag,
   farmasi: IconDocument,
   anatomi: IconStethoscope,
-  'data-terbesar': IconTag,
 };
 
 function ChevronIcon({ className }: { readonly className?: string }) {
@@ -62,7 +61,6 @@ export function Sidebar({ activeId, onNavigate, role }: SidebarProps) {
     laboratorium: true,
     farmasi: true,
     anatomi: true,
-    'data-terbesar': true,
   }));
 
   function toggleCategory(catId: string) {
@@ -96,26 +94,7 @@ export function Sidebar({ activeId, onNavigate, role }: SidebarProps) {
           />
         </button>
 
-        {isExpanded && cat.id === 'data-terbesar' && (
-          <div className="app-sidebar__vb6-grid">
-            {visibleItems.map((item: NavItem) => {
-              const isActive = activeId === item.id;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`app-sidebar__vb6-button ${isActive ? 'app-sidebar__vb6-button--active' : ''}`}
-                  onClick={() => onNavigate(item.id as AppViewId)}
-                  title={item.label}
-                >
-                  {item.shortLabel ?? item.label}
-                </button>
-              );
-            })}
-          </div>
-        )}
-
-        {isExpanded && cat.id !== 'data-terbesar' && (
+        {isExpanded && (
           <ul className="app-sidebar__child-list">
             {visibleItems.map((item: NavItem) => {
               const isActive = activeId === item.id;
@@ -294,6 +273,17 @@ export function Sidebar({ activeId, onNavigate, role }: SidebarProps) {
             >
               <IconTag className="app-sidebar__icon" />
               <span className="app-sidebar__label">Data Master AI Radiologi</span>
+            </button>
+          </li>
+
+          <li>
+            <button
+              type="button"
+              className={`app-sidebar__link${activeId === 'data-terbesar' ? ' app-sidebar__link--active' : ''}`}
+              onClick={() => onNavigate('data-terbesar')}
+            >
+              <IconTag className="app-sidebar__icon" />
+              <span className="app-sidebar__label">Data Terbesar</span>
             </button>
           </li>
         </ul>
