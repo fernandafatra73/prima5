@@ -97,30 +97,6 @@
   font-weight: 600;
 }
 
-.app-sidebar__vb6-menubar {
-  display: flex;
-  flex-wrap: wrap;
-  background: #c0c0c0;
-  border: 1px solid #808080;
-  margin: 0.15rem 0.5rem 0.5rem 0.85rem;
-}
-
-.app-sidebar__vb6-menubar-item {
-  padding: 5px 9px;
-  border: none;
-  background: transparent;
-  color: #000000;
-  font-family: Tahoma, 'Segoe UI', sans-serif;
-  font-size: 0.72rem;
-  cursor: pointer;
-}
-
-.app-sidebar__vb6-menubar-item:hover,
-.app-sidebar__vb6-menubar-item--active {
-  background: #000080;
-  color: #ffffff;
-}
-
 .app-sidebar__icon {
   flex-shrink: 0;
   width: 20px;

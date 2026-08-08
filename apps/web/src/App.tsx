@@ -139,7 +139,7 @@ function renderViewContent(
     case 'ai-radiologi':
       return <AiRadiologiPage />;
     case 'ai-radiologi-grup':
-      return <AiRadiologiGrupPage />;
+      return <AiRadiologiGrupPage onNavigate={navigate} />;
     case 'data-terbesar':
       return <DataTerbesarPage onNavigate={navigate} />;
     case 'harga-pemeriksaan-lab':

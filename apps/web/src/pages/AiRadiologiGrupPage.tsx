@@ -8,6 +8,7 @@ import { useListQueryParams, useListSearch } from '../hooks/useListQueryParams.t
 import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
 import { apiDelete, apiPatch, apiPost } from '../lib/api.ts';
+import type { AppViewId } from '../config/navigation.ts';
 import '../components/ui/ui.css';
 
 interface AiRadiologiGrup {
@@ -15,7 +16,19 @@ interface AiRadiologiGrup {
   readonly nama: string;
 }
 
-export function AiRadiologiGrupPage() {
+interface AiRadiologiGrupPageProps {
+  readonly onNavigate?: (view: AppViewId) => void;
+}
+
+const DATA_MASTER_MENUBAR_ITEMS: ReadonlyArray<{ readonly id: AppViewId; readonly label: string }> = [
+  { id: 'file', label: 'File' },
+  { id: 'pendaftaran-umum', label: 'Daftar' },
+  { id: 'pasien', label: 'Radiologi' },
+  { id: 'lab', label: 'Laboratorium' },
+  { id: 'keuangan-pembukuan', label: 'Keuangan' },
+];
+
+export function AiRadiologiGrupPage({ onNavigate }: AiRadiologiGrupPageProps) {
   const { search, setSearch } = useListSearch();
   const queryParams = useListQueryParams({}, search);
   const { items, pagination, setPage, loading, error, setError, reload: reloadList } =
@@ -77,6 +90,22 @@ export function AiRadiologiGrupPage() {
 
   return (
     <>
+      {onNavigate && (
+        <div className="vb6-menubar" role="menubar" aria-label="Data Master">
+          {DATA_MASTER_MENUBAR_ITEMS.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              role="menuitem"
+              className="vb6-menubar-item"
+              onClick={() => onNavigate(item.id)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <ListPageShell
         title="Data Master AI Radiologi"
         subtitle="Kelola grup data master untuk fitur AI Radiologi"

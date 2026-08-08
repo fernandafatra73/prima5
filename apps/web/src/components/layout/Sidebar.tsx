@@ -42,14 +42,6 @@ const CATEGORY_ICONS: Record<string, (props: { className?: string }) => JSX.Elem
   anatomi: IconStethoscope,
 };
 
-const DATA_MASTER_MENUBAR_ITEMS: ReadonlyArray<{ readonly id: AppViewId; readonly label: string }> = [
-  { id: 'file', label: 'File' },
-  { id: 'pendaftaran-umum', label: 'Daftar' },
-  { id: 'pasien', label: 'Radiologi' },
-  { id: 'lab', label: 'Laboratorium' },
-  { id: 'keuangan-pembukuan', label: 'Keuangan' },
-];
-
 function ChevronIcon({ className }: { readonly className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
@@ -293,22 +285,6 @@ export function Sidebar({ activeId, onNavigate, role }: SidebarProps) {
               <IconTag className="app-sidebar__icon" />
               <span className="app-sidebar__label">Data Master AI Radiologi</span>
             </button>
-
-            <div className="app-sidebar__vb6-menubar" role="menubar" aria-label="Data Master">
-              {DATA_MASTER_MENUBAR_ITEMS.map((item) => (
-                <button
-                  key={item.id}
-                  type="button"
-                  role="menuitem"
-                  className={`app-sidebar__vb6-menubar-item${
-                    activeId === item.id ? ' app-sidebar__vb6-menubar-item--active' : ''
-                  }`}
-                  onClick={() => onNavigate(item.id)}
-                >
-                  {item.label}
-                </button>
-              ))}
-            </div>
           </li>
         </ul>
       </nav>

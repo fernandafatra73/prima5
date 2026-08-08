@@ -1719,6 +1719,31 @@
   cursor: pointer;
 }
 
+/* Data Master AI Radiologi — menu bar horizontal ala Visual Basic 6 / Windows klasik. */
+.vb6-menubar {
+  display: flex;
+  flex-wrap: wrap;
+  background: #c0c0c0;
+  border: 1px solid #808080;
+  margin-bottom: 1.25rem;
+}
+
+.vb6-menubar-item {
+  padding: 6px 12px;
+  border: none;
+  background: transparent;
+  color: #000000;
+  font-family: Tahoma, 'Segoe UI', sans-serif;
+  font-size: 0.8rem;
+  cursor: pointer;
+}
+
+.vb6-menubar-item:hover,
+.vb6-menubar-item--active {
+  background: #000080;
+  color: #ffffff;
+}
+
 /* Pendaftaran Umum — layout GroupBox klasik ala form desktop (No Registrasi, Nama, dst di kiri; foto di kanan). */
 .legacy-groupbox {
   margin: 0;
