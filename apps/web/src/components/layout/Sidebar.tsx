@@ -1,4 +1,4 @@
-import { useState, type JSX } from 'react';
+import { Fragment, useState, type JSX } from 'react';
 import logoLabprima from '@src/image/logo-labprima.png';
 import {
   DASHBOARD_NAV_ID,
@@ -34,7 +34,6 @@ const CATEGORY_ICONS: Record<string, (props: { className?: string }) => JSX.Elem
   templet: IconDocument,
   pendaftaran: IconClipboard,
   radiologi: IconStethoscope,
-  keuangan: IconCurrency,
   'perhitungan-pajak': IconCurrency,
   'master-sistem': IconShield,
   laboratorium: IconTag,
@@ -55,7 +54,6 @@ export function Sidebar({ activeId, onNavigate, role }: SidebarProps) {
     templet: true,
     pendaftaran: true,
     radiologi: true,
-    keuangan: true,
     'perhitungan-pajak': true,
     'master-sistem': true,
     laboratorium: true,
@@ -151,7 +149,36 @@ export function Sidebar({ activeId, onNavigate, role }: SidebarProps) {
             </button>
           </li>
 
-          {otherCategories.map((cat: NavCategory) => renderCategory(cat))}
+          <li>
+            <button
+              type="button"
+              className={`app-sidebar__link${activeId === 'data-terbesar' ? ' app-sidebar__link--active' : ''}`}
+              onClick={() => onNavigate('data-terbesar')}
+            >
+              <IconTag className="app-sidebar__icon" />
+              <span className="app-sidebar__label">Data Terbesar</span>
+            </button>
+          </li>
+
+          {otherCategories.map((cat: NavCategory) => (
+            <Fragment key={cat.id}>
+              {renderCategory(cat)}
+              {cat.id === 'perhitungan-pajak' && (
+                <li>
+                  <button
+                    type="button"
+                    className={`app-sidebar__link app-sidebar__link--vb6-blue${
+                      activeId === 'keuangan-pembukuan' ? ' app-sidebar__link--active' : ''
+                    }`}
+                    onClick={() => onNavigate('keuangan-pembukuan')}
+                  >
+                    <IconCurrency className="app-sidebar__icon" />
+                    <span className="app-sidebar__label">Keuangan</span>
+                  </button>
+                </li>
+              )}
+            </Fragment>
+          ))}
 
           <li>
             <button
@@ -273,17 +300,6 @@ export function Sidebar({ activeId, onNavigate, role }: SidebarProps) {
             >
               <IconTag className="app-sidebar__icon" />
               <span className="app-sidebar__label">Data Master AI Radiologi</span>
-            </button>
-          </li>
-
-          <li>
-            <button
-              type="button"
-              className={`app-sidebar__link${activeId === 'data-terbesar' ? ' app-sidebar__link--active' : ''}`}
-              onClick={() => onNavigate('data-terbesar')}
-            >
-              <IconTag className="app-sidebar__icon" />
-              <span className="app-sidebar__label">Data Terbesar</span>
             </button>
           </li>
         </ul>

@@ -97,6 +97,29 @@
   font-weight: 600;
 }
 
+.app-sidebar__link--vb6-blue {
+  background: #000080;
+  color: #ffffff;
+  border-radius: 0;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #4d4dff #000040 #000040 #4d4dff;
+  font-family: Tahoma, 'Segoe UI', sans-serif;
+  font-weight: 700;
+}
+
+.app-sidebar__link--vb6-blue:hover {
+  background: #0000a8;
+  color: #ffffff;
+}
+
+.app-sidebar__link--vb6-blue.app-sidebar__link--active {
+  background: #0000a8;
+  color: #ffffff;
+  border-color: #000040 #4d4dff #4d4dff #000040;
+  transform: translate(1px, 1px);
+}
+
 .app-sidebar__icon {
   flex-shrink: 0;
   width: 20px;
