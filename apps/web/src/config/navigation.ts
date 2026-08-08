@@ -87,6 +87,23 @@ export const MAIN_NAV_CATEGORIES: readonly NavCategory[] = [
     ],
   },
   {
+    id: 'keuangan',
+    label: 'Keuangan',
+    iconName: 'currency',
+    items: [
+      { id: 'keuangan-pembukuan', label: 'Sistem Keuangan & Pembukuan', shortLabel: 'Buku Kas & Keuangan' },
+      { id: 'penggajian', label: 'Penggajian', shortLabel: 'Penggajian' },
+      { id: 'petugas-kasir', label: 'Kasir', shortLabel: 'Kasir' },
+      { id: 'petugas-admin-klinik', label: 'Petugas Admin Klinik', shortLabel: 'Petugas Admin Klinik' },
+      { id: 'logo-perusahaan', label: 'Logo Perusahaan', shortLabel: 'Logo Perusahaan' },
+      { id: 'sharing', label: 'Manajemen Sharing Dokter', shortLabel: 'Sharing Dokter' },
+      { id: 'laporan-tahunan', label: 'Laporan Tahunan', shortLabel: 'Laporan Tahunan' },
+      { id: 'laporan-pajak', label: 'Laporan Pajak', shortLabel: 'Laporan Pajak' },
+      { id: 'laporan-pajak-bulanan', label: 'Laporan Pajak Bulanan', shortLabel: 'Laporan Pajak Bulanan' },
+      { id: 'laporan-neraca', label: 'Laporan Neraca', shortLabel: 'Laporan Neraca' },
+    ],
+  },
+  {
     id: 'master-sistem',
     label: 'Dokter & System',
     iconName: 'shield',
