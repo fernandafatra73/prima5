@@ -252,6 +252,8 @@ function renderViewContent(
       return <ComingSoonPage title="HRD" />;
     case 'lengkap':
       return <ComingSoonPage title="Lengkap" />;
+    case 'file':
+      return <ComingSoonPage title="File" />;
     default:
       return <DashboardPage />;
   }
