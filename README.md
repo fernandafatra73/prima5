@@ -3,7 +3,7 @@ LabPrima adalah projek laboratorium CV Prima Husada
 
 # LabPrima
 
-Monorepo: **React + Vite** (frontend) and **Node + Fastify + Prisma + PostgreSQL** (API).
+Monorepo: **React + Vite** (frontend) and **Node + Fastify + Prisma + SQLite** (API).
 
 ## Stack
 
@@ -11,34 +11,21 @@ Monorepo: **React + Vite** (frontend) and **Node + Fastify + Prisma + PostgreSQL
 |-------|------|
 | Frontend | React 19, Vite 8 (`apps/web`) |
 | API | Fastify 5 (`apps/api`) |
-| ORM | Prisma 7 + PostgreSQL |
-| DB (local) | PostgreSQL + pgAdmin (no Docker) |
+| ORM | Prisma 7 + SQLite (via `@prisma/adapter-libsql`) |
+| DB (local) | SQLite file (`apps/api/dev.db`), no server/Docker needed |
 
 ## Prerequisites
 
 - **Node.js** 22+ (24 recommended; see `mise.toml`)
-- **PostgreSQL** installed locally
-- **pgAdmin** (or any SQL client)
 - **npm** 10+
 
-## PostgreSQL + pgAdmin (local)
+## Setup env
 
-1. Install PostgreSQL for Windows if you have not already.
-2. Open **pgAdmin** → connect to your local server (often `localhost`, user `postgres`).
-3. Create a database, e.g. `labprima` (right‑click **Databases** → **Create** → **Database**).
-4. Copy env and set your real password:
+Copy env (defaults already point at the local SQLite file, no password needed):
 
 ```sh
 cp apps/api/.env.example apps/api/.env
 ```
-
-Edit `apps/api/.env`:
-
-```env
-DATABASE_URL="postgresql://postgres:YOUR_PASSWORD@localhost:5432/labprima?schema=public"
-```
-
-Use the same host, port, user, and database name as in pgAdmin.
 
 ## Quick start
 
@@ -166,8 +153,8 @@ Never commits `.env` or secrets. Restart Cursor once after cloning if hooks do n
 
 ## Troubleshooting
 
-**API / DB connection errors** — check Postgres is running, database exists in pgAdmin, and `DATABASE_URL` in `apps/api/.env` matches your login.
+**API / DB connection errors** — check `apps/api/.env` exists and `DATABASE_URL` points at a writable path (default `file:./dev.db`).
 
-**Prisma migrate fails** — create the empty database in pgAdmin first, then run `npm run prisma:migrate` again.
+**Prisma migrate fails** — delete `apps/api/dev.db` (if present) and run `npm run prisma:migrate` again.
 
 **Node version** — if you use Mise: `mise install` then `mise trust`.
