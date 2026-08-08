@@ -73,6 +73,7 @@ import { PetugasKasirPage } from './pages/PetugasKasirPage.tsx';
 import { PetugasAdminKlinikPage } from './pages/PetugasAdminKlinikPage.tsx';
 import { AdminPendaftaranPage } from './pages/AdminPendaftaranPage.tsx';
 import { LogoPerusahaanPage } from './pages/LogoPerusahaanPage.tsx';
+import { ComingSoonPage } from './pages/ComingSoonPage.tsx';
 import { useState } from 'react';
 
 function AccessDenied({ viewId }: { readonly viewId: AppViewId }) {
@@ -240,6 +241,14 @@ function renderViewContent(
       return <AdminPendaftaranPage />;
     case 'ai-foto':
       return <AiFotoPage />;
+    case 'rawat-jalan':
+      return <ComingSoonPage title="Rawat Jalan" />;
+    case 'rawat-inap':
+      return <ComingSoonPage title="Rawat Inap" />;
+    case 'hrd':
+      return <ComingSoonPage title="HRD" />;
+    case 'lengkap':
+      return <ComingSoonPage title="Lengkap" />;
     default:
       return <DashboardPage />;
   }

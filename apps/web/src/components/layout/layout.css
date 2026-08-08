@@ -197,6 +197,43 @@
   font-style: italic;
 }
 
+.app-sidebar__vb6-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 6px;
+  margin: 0.35rem 0.5rem 0.6rem 0.85rem;
+}
+
+.app-sidebar__vb6-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  padding: 6px 4px;
+  background: #c0c0c0;
+  border-style: solid;
+  border-width: 2px;
+  border-color: #ffffff #404040 #404040 #ffffff;
+  color: #000000;
+  font-family: Tahoma, 'Segoe UI', sans-serif;
+  font-size: 0.72rem;
+  font-weight: 600;
+  line-height: 1.15;
+  text-align: center;
+  cursor: pointer;
+}
+
+.app-sidebar__vb6-button:hover {
+  background: #d6d6d6;
+}
+
+.app-sidebar__vb6-button:active,
+.app-sidebar__vb6-button--active {
+  border-color: #404040 #ffffff #ffffff #404040;
+  background: #b0b0b0;
+  transform: translate(1px, 1px);
+}
+
 .app-sidebar__footer {
   padding: 0.75rem;
   border-top: 1px solid var(--color-border);
