@@ -43,7 +43,7 @@
   height: 3px;
   margin: 1rem 0 1.25rem;
   border-radius: 999px;
-  background: linear-gradient(90deg, #1d4ed8 0%, #1d4ed8 50%, #dc2626 50%, #dc2626 100%);
+  background: linear-gradient(90deg, #000000 0%, #000000 50%, #737373 50%, #737373 100%);
 }
 
 .login-panel__title {

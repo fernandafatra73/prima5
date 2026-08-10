@@ -197,8 +197,15 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'kalkulator', label: 'Kalkulator', shortLabel: 'Kalkulator' },
   { id: 'ai-gemini', label: 'AI Gemini', shortLabel: 'AI Gemini' },
   { id: 'ai-radiologi', label: 'AI Radiologi', shortLabel: 'AI Radiologi' },
+  { id: 'ai-radiologi-grup', label: 'Data Master AI Radiologi', shortLabel: 'Data Master AI Radiologi' },
+  { id: 'data-terbesar', label: 'Data Terbesar', shortLabel: 'Data Terbesar' },
   { id: 'tanda-tangan-elektronik', label: 'Tanda Tangan Elektronik', shortLabel: 'Tanda Tangan Elektronik' },
   { id: 'ai-foto', label: 'AI Foto', shortLabel: 'AI Foto' },
+  { id: 'rawat-jalan', label: 'Rawat Jalan', shortLabel: 'Rawat Jalan' },
+  { id: 'rawat-inap', label: 'Rawat Inap', shortLabel: 'Rawat Inap' },
+  { id: 'hrd', label: 'HRD', shortLabel: 'HRD' },
+  { id: 'lengkap', label: 'Lengkap', shortLabel: 'Lengkap' },
+  { id: 'file', label: 'File', shortLabel: 'File' },
 ] as const;
 
 export type MainNavId = (typeof MAIN_NAV_ITEMS)[number]['id'];

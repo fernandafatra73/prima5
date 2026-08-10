@@ -135,7 +135,7 @@ export function CetakALModal({
 
     const pageCss =
       mode === 'label'
-        ? '@page { size: 20.5cm 15cm landscape; margin: 0; }'
+        ? '@page { size: 20.5cm 14.8cm landscape; margin: 0; }'
         : mode === 'amplop'
           ? '@page { margin: 0; }'
           : '@page { margin: 15mm; }';
@@ -224,16 +224,15 @@ export function CetakALModal({
             .label-sheet {
               width: 100%;
               max-width: 20.5cm;
-              height: 15cm;
+              height: 14.8cm;
               margin: 0 auto;
-              padding: 0;
+              padding: 0.4cm 0.2cm 0.4cm 0.1cm;
               display: grid;
               grid-template-columns: repeat(3, 1fr);
               grid-template-rows: repeat(4, 1fr);
-              column-gap: 0.25cm;
+              column-gap: 0.1cm;
               row-gap: 0.3cm;
               box-sizing: border-box;
-              transform: translate(-0.2cm, 0.1cm);
             }
             .label-cell {
               display: flex;
@@ -373,7 +372,7 @@ export function CetakALModal({
             }}
           >
             <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#334155', marginBottom: '0.5rem' }}>
-              Pilih Posisi Label di Lembar Stiker (20,5×15 cm — 3 kolom × 4 baris, 12 posisi)
+              Pilih Posisi Label di Lembar Stiker (20,5×14,8 cm — 3 kolom × 4 baris, 12 posisi)
             </div>
             <div
               style={{
@@ -498,7 +497,7 @@ export function CetakALModal({
                   gridTemplateColumns: 'repeat(3, 1fr)',
                   gridTemplateRows: 'repeat(4, 1fr)',
                   gap: '4px',
-                  aspectRatio: '20.5 / 15',
+                  aspectRatio: '20.5 / 14.8',
                   background: '#ffffff',
                   border: '2px solid #1e293b',
                   borderRadius: '8px',

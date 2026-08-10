@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { PDFViewer } from '@react-pdf/renderer';
+import { CetakAmplopPendaftaranModal } from '../components/CetakAmplopPendaftaranModal.tsx';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
@@ -126,6 +127,7 @@ export function PendaftaranUmumPage() {
   const [deleting, setDeleting] = useState<PendaftaranUmumItem | null>(null);
   const [previewItem, setPreviewItem] = useState<PendaftaranUmumItem | null>(null);
   const [kopSuratPreviewItem, setKopSuratPreviewItem] = useState<PendaftaranUmumItem | null>(null);
+  const [amplopPreviewItem, setAmplopPreviewItem] = useState<PendaftaranUmumItem | null>(null);
   const [logoSrc, setLogoSrc] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const fotoInputRef = useRef<HTMLInputElement>(null);
@@ -512,6 +514,15 @@ export function PendaftaranUmumPage() {
                       >
                         📄 Formulir
                       </button>
+                      <button
+                        type="button"
+                        className="btn btn--xs btn--ghost"
+                        onClick={() => setAmplopPreviewItem(item)}
+                        title="Cetak amplop pendaftaran"
+                        style={{ border: '1px solid var(--color-border)' }}
+                      >
+                        ✉️ Amplop
+                      </button>
                       <TableRowActions
                         onEdit={() => openEdit(item)}
                         onDelete={() => setDeleting(item)}
@@ -785,6 +796,23 @@ export function PendaftaranUmumPage() {
           </div>
         </Modal>
       )}
+
+      <CetakAmplopPendaftaranModal
+        open={!!amplopPreviewItem}
+        onClose={() => setAmplopPreviewItem(null)}
+        pasien={
+          amplopPreviewItem
+            ? {
+                noRegistrasi: amplopPreviewItem.noRegistrasi,
+                namaPasien: amplopPreviewItem.namaPasien,
+                umur: amplopPreviewItem.umur,
+                alamat: amplopPreviewItem.alamat,
+                tanggalMasuk: amplopPreviewItem.tanggalMasuk,
+                dokterPengirim: amplopPreviewItem.dokterPengirim,
+              }
+            : null
+        }
+      />
     </ListPageShell>
   );
 }

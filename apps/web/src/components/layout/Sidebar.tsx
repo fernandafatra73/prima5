@@ -151,6 +151,17 @@ export function Sidebar({ activeId, onNavigate, role }: SidebarProps) {
             </button>
           </li>
 
+          <li>
+            <button
+              type="button"
+              className={`app-sidebar__link${activeId === 'data-terbesar' ? ' app-sidebar__link--active' : ''}`}
+              onClick={() => onNavigate('data-terbesar')}
+            >
+              <IconTag className="app-sidebar__icon" />
+              <span className="app-sidebar__label">Data Terbesar</span>
+            </button>
+          </li>
+
           {otherCategories.map((cat: NavCategory) => renderCategory(cat))}
 
           <li>
@@ -262,6 +273,17 @@ export function Sidebar({ activeId, onNavigate, role }: SidebarProps) {
             >
               <IconStethoscope className="app-sidebar__icon" />
               <span className="app-sidebar__label">AI Radiologi</span>
+            </button>
+          </li>
+
+          <li>
+            <button
+              type="button"
+              className={`app-sidebar__link${activeId === 'ai-radiologi-grup' ? ' app-sidebar__link--active' : ''}`}
+              onClick={() => onNavigate('ai-radiologi-grup')}
+            >
+              <IconTag className="app-sidebar__icon" />
+              <span className="app-sidebar__label">Data Master AI Radiologi</span>
             </button>
           </li>
         </ul>

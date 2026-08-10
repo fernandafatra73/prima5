@@ -1,36 +1,27 @@
 import { Modal } from './ui/Modal.tsx';
-import { computeUmurYears, formatDateShort } from '../lib/format.ts';
 import './ui/ui.css';
 
-export interface CetakAmplopLabPasien {
-  readonly id: string;
-  readonly regCode: string;
-  readonly nama: string;
-  readonly umur?: number;
-  readonly tanggalLahir: string;
-  readonly createdAt: string;
-  readonly pengirim: {
-    readonly nama: string;
-  };
-  readonly pemeriksaan: readonly {
-    readonly nama: string;
-  }[];
+export interface CetakAmplopPendaftaranPasien {
+  readonly noRegistrasi: string;
+  readonly namaPasien: string;
+  readonly umur: string | null;
+  readonly alamat: string | null;
+  readonly tanggalMasuk: string;
+  readonly dokterPengirim: string | null;
 }
 
-interface CetakAmplopLabModalProps {
+interface CetakAmplopPendaftaranModalProps {
   readonly open: boolean;
   readonly onClose: () => void;
-  readonly pasien: CetakAmplopLabPasien | null;
+  readonly pasien: CetakAmplopPendaftaranPasien | null;
 }
 
-export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabModalProps) {
+export function CetakAmplopPendaftaranModal({ open, onClose, pasien }: CetakAmplopPendaftaranModalProps) {
   if (!pasien) {
     return null;
   }
 
-  const umur = pasien.umur ?? computeUmurYears(pasien.tanggalLahir, pasien.createdAt) ?? 0;
-  const tanggal = formatDateShort(pasien.createdAt);
-  const jenisNames = pasien.pemeriksaan.map((p) => p.nama).join(', ') || 'Pemeriksaan Laboratorium';
+  const tanggal = new Date(pasien.tanggalMasuk).toLocaleDateString('id-ID');
 
   function handlePrintNow() {
     if (!pasien) return;
@@ -43,35 +34,35 @@ export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabMod
     const amplopHtml = `
       <div class="amplop-sheet">
         <div class="amplop-header">
-          <div class="amplop-title">KLINIK PRIMA HUSADA</div>
-          <div class="amplop-subtitle">HASIL PEMERIKSAAN LABORATORIUM</div>
+          <div class="amplop-title">KLINIK ROENTGEN &amp; USG PRIMA HUSADA</div>
+          <div class="amplop-subtitle">PENDAFTARAN PASIEN UMUM</div>
         </div>
         <div class="amplop-body">
           <table class="amplop-table">
             <tr>
               <th>No. Registrasi</th>
-              <td><strong>${pasien.regCode}</strong></td>
+              <td><strong>${pasien.noRegistrasi}</strong></td>
             </tr>
             <tr>
               <th>Nama Pasien</th>
-              <td><strong>${pasien.nama}</strong> (${umur} tahun)</td>
+              <td><strong>${pasien.namaPasien}</strong>${pasien.umur ? ` (${pasien.umur})` : ''}</td>
             </tr>
             <tr>
-              <th>Tanggal</th>
+              <th>Alamat</th>
+              <td>${pasien.alamat || '-'}</td>
+            </tr>
+            <tr>
+              <th>Tanggal Masuk</th>
               <td>${tanggal}</td>
             </tr>
             <tr>
-              <th>Jenis Pemeriksaan</th>
-              <td><strong>${jenisNames}</strong></td>
-            </tr>
-            <tr>
-              <th>Kepada Yth. TS</th>
-              <td>${pasien.pengirim.nama}</td>
+              <th>Dokter Pengirim</th>
+              <td>${pasien.dokterPengirim || '-'}</td>
             </tr>
           </table>
         </div>
         <div class="amplop-footer">
-          * Harap membawa amplop ini saat pengambilan hasil pemeriksaan laboratorium.
+          * Simpan amplop ini sebagai bukti pendaftaran pasien.
         </div>
       </div>
     `;
@@ -80,31 +71,25 @@ export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabMod
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Klinik Prima Husada — Amplop Laboratorium</title>
+          <title>Klinik Prima Husada — Amplop Pendaftaran</title>
           <style>
-            @page { size: 11cm 23cm; margin: 0; }
+            @page { size: 10cm 8cm; margin: 0; }
             body {
               font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
               color: #0f172a;
               background: #fff;
               margin: 0;
-              box-sizing: border-box;
-              padding: 1cm 0 0 0;
-              width: 11cm;
-              height: 23cm;
-              display: flex;
-              align-items: flex-start;
-              justify-content: center;
+              padding: 20px;
             }
             .amplop-sheet {
-              width: 9cm;
-              height: 6cm;
+              width: 10cm;
+              height: 8cm;
               box-sizing: border-box;
               overflow: hidden;
               border: 2px solid #000;
               padding: 10px;
               border-radius: 6px;
-              margin: 0;
+              margin: 0 auto;
               display: flex;
               flex-direction: column;
             }
@@ -115,9 +100,9 @@ export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabMod
               margin-bottom: 8px;
             }
             .amplop-title {
-              font-size: 14px;
+              font-size: 11.5px;
               font-weight: 700;
-              letter-spacing: 0.3px;
+              letter-spacing: 0.2px;
             }
             .amplop-subtitle {
               font-size: 11px;
@@ -150,9 +135,7 @@ export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabMod
               font-size: 11.5px;
               border-bottom: 1px solid #e2e8f0;
               vertical-align: top;
-              white-space: nowrap;
-              overflow: hidden;
-              text-overflow: ellipsis;
+              overflow-wrap: break-word;
             }
             .amplop-footer {
               margin-top: 6px;
@@ -177,7 +160,7 @@ export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabMod
   }
 
   return (
-    <Modal open={open} title={`Pratinjau Cetak Amplop — ${pasien.regCode}`} onClose={onClose} size="lg">
+    <Modal open={open} title={`Pratinjau Cetak Amplop — ${pasien.noRegistrasi}`} onClose={onClose} size="lg">
       <div>
         <div
           style={{
@@ -206,9 +189,9 @@ export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabMod
                 marginBottom: '1rem',
               }}
             >
-              <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#0f172a' }}>KLINIK PRIMA HUSADA</div>
+              <div style={{ fontSize: '1rem', fontWeight: 700, color: '#0f172a' }}>KLINIK ROENTGEN &amp; USG PRIMA HUSADA</div>
               <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0369a1', marginTop: '0.25rem' }}>
-                HASIL PEMERIKSAAN LABORATORIUM
+                PENDAFTARAN PASIEN UMUM
               </div>
             </div>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -217,25 +200,26 @@ export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabMod
                   <th style={{ textAlign: 'left', padding: '8px 4px', width: '180px', color: '#64748b' }}>
                     No. Registrasi
                   </th>
-                  <td style={{ padding: '8px 4px', fontWeight: 700, fontSize: '1.05rem' }}>{pasien.regCode}</td>
+                  <td style={{ padding: '8px 4px', fontWeight: 700, fontSize: '1.05rem' }}>{pasien.noRegistrasi}</td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>Nama Pasien</th>
                   <td style={{ padding: '8px 4px' }}>
-                    <strong>{pasien.nama}</strong> ({umur} tahun)
+                    <strong>{pasien.namaPasien}</strong>
+                    {pasien.umur ? ` (${pasien.umur})` : ''}
                   </td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>Tanggal</th>
-                  <td style={{ padding: '8px 4px' }}>{tanggal}</td>
+                  <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>Alamat</th>
+                  <td style={{ padding: '8px 4px' }}>{pasien.alamat || '-'}</td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-                  <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>Jenis Pemeriksaan</th>
-                  <td style={{ padding: '8px 4px', fontWeight: 600, color: '#0f172a' }}>{jenisNames}</td>
+                  <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>Tanggal Masuk</th>
+                  <td style={{ padding: '8px 4px' }}>{tanggal}</td>
                 </tr>
                 <tr>
-                  <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>Kepada Yth. TS</th>
-                  <td style={{ padding: '8px 4px' }}>{pasien.pengirim.nama}</td>
+                  <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>Dokter Pengirim</th>
+                  <td style={{ padding: '8px 4px' }}>{pasien.dokterPengirim || '-'}</td>
                 </tr>
               </tbody>
             </table>
@@ -250,7 +234,7 @@ export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabMod
                 fontStyle: 'italic',
               }}
             >
-              * Harap membawa amplop ini saat pengambilan hasil pemeriksaan laboratorium.
+              * Simpan amplop ini sebagai bukti pendaftaran pasien.
             </div>
           </div>
         </div>

@@ -285,8 +285,8 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
 
   return (
     <Document>
-      {/* 425.2 pt x 595.28 pt = 15cm x 21cm (28.3465 pt/cm) */}
-      <Page size={[425.2, 595.28]} style={styles.page}>
+      {/* 420.95 pt x 595.28 pt = 14.85cm x 21cm (A4 dibagi 2, 28.3465 pt/cm) */}
+      <Page size={[420.95, 595.28]} style={styles.page}>
         <View style={styles.frame}>
           <View style={styles.headerRow}>
             <Image style={styles.logo} src={data.logoSrc} />

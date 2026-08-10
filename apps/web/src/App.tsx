@@ -35,6 +35,7 @@ import { TelegramPage } from './pages/TelegramPage.tsx';
 import { KalkulatorPage } from './pages/KalkulatorPage.tsx';
 import { AiGeminiPage } from './pages/AiGeminiPage.tsx';
 import { AiRadiologiPage } from './pages/AiRadiologiPage.tsx';
+import { AiRadiologiGrupPage } from './pages/AiRadiologiGrupPage.tsx';
 import { AiFotoPage } from './pages/AiFotoPage.tsx';
 import { LoginPage } from './pages/LoginPage.tsx';
 import { PasienPage } from './pages/PasienPage.tsx';
@@ -72,6 +73,8 @@ import { PetugasKasirPage } from './pages/PetugasKasirPage.tsx';
 import { PetugasAdminKlinikPage } from './pages/PetugasAdminKlinikPage.tsx';
 import { AdminPendaftaranPage } from './pages/AdminPendaftaranPage.tsx';
 import { LogoPerusahaanPage } from './pages/LogoPerusahaanPage.tsx';
+import { ComingSoonPage } from './pages/ComingSoonPage.tsx';
+import { DataTerbesarPage } from './pages/DataTerbesarPage.tsx';
 import { useState } from 'react';
 
 function AccessDenied({ viewId }: { readonly viewId: AppViewId }) {
@@ -135,6 +138,10 @@ function renderViewContent(
       return <AiGeminiPage />;
     case 'ai-radiologi':
       return <AiRadiologiPage />;
+    case 'ai-radiologi-grup':
+      return <AiRadiologiGrupPage onNavigate={navigate} />;
+    case 'data-terbesar':
+      return <DataTerbesarPage onNavigate={navigate} />;
     case 'harga-pemeriksaan-lab':
       return <HargaPemeriksaanLabPage />;
     case 'lab':
@@ -237,6 +244,16 @@ function renderViewContent(
       return <AdminPendaftaranPage />;
     case 'ai-foto':
       return <AiFotoPage />;
+    case 'rawat-jalan':
+      return <ComingSoonPage title="Rawat Jalan" />;
+    case 'rawat-inap':
+      return <ComingSoonPage title="Rawat Inap" />;
+    case 'hrd':
+      return <ComingSoonPage title="HRD" />;
+    case 'lengkap':
+      return <ComingSoonPage title="Lengkap" />;
+    case 'file':
+      return <ComingSoonPage title="File" />;
     default:
       return <DashboardPage />;
   }

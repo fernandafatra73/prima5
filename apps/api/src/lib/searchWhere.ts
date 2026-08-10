@@ -40,6 +40,12 @@ export function radiologListWhere(q?: string): Prisma.RadiologWhereInput {
   };
 }
 
+export function aiRadiologiGrupListWhere(q?: string): Prisma.AiRadiologiGrupWhereInput {
+  const term = searchTerm(q);
+  if (!term) return {};
+  return { nama: { contains: term } };
+}
+
 export function petugasLabListWhere(q?: string): Prisma.PetugasLabWhereInput {
   const term = searchTerm(q);
   if (!term) return {};
