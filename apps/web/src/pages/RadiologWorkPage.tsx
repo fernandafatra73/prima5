@@ -364,6 +364,7 @@ export function RadiologWorkPage() {
       umur: item.umur,
       tanggalLahir: item.tanggalLahir,
       createdAt: item.createdAt,
+      alamat: item.alamat,
       pengirim: { nama: item.pengirimNama },
       radiolog: item.radiologNama ? { nama: item.radiologNama } : null,
       pemeriksaan: item.pemeriksaanNama

@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { Modal } from './ui/Modal.tsx';
 import { computeUmurYears, formatDateShort } from '../lib/format.ts';
+import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
+import logoLabprima from '@src/image/logo-labprima.png';
 import './ui/ui.css';
 
 export interface CetakALPasien {
@@ -10,6 +12,7 @@ export interface CetakALPasien {
   readonly umur?: number;
   readonly tanggalLahir: string;
   readonly createdAt: string;
+  readonly alamat?: string | null;
   readonly pengirim: {
     readonly nama: string;
   };
@@ -20,6 +23,8 @@ export interface CetakALPasien {
     readonly nama: string;
   }[];
 }
+
+type CetakALMode = 'amplop' | 'amplopv2' | 'label' | 'both';
 
 interface CetakALModalProps {
   readonly open: boolean;
@@ -34,7 +39,7 @@ export function CetakALModal({
   pasien,
   initialMode = 'both',
 }: CetakALModalProps) {
-  const [mode, setMode] = useState<'amplop' | 'label' | 'both'>(initialMode);
+  const [mode, setMode] = useState<CetakALMode>(initialMode);
   const [copied, setCopied] = useState(false);
   const [labelPosition, setLabelPosition] = useState(1);
   const LABEL_POSITIONS = Array.from({ length: 12 }, (_, i) => i + 1);
@@ -56,13 +61,56 @@ export function CetakALModal({
     setTimeout(() => setCopied(false), 2000);
   }
 
-  function handlePrintNow() {
+  async function handlePrintNow() {
     if (!pasien) return;
     const win = window.open('', '_blank', 'width=850,height=700');
     if (!win) {
       alert('Jendela cetak diblokir oleh browser. Harap izinkan pop-up untuk situs ini.');
       return;
     }
+
+    const logoSrc = mode === 'amplopv2' ? await loadLogoDataUrl().catch(() => '') : '';
+
+    const amplopV2Html = `
+      <div class="amplopv2-sheet">
+        <div class="amplopv2-header">
+          ${logoSrc ? `<img class="amplopv2-logo" src="${logoSrc}" alt="Logo" />` : ''}
+          <div class="amplopv2-headertext">
+            <div class="amplopv2-kop">KLINIK ROENTGEN DAN USG</div>
+            <div class="amplopv2-clinicname">PRIMA HUSADA</div>
+            <div class="amplopv2-address">Jl. Raya Siliwangi Parung Kuda</div>
+            <div class="amplopv2-address">Telp/HP 0857-1932-5557</div>
+          </div>
+        </div>
+        <table class="amplopv2-table">
+          <tr>
+            <td class="amplopv2-label">Nama Pasien</td>
+            <td class="amplopv2-colon">:</td>
+            <td class="amplopv2-value">${pasien.nama}</td>
+            <td class="amplopv2-label">Umur</td>
+            <td class="amplopv2-colon">:</td>
+            <td class="amplopv2-value">${umur} thn</td>
+          </tr>
+          <tr>
+            <td class="amplopv2-label">Alamat</td>
+            <td class="amplopv2-colon">:</td>
+            <td class="amplopv2-value">${pasien.alamat ?? '-'}</td>
+            <td class="amplopv2-label">Tanggal</td>
+            <td class="amplopv2-colon">:</td>
+            <td class="amplopv2-value">${tanggal}</td>
+          </tr>
+          <tr>
+            <td class="amplopv2-label">Pemeriksaan</td>
+            <td class="amplopv2-colon">:</td>
+            <td class="amplopv2-value">${jenisNames}</td>
+            <td class="amplopv2-label">Pengirim</td>
+            <td class="amplopv2-colon">:</td>
+            <td class="amplopv2-value">${pasien.pengirim.nama}</td>
+          </tr>
+        </table>
+        <div class="amplopv2-footer">HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!</div>
+      </div>
+    `;
 
     const amplopHtml = `
       <div class="amplop-sheet">
@@ -129,14 +177,16 @@ export function CetakALModal({
     const bodyHtml =
       mode === 'amplop'
         ? amplopHtml
-        : mode === 'label'
-          ? labelHtml
-          : `${amplopHtml}<div style="page-break-after: always;"></div>${labelHtml}`;
+        : mode === 'amplopv2'
+          ? amplopV2Html
+          : mode === 'label'
+            ? labelHtml
+            : `${amplopHtml}<div style="page-break-after: always;"></div>${labelHtml}`;
 
     const pageCss =
       mode === 'label'
         ? '@page { size: 20.5cm 14.8cm landscape; margin: 0; }'
-        : mode === 'amplop'
+        : mode === 'amplop' || mode === 'amplopv2'
           ? '@page { margin: 0; }'
           : '@page { margin: 15mm; }';
     const bodyPadding = mode === 'label' ? '0' : '20px';
@@ -219,6 +269,84 @@ export function CetakALModal({
               font-style: italic;
               color: #475569;
               text-align: center;
+            }
+
+            .amplopv2-sheet {
+              width: 12cm;
+              height: 8cm;
+              box-sizing: border-box;
+              overflow: hidden;
+              padding: 10px;
+              margin: 0 auto;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+            }
+            .amplopv2-header {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 10px;
+              margin-bottom: 10px;
+            }
+            .amplopv2-logo {
+              width: 48px;
+              height: 48px;
+              object-fit: contain;
+              flex-shrink: 0;
+            }
+            .amplopv2-headertext {
+              text-align: center;
+              color: #1d4ed8;
+            }
+            .amplopv2-kop {
+              font-size: 9px;
+              font-weight: 700;
+            }
+            .amplopv2-clinicname {
+              font-size: 16px;
+              font-weight: 800;
+              line-height: 1.3;
+            }
+            .amplopv2-address {
+              font-size: 8.5px;
+              font-weight: 700;
+            }
+            .amplopv2-table {
+              width: 100%;
+              border-collapse: collapse;
+              table-layout: fixed;
+              margin-bottom: 10px;
+            }
+            .amplopv2-table td {
+              border: 1px solid #000;
+              padding: 3px 5px;
+              font-size: 8.5px;
+              vertical-align: middle;
+            }
+            .amplopv2-label {
+              width: 20%;
+              color: #0f172a;
+            }
+            .amplopv2-colon {
+              width: 3%;
+              text-align: center;
+              color: #0f172a;
+            }
+            .amplopv2-value {
+              width: 27%;
+              color: #1d4ed8;
+              font-weight: 600;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .amplopv2-footer {
+              text-align: center;
+              font-size: 9px;
+              font-weight: 700;
+              font-style: italic;
+              color: #1d4ed8;
             }
 
             .label-sheet {
@@ -346,6 +474,13 @@ export function CetakALModal({
             onClick={() => setMode('amplop')}
           >
             ✉️ Amplop (A)
+          </button>
+          <button
+            type="button"
+            className={`btn btn--sm ${mode === 'amplopv2' ? 'btn--primary' : 'btn--secondary'}`}
+            onClick={() => setMode('amplopv2')}
+          >
+            🧾 Amplop V2
           </button>
           <button
             type="button"
@@ -485,6 +620,99 @@ export function CetakALModal({
                 }}
               >
                 * Harap membawa amplop &amp; hasil foto ini saat kontrol kembali ke dokter yang merawat.
+              </div>
+            </div>
+          )}
+
+          {mode === 'amplopv2' && (
+            <div
+              style={{
+                background: '#ffffff',
+                border: '2px solid #1e293b',
+                borderRadius: '8px',
+                padding: '1.5rem',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.08)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  marginBottom: '1rem',
+                }}
+              >
+                <img
+                  src={logoLabprima}
+                  alt="Logo"
+                  style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }}
+                />
+                <div style={{ textAlign: 'center', color: '#1d4ed8' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700 }}>KLINIK ROENTGEN DAN USG</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, lineHeight: 1.3 }}>PRIMA HUSADA</div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>Jl. Raya Siliwangi Parung Kuda</div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>Telp/HP 0857-1932-5557</div>
+                </div>
+              </div>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+                <tbody>
+                  <tr>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '18%' }}>
+                      Nama Pasien
+                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '3%', textAlign: 'center' }}>
+                      :
+                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+                      {pasien.nama}
+                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '14%' }}>
+                      Umur
+                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '3%', textAlign: 'center' }}>
+                      :
+                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+                      {umur} thn
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Alamat</td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
+                      :
+                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+                      {pasien.alamat ?? '-'}
+                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Tanggal</td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
+                      :
+                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+                      {tanggal}
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Pemeriksaan</td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
+                      :
+                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+                      {jenisNames}
+                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Pengirim</td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
+                      :
+                    </td>
+                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+                      {pasien.pengirim.nama}
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+              <div style={{ textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, fontStyle: 'italic', color: '#1d4ed8' }}>
+                HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!
               </div>
             </div>
           )}
