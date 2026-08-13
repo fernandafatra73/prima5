@@ -56,7 +56,7 @@ const styles = StyleSheet.create({
     color: BLACK,
   },
   frame: {
-    height: '100%',
+    minHeight: '100%',
     borderWidth: 1,
     borderColor: BLACK,
     padding: 10,
@@ -341,18 +341,43 @@ const DEFAULT_LAB_ROWS: readonly LabTestRow[] = [
 export function chunkLabRowsForPdf(
   rows: readonly LabTestRow[],
   pageSize = 32,
+  lastPageSize = 20,
 ): readonly (readonly LabTestRow[])[] {
   if (rows.length === 0) return [[]];
+  // The last page also carries the notes box and signature block, which
+  // don't fit if it's packed as full as an interior page — reserve it a
+  // smaller budget so that content never overflows past the page edge.
+  if (rows.length <= lastPageSize) return [rows];
+
   const pages: LabTestRow[][] = [];
-  for (let i = 0; i < rows.length; i += pageSize) {
-    pages.push(rows.slice(i, i + pageSize));
+  let idx = 0;
+  let remaining = rows.length;
+
+  // Fill interior pages at full size, stopping once what's left can be
+  // settled into a final one or two pages without exceeding lastPageSize.
+  while (remaining > pageSize + lastPageSize) {
+    pages.push(rows.slice(idx, idx + pageSize));
+    idx += pageSize;
+    remaining -= pageSize;
   }
+
+  if (remaining <= lastPageSize) {
+    pages.push(rows.slice(idx, idx + remaining));
+  } else {
+    // Balance the tail across two pages instead of dumping most of it onto
+    // a near-empty page ahead of a nearly-full last page.
+    const half = Math.ceil(remaining / 2);
+    const firstTake = Math.min(pageSize, Math.max(half, remaining - lastPageSize));
+    pages.push(rows.slice(idx, idx + firstTake));
+    pages.push(rows.slice(idx + firstTake, idx + remaining));
+  }
+
   return pages;
 }
 
 export function LabReportDocument({ data }: { readonly data: LabReportData }) {
   const allRows = data.rows && data.rows.length > 0 ? data.rows : DEFAULT_LAB_ROWS;
-  const pages = chunkLabRowsForPdf(allRows, 32);
+  const pages = chunkLabRowsForPdf(allRows);
 
   return (
     <Document title={`Hasil_Lab_${data.namaPasien.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}>

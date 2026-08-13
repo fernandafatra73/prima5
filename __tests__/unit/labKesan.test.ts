@@ -210,7 +210,7 @@ describe('abnormal lab result asterisk formatting', () => {
 });
 
 describe('chunkLabRowsForPdf pagination', () => {
-  test('chunks rows by pageSize = 32 and moves overflow to page 2', () => {
+  test('splits overflow across pages and keeps the last page within lastPageSize', () => {
     const rows = Array.from({ length: 45 }, (_, i) => ({
       name: `Test ${i + 1}`,
       result: '10',
@@ -218,11 +218,14 @@ describe('chunkLabRowsForPdf pagination', () => {
     }));
     const chunks = chunkLabRowsForPdf(rows, 32);
     expect(chunks.length).toBe(2);
-    expect(chunks[0].length).toBe(32);
-    expect(chunks[1].length).toBe(13);
+    // The last page also carries the notes box and signature block, so it
+    // gets a smaller budget (default 20) instead of being packed as full
+    // as an interior page — otherwise that content overflows the sheet.
+    expect(chunks[0].length + chunks[1].length).toBe(45);
+    expect(chunks[1].length).toBeLessThanOrEqual(20);
   });
 
-  test('returns a single page when rows <= 32', () => {
+  test('returns a single page when rows <= lastPageSize', () => {
     const rows = Array.from({ length: 20 }, (_, i) => ({
       name: `Test ${i + 1}`,
       result: '10',
@@ -231,6 +234,23 @@ describe('chunkLabRowsForPdf pagination', () => {
     const chunks = chunkLabRowsForPdf(rows, 32);
     expect(chunks.length).toBe(1);
     expect(chunks[0].length).toBe(20);
+  });
+
+  test('never lets the last page exceed lastPageSize, across a range of row counts', () => {
+    for (const n of [21, 32, 33, 45, 52, 53, 64, 100]) {
+      const rows = Array.from({ length: n }, (_, i) => ({
+        name: `Test ${i + 1}`,
+        result: '10',
+        reference: '5-15',
+      }));
+      const chunks = chunkLabRowsForPdf(rows, 32, 20);
+      const total = chunks.reduce((sum, c) => sum + c.length, 0);
+      expect(total).toBe(n);
+      expect(chunks[chunks.length - 1].length).toBeLessThanOrEqual(20);
+      for (const c of chunks.slice(0, -1)) {
+        expect(c.length).toBeLessThanOrEqual(32);
+      }
+    }
   });
 });
 
