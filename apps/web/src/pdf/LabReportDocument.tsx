@@ -478,7 +478,10 @@ export function LabReportDocument({ data }: { readonly data: LabReportData }) {
 
               {/* Signature Wrap */}
               {isLastPage ? (
-                <View style={styles.signatureWrap}>
+                // wrap={false}: keep the signature block atomic — if it doesn't
+                // fully fit in the space left on this page, move the whole
+                // block to the next page instead of squeezing/cutting it off.
+                <View style={styles.signatureWrap} wrap={false}>
                   <View style={styles.signature}>
                     <Text style={styles.signatureLine}>Divalidasi</Text>
                     <View style={styles.signatureGap} />
