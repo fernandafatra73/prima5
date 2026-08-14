@@ -50,12 +50,21 @@ const RED = '#dc2626';
 
 const styles = StyleSheet.create({
   page: {
-    padding: 12,
+    // Margin cetak aman: printer fisik sering tidak bisa mencetak sampai
+    // tepi kertas, terutama di sisi bawah (mekanisme feed/fuser). 12pt
+    // sebelumnya terlalu mepet dan berisiko memotong tanda tangan Analis.
+    paddingTop: '1.2cm',
+    paddingBottom: '1.8cm',
+    paddingLeft: '1cm',
+    paddingRight: '1cm',
     fontFamily: 'Helvetica',
     fontSize: 9,
     color: BLACK,
   },
   frame: {
+    // minHeight (bukan height) supaya saat konten lebih panjang dari satu
+    // halaman, framenya melebar mengikuti konten dan react-pdf otomatis
+    // memecah ke halaman baru — bukan memampatkan/menumpuk baris tabel.
     minHeight: '100%',
     borderWidth: 1,
     borderColor: BLACK,
