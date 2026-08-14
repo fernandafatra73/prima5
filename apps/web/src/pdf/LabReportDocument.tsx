@@ -263,6 +263,10 @@ const styles = StyleSheet.create({
     color: BLUE,
     lineHeight: 1.35,
   },
+  // 5 baris kosong (setara 5x enter) sebelum blok tanda tangan.
+  notesSpacer: {
+    height: 9 * 5,
+  },
 
   signatureWrap: {
     marginTop: 'auto',
@@ -467,6 +471,10 @@ export function LabReportDocument({ data }: { readonly data: LabReportData }) {
                   <Text style={styles.notesContent}>{data.labResultsText}</Text>
                 </View>
               ) : null}
+
+              {/* 5 baris kosong (setara 5x enter) setelah hasil pemeriksaan,
+                  sebelum blok tanda tangan. */}
+              {isLastPage ? <View style={styles.notesSpacer} /> : null}
 
               {/* Signature Wrap */}
               {isLastPage ? (
