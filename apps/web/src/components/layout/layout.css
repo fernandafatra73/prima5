@@ -147,6 +147,18 @@
   box-shadow: 0 12px 28px rgba(4, 12, 36, 0.18);
 }
 
+.app-navbar__dropdown--radiologi {
+  background: #dbeafe;
+}
+
+.app-navbar__dropdown--laboratorium {
+  background: #fce7f3;
+}
+
+.app-navbar__dropdown--keuangan {
+  background: #fef9c3;
+}
+
 .app-navbar__dropdown-link {
   display: block;
   width: 100%;

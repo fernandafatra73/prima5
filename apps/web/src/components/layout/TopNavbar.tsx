@@ -57,6 +57,12 @@ type NavbarSpec =
   | { readonly type: 'category'; readonly categoryId: string; readonly icon: IconComponent }
   | { readonly type: 'group'; readonly groupId: string; readonly label: string; readonly icon: IconComponent; readonly items: readonly MenuItem[] };
 
+const DROPDOWN_TINT_CLASS: Readonly<Record<string, string>> = {
+  radiologi: 'app-navbar__dropdown--radiologi',
+  laboratorium: 'app-navbar__dropdown--laboratorium',
+  keuangan: 'app-navbar__dropdown--keuangan',
+};
+
 const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'category', categoryId: 'pendaftaran', icon: IconClipboard },
   { type: 'category', categoryId: 'radiologi', icon: IconStethoscope },
@@ -156,7 +162,10 @@ export function TopNavbar({ activeId, onNavigate, role, departemen, onLogout }: 
               </button>
 
               {isOpen && (
-                <ul className="app-navbar__dropdown" role="menu">
+                <ul
+                  className={`app-navbar__dropdown ${DROPDOWN_TINT_CLASS[menu.key] ?? ''}`}
+                  role="menu"
+                >
                   {visibleItems.map((item) => (
                     <li key={item.id} role="none">
                       <button
