@@ -17,15 +17,14 @@
   padding: 0.6rem 1.5rem;
   background: var(--navbar-bg);
   border-bottom: 1px solid var(--navbar-border);
-  box-shadow: 0 2px 10px rgba(15, 60, 130, 0.12);
+  box-shadow: 0 2px 10px rgba(4, 24, 16, 0.25);
 
-  --navbar-bg: #d6e9ff;
-  --navbar-border: #b7d7fb;
-  --navbar-fg: #0d2a54;
-  --navbar-fg-muted: rgba(13, 42, 84, 0.65);
-  --navbar-hover-bg: rgba(13, 42, 84, 0.08);
-  --navbar-active-bg: rgba(13, 42, 84, 0.14);
-  --navbar-accent: #1d4ed8;
+  --navbar-bg: #0b3d24;
+  --navbar-border: #145534;
+  --navbar-fg: #ffffff;
+  --navbar-fg-muted: rgba(255, 255, 255, 0.68);
+  --navbar-hover-bg: rgba(255, 255, 255, 0.12);
+  --navbar-active-bg: rgba(255, 255, 255, 0.2);
 }
 
 .app-navbar__brand {
@@ -189,8 +188,8 @@
   border: none;
   border-radius: 50%;
   background: #ffffff;
-  color: var(--navbar-accent);
-  box-shadow: 0 2px 6px rgba(15, 60, 130, 0.2);
+  color: var(--navbar-bg);
+  box-shadow: 0 2px 6px rgba(4, 12, 36, 0.25);
   cursor: pointer;
 }
 
@@ -205,24 +204,11 @@
   gap: 0.6rem;
 }
 
-.app-navbar__user-text {
-  text-align: right;
-}
-
-.app-navbar__user-name {
-  margin: 0;
-  font-size: 0.825rem;
+.app-navbar__user-credit {
+  font-size: 0.8rem;
   font-weight: 600;
   color: var(--navbar-fg);
   white-space: nowrap;
-}
-
-.app-navbar__user-role {
-  margin: 0;
-  font-size: 0.7rem;
-  color: var(--navbar-fg-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
 }
 
 .app-navbar__avatar {
@@ -233,7 +219,7 @@
   height: 38px;
   border-radius: 50%;
   background: #ffffff;
-  color: var(--navbar-accent);
+  color: var(--navbar-bg);
   font-size: 0.75rem;
   font-weight: 700;
 }

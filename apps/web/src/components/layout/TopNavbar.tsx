@@ -1,17 +1,14 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
 import logoLabprima from '@src/image/logo-labprima.png';
 import {
-  DASHBOARD_NAV_ID,
   isViewAllowedForRole,
   MAIN_NAV_CATEGORIES,
   type AppViewId,
   type StaffRole,
 } from '../../config/navigation.ts';
-import type { AuthUser } from '../../lib/auth.ts';
 import {
   IconClipboard,
   IconCurrency,
-  IconDashboard,
   IconDocument,
   IconLogout,
   IconShield,
@@ -24,7 +21,6 @@ interface TopNavbarProps {
   readonly activeId: AppViewId;
   readonly onNavigate: (id: AppViewId) => void;
   readonly role: StaffRole;
-  readonly authUser: AuthUser;
   readonly onLogout: () => void;
 }
 
@@ -54,7 +50,6 @@ type NavbarSpec =
   | { readonly type: 'group'; readonly groupId: string; readonly label: string; readonly icon: IconComponent; readonly items: readonly MenuItem[] };
 
 const NAVBAR_SPECS: readonly NavbarSpec[] = [
-  { type: 'link', id: DASHBOARD_NAV_ID, label: 'Dashboard', icon: IconDashboard },
   { type: 'category', categoryId: 'pendaftaran', icon: IconClipboard },
   { type: 'category', categoryId: 'radiologi', icon: IconStethoscope },
   { type: 'category', categoryId: 'laboratorium', icon: IconTag },
@@ -65,26 +60,11 @@ const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'group', groupId: 'mega-data', label: 'Mega Data', icon: IconTag, items: MEGA_DATA_ITEMS },
   { type: 'category', categoryId: 'anatomi', icon: IconStethoscope },
   { type: 'link', id: 'ai-radiologi', label: 'AI Radiologi', icon: IconStethoscope },
-  { type: 'link', id: 'ai-radiologi-grup', label: 'Data Master AI Radiologi', icon: IconTag },
 ];
 
-function getRoleLabel(role: AuthUser['role']): string {
-  return role === 'ADMIN' ? 'Manajemen' : 'Pekerja';
-}
-
-function getInitials(name: string): string {
-  return name
-    .split(' ')
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((part) => part[0]?.toUpperCase() ?? '')
-    .join('');
-}
-
-export function TopNavbar({ activeId, onNavigate, role, authUser, onLogout }: TopNavbarProps) {
+export function TopNavbar({ activeId, onNavigate, role, onLogout }: TopNavbarProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
-  const initials = getInitials(authUser.nama) || 'LP';
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -191,12 +171,9 @@ export function TopNavbar({ activeId, onNavigate, role, authUser, onLogout }: To
 
       <div className="app-navbar__actions">
         <div className="app-navbar__user">
-          <div className="app-navbar__user-text">
-            <p className="app-navbar__user-name">{authUser.nama}</p>
-            <p className="app-navbar__user-role">{getRoleLabel(authUser.role)}</p>
-          </div>
+          <span className="app-navbar__user-credit">By: F. Fatria Fatra</span>
           <div className="app-navbar__avatar" aria-hidden>
-            {initials}
+            FF
           </div>
         </div>
 
