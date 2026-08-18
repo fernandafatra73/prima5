@@ -32,6 +32,7 @@ interface ArsipPasienItem {
   readonly alamat: string | null;
   readonly pengirimNama: string;
   readonly pemeriksaanNama: string;
+  readonly petugasAdminKlinik: string | null;
   readonly paymentStatus: 'BELUM_LUNAS' | 'LUNAS';
   readonly totalHarga: string;
   readonly totalSharing: string;
@@ -129,6 +130,7 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
     alamat: '',
     pengirimNama: '',
     pemeriksaanNama: '',
+    petugasAdminKlinik: '',
     totalHarga: '0',
     totalSharing: '0',
     paymentStatus: 'BELUM_LUNAS' as 'BELUM_LUNAS' | 'LUNAS',
@@ -159,6 +161,7 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
       alamat: item.alamat ?? '',
       pengirimNama: item.pengirimNama,
       pemeriksaanNama: item.pemeriksaanNama,
+      petugasAdminKlinik: item.petugasAdminKlinik ?? '',
       totalHarga: item.totalHarga,
       totalSharing: item.totalSharing,
       paymentStatus: item.paymentStatus,
@@ -178,6 +181,7 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
         alamat: editForm.alamat || undefined,
         pengirimNama: editForm.pengirimNama,
         pemeriksaanNama: editForm.pemeriksaanNama,
+        petugasAdminKlinik: editForm.petugasAdminKlinik || undefined,
         totalHarga: Number(editForm.totalHarga) || 0,
         totalSharing: Number(editForm.totalSharing) || 0,
         paymentStatus: editForm.paymentStatus,
@@ -693,6 +697,14 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
                 required
                 value={editForm.totalSharing}
                 onChange={(e) => setEditForm((f) => ({ ...f, totalSharing: e.target.value }))}
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="sharing-edit-petugas-admin">Petugas Admin Klinik</label>
+              <input
+                id="sharing-edit-petugas-admin"
+                value={editForm.petugasAdminKlinik}
+                onChange={(e) => setEditForm((f) => ({ ...f, petugasAdminKlinik: e.target.value }))}
               />
             </div>
             <div className="form-field">

@@ -2469,6 +2469,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         paymentStatus: d.paymentStatus,
         pemeriksaanNama: d.pemeriksaanNama,
         petugasKasir: d.petugasKasir,
+        petugasAdminKlinik: d.petugasAdminKlinik,
         totalHarga: serializeDecimal(d.totalHarga),
         totalSharing: serializeDecimal(d.totalSharing),
         createdAt: d.registeredAt.toISOString(),
@@ -2487,6 +2488,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       pengirimNama?: string;
       pemeriksaanNama?: string;
       petugasKasir?: string;
+      petugasAdminKlinik?: string;
       kesan?: string;
       totalHarga?: number;
       totalSharing?: number;
@@ -2506,6 +2508,8 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         pengirimNama: b.pengirimNama?.trim() ?? existing.pengirimNama,
         pemeriksaanNama: b.pemeriksaanNama?.trim() ?? existing.pemeriksaanNama,
         petugasKasir: b.petugasKasir !== undefined ? b.petugasKasir?.trim() || null : existing.petugasKasir,
+        petugasAdminKlinik:
+          b.petugasAdminKlinik !== undefined ? b.petugasAdminKlinik?.trim() || null : existing.petugasAdminKlinik,
         kesan: b.kesan !== undefined ? b.kesan?.trim() || null : existing.kesan,
         totalHarga: b.totalHarga !== undefined ? b.totalHarga : existing.totalHarga,
         totalSharing: b.totalSharing !== undefined ? b.totalSharing : existing.totalSharing,
@@ -2531,6 +2535,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         paymentStatus: item.paymentStatus,
         pemeriksaanNama: item.pemeriksaanNama,
         petugasKasir: item.petugasKasir,
+        petugasAdminKlinik: item.petugasAdminKlinik,
         totalHarga: serializeDecimal(item.totalHarga),
         totalSharing: serializeDecimal(item.totalSharing),
         createdAt: item.registeredAt.toISOString(),

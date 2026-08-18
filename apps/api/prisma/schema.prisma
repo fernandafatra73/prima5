@@ -600,6 +600,7 @@ model PasienDuplikat {
   paymentStatus   PaymentStatus @default(BELUM_LUNAS)
   pemeriksaanNama String        @default("")
   petugasKasir    String?
+  petugasAdminKlinik String?
   totalHarga      Decimal       @default(0)
   totalSharing    Decimal       @default(0)
   registeredAt    DateTime
