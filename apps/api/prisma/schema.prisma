@@ -68,12 +68,27 @@ model KaryawanKlinik {
 }
 
 model Radiolog {
-  id        String   @id @default(cuid())
-  nama      String
-  noTelepon String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  pasien    Pasien[] @relation("PasienRadiolog")
+  id              String             @id @default(cuid())
+  nama            String
+  noTelepon       String?
+  createdAt       DateTime           @default(now())
+  updatedAt       DateTime           @updatedAt
+  pasien          Pasien[]           @relation("PasienRadiolog")
+  sharingRadiolog SharingRadiolog[]
+}
+
+/// Data sharing radiolog yang diisi manual oleh admin (bukan hasil hitungan
+/// otomatis dari transaksi Pasien) — mis. untuk kesepakatan sharing per
+/// jenis pemeriksaan dengan radiolog tertentu.
+model SharingRadiolog {
+  id              String   @id @default(cuid())
+  namaPemeriksaan String
+  sharingNominal  Decimal
+  totalSharing    Decimal
+  radiologId      String
+  radiolog        Radiolog @relation(fields: [radiologId], references: [id])
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 }
 
 model PetugasLab {

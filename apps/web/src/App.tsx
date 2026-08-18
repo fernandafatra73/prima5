@@ -19,6 +19,7 @@ import { DokterPage } from './pages/DokterPage.tsx';
 import { KaryawanKlinikPage } from './pages/KaryawanKlinikPage.tsx';
 import { TandaTanganElektronikPage } from './pages/TandaTanganElektronikPage.tsx';
 import { FotoDashboardPage } from './pages/FotoDashboardPage.tsx';
+import { SharingRadiologPage } from './pages/SharingRadiologPage.tsx';
 import { JenisPemeriksaanPage } from './pages/JenisPemeriksaanPage.tsx';
 import { KesanPage } from './pages/KesanPage.tsx';
 import { LaboratoriumPage } from './pages/LaboratoriumPage.tsx';
@@ -190,6 +191,8 @@ function renderViewContent(
       return <KwitansiRadiologiPage />;
     case 'sharing-radiologi':
       return <SharingArsipPage modul="RADIOLOGI" />;
+    case 'sharing-radiolog':
+      return <SharingRadiologPage />;
     case 'cetak-al':
       return <CetakALPage />;
     case 'cetak-amplop-lab':

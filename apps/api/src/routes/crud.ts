@@ -25,6 +25,7 @@ import {
   petugasLabListWhere,
   radiograferListWhere,
   radiologListWhere,
+  sharingRadiologListWhere,
   staffListWhere,
   suratKeteranganRujukanListWhere,
   suratKeteranganSehatListWhere,
@@ -244,6 +245,100 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       return { item };
     },
   );
+
+  app.get<{ Querystring: ListQuery }>('/api/sharing-radiolog', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const where = sharingRadiologListWhere(req.query.q);
+    const [total, items] = await Promise.all([
+      prisma.sharingRadiolog.count({ where }),
+      prisma.sharingRadiolog.findMany({
+        where,
+        include: { radiolog: true },
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+    ]);
+    return {
+      items: items.map((item) => ({
+        ...item,
+        sharingNominal: serializeDecimal(item.sharingNominal),
+        totalSharing: serializeDecimal(item.totalSharing),
+      })),
+      pagination: buildPaginationMeta(total, page, limit),
+    };
+  });
+
+  app.post<{
+    Body: {
+      namaPemeriksaan: string;
+      sharingNominal: string | number;
+      totalSharing: string | number;
+      radiologId: string;
+    };
+  }>('/api/sharing-radiolog', async (req, reply) => {
+    if (!req.body.namaPemeriksaan?.trim()) return badRequest(reply, 'namaPemeriksaan wajib diisi');
+    if (!req.body.radiologId) return badRequest(reply, 'radiologId wajib diisi');
+    const radiolog = await prisma.radiolog.findUnique({ where: { id: req.body.radiologId } });
+    if (!radiolog) return badRequest(reply, 'Radiolog tidak ditemukan');
+    const item = await prisma.sharingRadiolog.create({
+      data: {
+        namaPemeriksaan: req.body.namaPemeriksaan.trim(),
+        sharingNominal: new Decimal(req.body.sharingNominal ?? 0),
+        totalSharing: new Decimal(req.body.totalSharing ?? 0),
+        radiologId: req.body.radiologId,
+      },
+      include: { radiolog: true },
+    });
+    return reply.status(201).send({
+      item: {
+        ...item,
+        sharingNominal: serializeDecimal(item.sharingNominal),
+        totalSharing: serializeDecimal(item.totalSharing),
+      },
+    });
+  });
+
+  app.patch<{
+    Params: { id: string };
+    Body: {
+      namaPemeriksaan?: string;
+      sharingNominal?: string | number;
+      totalSharing?: string | number;
+      radiologId?: string;
+    };
+  }>('/api/sharing-radiolog/:id', async (req, reply) => {
+    const existing = await prisma.sharingRadiolog.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Sharing radiolog tidak ditemukan' });
+    if (req.body.radiologId) {
+      const radiolog = await prisma.radiolog.findUnique({ where: { id: req.body.radiologId } });
+      if (!radiolog) return badRequest(reply, 'Radiolog tidak ditemukan');
+    }
+    const item = await prisma.sharingRadiolog.update({
+      where: { id: req.params.id },
+      data: {
+        namaPemeriksaan: req.body.namaPemeriksaan?.trim() ?? existing.namaPemeriksaan,
+        sharingNominal:
+          req.body.sharingNominal !== undefined ? new Decimal(req.body.sharingNominal) : existing.sharingNominal,
+        totalSharing:
+          req.body.totalSharing !== undefined ? new Decimal(req.body.totalSharing) : existing.totalSharing,
+        radiologId: req.body.radiologId ?? existing.radiologId,
+      },
+      include: { radiolog: true },
+    });
+    return {
+      item: {
+        ...item,
+        sharingNominal: serializeDecimal(item.sharingNominal),
+        totalSharing: serializeDecimal(item.totalSharing),
+      },
+    };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/sharing-radiolog/:id', async (req) => {
+    await prisma.sharingRadiolog.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
 
   app.get<{ Querystring: ListQuery }>('/api/ai-radiologi-grup', async (req) => {
     const { page, limit, skip } = parsePagination(req.query);

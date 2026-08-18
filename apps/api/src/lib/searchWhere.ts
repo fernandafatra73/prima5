@@ -133,6 +133,17 @@ export function fotoDashboardListWhere(q?: string): Prisma.FotoDashboardWhereInp
   };
 }
 
+export function sharingRadiologListWhere(q?: string): Prisma.SharingRadiologWhereInput {
+  const term = searchTerm(q);
+  if (!term) return {};
+  return {
+    OR: [
+      { namaPemeriksaan: { contains: term } },
+      { radiolog: { nama: { contains: term } } },
+    ],
+  };
+}
+
 export function suratKeteranganSehatListWhere(q?: string): Prisma.SuratKeteranganSehatWhereInput {
   const term = searchTerm(q);
   if (!term) return {};
