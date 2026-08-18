@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo, useRef } from 'react';
 import { PDFViewer } from '@react-pdf/renderer';
 import { CetakAmplopPendaftaranModal } from '../components/CetakAmplopPendaftaranModal.tsx';
+import { CetakLabelPendaftaranModal } from '../components/CetakLabelPendaftaranModal.tsx';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
@@ -128,6 +129,7 @@ export function PendaftaranUmumPage() {
   const [previewItem, setPreviewItem] = useState<PendaftaranUmumItem | null>(null);
   const [kopSuratPreviewItem, setKopSuratPreviewItem] = useState<PendaftaranUmumItem | null>(null);
   const [amplopPreviewItem, setAmplopPreviewItem] = useState<PendaftaranUmumItem | null>(null);
+  const [labelPreviewItem, setLabelPreviewItem] = useState<PendaftaranUmumItem | null>(null);
   const [logoSrc, setLogoSrc] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const fotoInputRef = useRef<HTMLInputElement>(null);
@@ -523,6 +525,15 @@ export function PendaftaranUmumPage() {
                       >
                         ✉️ Amplop
                       </button>
+                      <button
+                        type="button"
+                        className="btn btn--xs btn--ghost"
+                        onClick={() => setLabelPreviewItem(item)}
+                        title="Cetak label stiker identitas"
+                        style={{ border: '1px solid var(--color-border)' }}
+                      >
+                        🏷️ Label
+                      </button>
                       <TableRowActions
                         onEdit={() => openEdit(item)}
                         onDelete={() => setDeleting(item)}
@@ -809,6 +820,22 @@ export function PendaftaranUmumPage() {
                 alamat: amplopPreviewItem.alamat,
                 tanggalMasuk: amplopPreviewItem.tanggalMasuk,
                 dokterPengirim: amplopPreviewItem.dokterPengirim,
+              }
+            : null
+        }
+      />
+
+      <CetakLabelPendaftaranModal
+        open={!!labelPreviewItem}
+        onClose={() => setLabelPreviewItem(null)}
+        pasien={
+          labelPreviewItem
+            ? {
+                noRegistrasi: labelPreviewItem.noRegistrasi,
+                namaPasien: labelPreviewItem.namaPasien,
+                umur: labelPreviewItem.umur,
+                tanggalMasuk: labelPreviewItem.tanggalMasuk,
+                dokterPengirim: labelPreviewItem.dokterPengirim,
               }
             : null
         }
