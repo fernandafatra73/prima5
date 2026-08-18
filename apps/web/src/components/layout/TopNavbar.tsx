@@ -12,6 +12,7 @@ import {
   IconCurrency,
   IconDocument,
   IconLogout,
+  IconSettings,
   IconShield,
   IconStethoscope,
   IconTag,
@@ -32,6 +33,10 @@ interface MenuItem {
   readonly id: AppViewId;
   readonly label: string;
 }
+
+const PENGATURAN_ITEMS: readonly MenuItem[] = [
+  { id: 'logo-perusahaan', label: 'Pengaturan Kop Surat & Logo' },
+];
 
 const MEGA_DATA_ITEMS: readonly MenuItem[] = [
   { id: 'fatra', label: 'Fatra' },
@@ -58,6 +63,7 @@ const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'category', categoryId: 'perhitungan-pajak', icon: IconCurrency },
   { type: 'category', categoryId: 'keuangan', icon: IconCurrency },
   { type: 'category', categoryId: 'master-sistem', icon: IconShield },
+  { type: 'group', groupId: 'pengaturan', label: 'Pengaturan', icon: IconSettings, items: PENGATURAN_ITEMS },
   { type: 'category', categoryId: 'farmasi', icon: IconDocument },
   { type: 'group', groupId: 'mega-data', label: 'Mega Data', icon: IconTag, items: MEGA_DATA_ITEMS },
   { type: 'category', categoryId: 'anatomi', icon: IconStethoscope },
