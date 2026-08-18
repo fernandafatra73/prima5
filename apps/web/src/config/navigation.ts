@@ -207,6 +207,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'hrd', label: 'HRD', shortLabel: 'HRD' },
   { id: 'lengkap', label: 'Lengkap', shortLabel: 'Lengkap' },
   { id: 'file', label: 'File', shortLabel: 'File' },
+  { id: 'autote1', label: 'Autote1', shortLabel: 'Autote1' },
 ] as const;
 
 export type MainNavId = (typeof MAIN_NAV_ITEMS)[number]['id'];

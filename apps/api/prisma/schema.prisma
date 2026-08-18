@@ -119,6 +119,15 @@ model AdminPendaftaran {
   updatedAt     DateTime @updatedAt
 }
 
+/// Teks berjalan (marquee) pada band bawah aplikasi. Satu baris singleton,
+/// diisi lewat menu Pengaturan > Autote1.
+model AutoText {
+  id        String   @id @default(cuid())
+  text      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 model LogoPerusahaan {
   id               String   @id @default(cuid())
   namaKlinik       String

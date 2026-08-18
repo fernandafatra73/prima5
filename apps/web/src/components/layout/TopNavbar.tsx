@@ -36,6 +36,7 @@ interface MenuItem {
 
 const PENGATURAN_ITEMS: readonly MenuItem[] = [
   { id: 'logo-perusahaan', label: 'Pengaturan Kop Surat & Logo' },
+  { id: 'autote1', label: 'Autote1' },
 ];
 
 const MEGA_DATA_ITEMS: readonly MenuItem[] = [

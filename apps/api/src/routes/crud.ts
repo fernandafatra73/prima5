@@ -2898,6 +2898,21 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  app.get('/api/autotext', async () => {
+    const item = await prisma.autoText.findFirst({ orderBy: { createdAt: 'asc' } });
+    return { item };
+  });
+
+  app.put<{ Body: { text: string } }>('/api/autotext', async (req, reply) => {
+    if (!req.body.text?.trim()) return badRequest(reply, 'text wajib diisi');
+    const text = req.body.text.trim();
+    const existing = await prisma.autoText.findFirst({ orderBy: { createdAt: 'asc' } });
+    const item = existing
+      ? await prisma.autoText.update({ where: { id: existing.id }, data: { text } })
+      : await prisma.autoText.create({ data: { text } });
+    return { item };
+  });
+
   app.get<{ Querystring: ListQuery }>('/api/daftar-telpon', async (req) => {
     const { page, limit, skip } = parsePagination(req.query);
     const where = daftarTelponListWhere(req.query.q);
