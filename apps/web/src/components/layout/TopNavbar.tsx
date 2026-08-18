@@ -54,6 +54,8 @@ const SOSMED_ITEMS: readonly ExternalLinkItem[] = [
   { id: 'facebook', label: 'Facebook', url: 'https://www.facebook.com/' },
   { id: 'shopee', label: 'Shopee', url: 'https://shopee.co.id/' },
   { id: 'instagram', label: 'Instagram', url: 'https://www.instagram.com/' },
+  { id: 'whatsapp-sosmed', label: 'WhatsApp', url: 'https://www.whatsapp.com/' },
+  { id: 'telegram-sosmed', label: 'Telegram', url: 'https://telegram.org/' },
 ];
 
 const MEGA_DATA_ITEMS: readonly MenuItem[] = [
