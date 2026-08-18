@@ -1,5 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
-import { PDFViewer } from '@react-pdf/renderer';
+import { PDFViewer, pdf } from '@react-pdf/renderer';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
@@ -9,9 +9,11 @@ import { useListQueryParams, useListSearch } from '../hooks/useListQueryParams.t
 import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '../lib/api.ts';
-import { formatRupiah, formatUmurDetail, formatUmurTahun, parseUmurManualToTanggalLahir } from '../lib/format.ts';
+import { formatDateShort, formatRupiah, formatUmurDetail, formatUmurTahun, parseUmurManualToTanggalLahir } from '../lib/format.ts';
+import { terbilangRupiah } from '../lib/terbilang.ts';
 import type { PaginatedResponse } from '../lib/pagination.ts';
 import { LabReportDocument, type LabReportData } from '../pdf/LabReportDocument.tsx';
+import { KwitansiReportDocument, type KwitansiReportData } from '../pdf/KwitansiReportDocument.tsx';
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
 import { printLabReport, type LabReportPrintOptions } from '../pdf/printLabReport.tsx';
 import {
@@ -58,9 +60,11 @@ interface LabPasienItem {
   readonly kesan: string | null;
   readonly hasilStatus: 'MENUNGGU_HASIL' | 'SELESAI';
   readonly paymentStatus: 'BELUM_LUNAS' | 'LUNAS';
+  readonly petugasKasir: string | null;
+  readonly totalHarga: string;
   readonly pengirim: { readonly id: string; readonly nama: string };
   readonly radiolog: { readonly id: string; readonly nama: string } | null;
-  readonly pemeriksaan: readonly { readonly id: string; readonly jenisPemeriksaanId: string; readonly nama: string }[];
+  readonly pemeriksaan: readonly { readonly id: string; readonly jenisPemeriksaanId: string; readonly nama: string; readonly harga: string }[];
 }
 
 interface PetugasLabItem {
@@ -169,6 +173,7 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
   const [selected, setSelected] = useState<LabPasienItem | null>(null);
   const [previewItem, setPreviewItem] = useState<LabPasienItem | null>(null);
   const [amplopItem, setAmplopItem] = useState<LabPasienItem | null>(null);
+  const [kwitansiItem, setKwitansiItem] = useState<LabPasienItem | null>(null);
   const [labRows, setLabRows] = useState<LabTableRow[]>([]);
   const [analisList, setAnalisList] = useState<PetugasLabItem[]>([]);
   const [analisId, setAnalisId] = useState('');
@@ -300,6 +305,33 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
     setEditUmurManual(String(item.umur));
     setEditPengirimId(item.pengirim.id);
     setEditAlamat(item.alamat ?? '');
+  }
+
+  function buildKwitansiData(item: LabPasienItem): KwitansiReportData {
+    return {
+      logoSrc,
+      noKwitansi: item.regCode,
+      tanggal: formatDateShort(item.createdAt),
+      namaPasien: item.nama,
+      umur: formatUmurDetail(item.tanggalLahir),
+      alamat: item.alamat || '—',
+      dokterPengirim: item.pengirim.nama,
+      items: item.pemeriksaan.map((x) => ({ nama: x.nama, hargaFormatted: formatRupiah(x.harga) })),
+      totalFormatted: formatRupiah(item.totalHarga),
+      terbilang: terbilangRupiah(item.totalHarga),
+      paymentStatus: item.paymentStatus,
+      kasirNama: item.petugasKasir || '',
+    };
+  }
+
+  async function handleDownloadKwitansi(item: LabPasienItem) {
+    const blob = await pdf(<KwitansiReportDocument data={buildKwitansiData(item)} />).toBlob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `Kwitansi_${item.regCode}.pdf`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   function handleEditUmurManualChange(value: string) {
@@ -881,6 +913,14 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
                       title="Cetak Amplop Hasil Laboratorium"
                     >
                       ✉️ Amplop
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--secondary btn--sm"
+                      onClick={() => setKwitansiItem(item)}
+                      title="Kwitansi"
+                    >
+                      🧾 Kwitansi
                     </button>
                   </div>
                 </td>
@@ -1668,6 +1708,31 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
         onClose={() => setAmplopItem(null)}
         pasien={amplopItem as CetakAmplopLabPasien | null}
       />
+
+      {kwitansiItem && (
+        <Modal
+          title={`Pratinjau Kwitansi — ${kwitansiItem.regCode}`}
+          open={true}
+          onClose={() => setKwitansiItem(null)}
+          size="xl"
+        >
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => void handleDownloadKwitansi(kwitansiItem)}
+              style={{ fontWeight: 600 }}
+            >
+              ⬇️ Unduh / Cetak Kwitansi
+            </button>
+          </div>
+          <div style={{ width: '100%', height: 'calc(100vh - 14rem)', minHeight: '600px' }}>
+            <PDFViewer width="100%" height="100%" className="pdf-viewer">
+              <KwitansiReportDocument data={buildKwitansiData(kwitansiItem)} />
+            </PDFViewer>
+          </div>
+        </Modal>
+      )}
 
       <Modal
         open={quickEditItem !== null}

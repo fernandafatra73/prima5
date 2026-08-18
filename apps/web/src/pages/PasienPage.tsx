@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
-import { PDFViewer } from '@react-pdf/renderer';
+import { PDFViewer, pdf } from '@react-pdf/renderer';
 import { CetakALModal, type CetakALPasien } from '../components/CetakALModal.tsx';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
@@ -8,6 +8,7 @@ import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { TableRowActions } from '../components/ui/TableRowActions.tsx';
 import { KesanRegioPicker } from '../components/KesanRegioPicker.tsx';
 import { PendaftaranReportDocument } from '../pdf/PendaftaranReportDocument.tsx';
+import { KwitansiReportDocument, type KwitansiReportData } from '../pdf/KwitansiReportDocument.tsx';
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
 import { parseKlinisData, serializeKlinisData } from '../lib/penunjang.ts';
 import { useListQueryParams, useListSearch } from '../hooks/useListQueryParams.ts';
@@ -20,11 +21,13 @@ import { clampClinicalInput } from '../lib/clinicalText.ts';
 import {
   computeAutoSharingAmount,
   computeUmurYears,
+  formatDateShort,
   formatRupiah,
   formatUmurDetail,
   formatUmurTahun,
   parseUmurManualToTanggalLahir,
 } from '../lib/format.ts';
+import { terbilangRupiah } from '../lib/terbilang.ts';
 import { printPasienReport } from '../lib/pasienPrint.ts';
 import type { PaginatedResponse } from '../lib/pagination.ts';
 import '../components/ui/ui.css';
@@ -72,14 +75,17 @@ interface PasienRow {
   readonly nama: string;
   readonly umur: number;
   readonly tanggalLahir: string;
+  readonly alamat: string | null;
+  readonly petugasKasir: string | null;
   readonly pengirim: { readonly id: string; readonly nama: string };
-  readonly pemeriksaan: readonly { readonly nama: string }[];
+  readonly pemeriksaan: readonly { readonly nama: string; readonly harga: string }[];
   readonly totalHarga: string;
   readonly totalSharing: string;
   readonly hasilStatus: 'MENUNGGU_HASIL' | 'SELESAI';
   readonly paymentStatus: 'BELUM_LUNAS' | 'LUNAS';
   readonly klinis?: string | null;
   readonly kesan?: string | null;
+  readonly createdAt: string;
 }
 
 interface PemeriksaanItem {
@@ -175,6 +181,7 @@ export function PasienPage() {
   const [saving, setSaving] = useState(false);
   const [printingId, setPrintingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
+  const [kwitansiItem, setKwitansiItem] = useState<PasienRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [quickEditOpen, setQuickEditOpen] = useState(false);
   const [quickEditId, setQuickEditId] = useState<string | null>(null);
@@ -625,6 +632,33 @@ export function PasienPage() {
     } finally {
       setPrintingId(null);
     }
+  }
+
+  function buildKwitansiData(p: PasienRow): KwitansiReportData {
+    return {
+      logoSrc: pendaftaranLogoSrc,
+      noKwitansi: p.regCode,
+      tanggal: formatDateShort(p.createdAt),
+      namaPasien: p.nama,
+      umur: formatUmurDetail(p.tanggalLahir),
+      alamat: p.alamat || '—',
+      dokterPengirim: p.pengirim.nama,
+      items: p.pemeriksaan.map((x) => ({ nama: x.nama, hargaFormatted: formatRupiah(x.harga) })),
+      totalFormatted: formatRupiah(p.totalHarga),
+      terbilang: terbilangRupiah(p.totalHarga),
+      paymentStatus: p.paymentStatus,
+      kasirNama: p.petugasKasir || '',
+    };
+  }
+
+  async function handleDownloadKwitansi(p: PasienRow) {
+    const blob = await pdf(<KwitansiReportDocument data={buildKwitansiData(p)} />).toBlob();
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = `Kwitansi_${p.regCode}.pdf`;
+    anchor.click();
+    URL.revokeObjectURL(url);
   }
 
   async function onSubmitAdd(e: FormEvent) {
@@ -1379,6 +1413,15 @@ export function PasienPage() {
                           printingId === p.id ? 'Membuat PDF…' : 'Cetak hasil radiologi'
                         }
                       />
+                      <button
+                        type="button"
+                        className="btn btn--xs btn--ghost"
+                        onClick={() => setKwitansiItem(p)}
+                        title="Kwitansi"
+                        style={{ border: '1px solid var(--color-border)' }}
+                      >
+                        🧾 Kwitansi
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -1801,6 +1844,31 @@ export function PasienPage() {
         onClose={() => setDeleteTarget(null)}
         onConfirm={() => void confirmDelete()}
       />
+
+      {kwitansiItem && (
+        <Modal
+          title={`Pratinjau Kwitansi — ${kwitansiItem.regCode}`}
+          open={true}
+          onClose={() => setKwitansiItem(null)}
+          size="xl"
+        >
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+            <button
+              type="button"
+              className="btn btn--primary"
+              onClick={() => void handleDownloadKwitansi(kwitansiItem)}
+              style={{ fontWeight: 600 }}
+            >
+              ⬇️ Unduh / Cetak Kwitansi
+            </button>
+          </div>
+          <div style={{ width: '100%', height: 'calc(100vh - 14rem)', minHeight: '600px' }}>
+            <PDFViewer width="100%" height="100%" className="pdf-viewer">
+              <KwitansiReportDocument data={buildKwitansiData(kwitansiItem)} />
+            </PDFViewer>
+          </div>
+        </Modal>
+      )}
 
       <Modal
         open={quickEditOpen}
