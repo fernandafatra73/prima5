@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { PDFViewer } from '@react-pdf/renderer';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
@@ -409,6 +409,26 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
       ...prev,
       { id: String(Date.now()), klasifikasi: '', pemeriksaan: '', hasil: '', nilaiRujukan: '' },
     ]);
+  }
+
+  // Menambah baris pemeriksaan baru langsung di dalam satu klasifikasi,
+  // disisipkan tepat setelah baris terakhir klasifikasi tsb supaya baris
+  // per klasifikasi tetap berurutan (grouping saat cetak PDF bergantung
+  // pada baris klasifikasi yang sama berurutan, lihat groupLabRowsForPdf).
+  function handleAddRowInGroup(klasifikasi: string) {
+    setLabRows((prev) => {
+      const newRow: LabTableRow = { id: String(Date.now()), klasifikasi, pemeriksaan: '', hasil: '', nilaiRujukan: '' };
+      let lastIndex = -1;
+      prev.forEach((row, i) => {
+        if ((row.klasifikasi || '').trim().toLowerCase() === klasifikasi.trim().toLowerCase()) {
+          lastIndex = i;
+        }
+      });
+      if (lastIndex === -1) return [...prev, newRow];
+      const updated = [...prev];
+      updated.splice(lastIndex + 1, 0, newRow);
+      return updated;
+    });
   }
 
   function handleRemoveRow(index: number) {
@@ -944,88 +964,123 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
                       </tr>
                     </thead>
                     <tbody>
-                      {labRows.map((row, index) => (
-                        <tr key={row.id}>
-                          <td style={{ padding: '0.3rem 0.4rem' }}>
-                            <input
-                              type="text"
-                              list="list-klasifikasi-lab"
-                              value={row.klasifikasi || ''}
-                              onChange={(e) => handleRowChange(index, 'klasifikasi', e.target.value)}
-                              placeholder="Klasifikasi..."
-                              style={{ width: '100%', padding: '0.3rem 0.45rem', fontSize: '0.83rem', backgroundColor: '#e0f2fe', color: '#0369a1', fontWeight: 600, border: '1px solid #38bdf8', borderRadius: '4px' }}
-                            />
-                          </td>
-                          <td style={{ padding: '0.3rem 0.4rem' }}>
-                            <input
-                              type="text"
-                              list="list-pemeriksaan-lab"
-                              value={row.pemeriksaan}
-                              onChange={(e) => handleRowChange(index, 'pemeriksaan', e.target.value)}
-                              placeholder="Nama pemeriksaan..."
-                              style={{ width: '100%', padding: '0.3rem 0.45rem', fontSize: '0.83rem', fontWeight: 600 }}
-                            />
-                          </td>
-                          <td style={{ padding: '0.3rem 0.4rem' }}>
-                            <input
-                              type="text"
-                              value={row.hasil}
-                              onChange={(e) => handleRowChange(index, 'hasil', e.target.value)}
-                              onBlur={(e) => {
-                                const formatted = formatAbnormalResult(
-                                  e.target.value,
-                                  row.nilaiRujukan,
-                                  previewItem?.jenisKelamin,
-                                );
-                                if (formatted !== row.hasil) {
-                                  handleRowChange(index, 'hasil', formatted);
-                                }
-                              }}
-                              placeholder="Hasil lab..."
-                              style={{
-                                width: '100%',
-                                padding: '0.3rem 0.45rem',
-                                fontSize: '0.83rem',
-                                fontWeight: 'bold',
-                                color: isLabResultAbnormal(
-                                  row.hasil,
-                                  row.nilaiRujukan,
-                                  previewItem?.jenisKelamin,
-                                )
-                                  ? '#dc2626'
-                                  : 'var(--color-primary)',
-                                background: isLabResultAbnormal(
-                                  row.hasil,
-                                  row.nilaiRujukan,
-                                  previewItem?.jenisKelamin,
-                                )
-                                  ? '#fef2f2'
-                                  : undefined,
-                              }}
-                            />
-                          </td>
-                          <td style={{ padding: '0.3rem 0.4rem' }}>
-                            <input
-                              type="text"
-                              value={row.nilaiRujukan}
-                              onChange={(e) => handleRowChange(index, 'nilaiRujukan', e.target.value)}
-                              placeholder="Nilai rujukan..."
-                              style={{ width: '100%', padding: '0.3rem 0.45rem', fontSize: '0.83rem' }}
-                            />
-                          </td>
-                          <td style={{ padding: '0.3rem 0.4rem', textAlign: 'center' }}>
-                            <button
-                              type="button"
-                              className="btn btn--ghost btn--sm"
-                              onClick={() => handleRemoveRow(index)}
-                              title="Hapus baris"
-                              style={{ color: '#ef4444', padding: '0.2rem 0.45rem' }}
-                            >
-                              ✕
-                            </button>
-                          </td>
-                        </tr>
-                      ))}
+                      {(() => {
+                        // Kelompokkan baris berurutan dengan klasifikasi yang sama,
+                        // supaya tiap klasifikasi punya tombol "+" sendiri untuk
+                        // menambah pemeriksaan tepat di grupnya.
+                        const groups: { klasifikasi: string; entries: { row: LabTableRow; index: number }[] }[] = [];
+                        labRows.forEach((row, index) => {
+                          const klas = (row.klasifikasi || '').trim();
+                          const last = groups[groups.length - 1];
+                          if (last && last.klasifikasi.toLowerCase() === klas.toLowerCase()) {
+                            last.entries.push({ row, index });
+                          } else {
+                            groups.push({ klasifikasi: klas, entries: [{ row, index }] });
+                          }
+                        });
+
+                        return groups.map((group, gi) => (
+                          <Fragment key={`${group.klasifikasi}-${gi}`}>
+                            {group.entries.map(({ row, index }) => (
+                              <tr key={row.id}>
+                                <td style={{ padding: '0.3rem 0.4rem' }}>
+                                  <input
+                                    type="text"
+                                    list="list-klasifikasi-lab"
+                                    value={row.klasifikasi || ''}
+                                    onChange={(e) => handleRowChange(index, 'klasifikasi', e.target.value)}
+                                    placeholder="Klasifikasi..."
+                                    style={{ width: '100%', padding: '0.3rem 0.45rem', fontSize: '0.83rem', backgroundColor: '#e0f2fe', color: '#0369a1', fontWeight: 600, border: '1px solid #38bdf8', borderRadius: '4px' }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.3rem 0.4rem' }}>
+                                  <input
+                                    type="text"
+                                    list="list-pemeriksaan-lab"
+                                    value={row.pemeriksaan}
+                                    onChange={(e) => handleRowChange(index, 'pemeriksaan', e.target.value)}
+                                    placeholder="Nama pemeriksaan..."
+                                    style={{ width: '100%', padding: '0.3rem 0.45rem', fontSize: '0.83rem', fontWeight: 600 }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.3rem 0.4rem' }}>
+                                  <input
+                                    type="text"
+                                    value={row.hasil}
+                                    onChange={(e) => handleRowChange(index, 'hasil', e.target.value)}
+                                    onBlur={(e) => {
+                                      const formatted = formatAbnormalResult(
+                                        e.target.value,
+                                        row.nilaiRujukan,
+                                        previewItem?.jenisKelamin,
+                                      );
+                                      if (formatted !== row.hasil) {
+                                        handleRowChange(index, 'hasil', formatted);
+                                      }
+                                    }}
+                                    placeholder="Hasil lab..."
+                                    style={{
+                                      width: '100%',
+                                      padding: '0.3rem 0.45rem',
+                                      fontSize: '0.83rem',
+                                      fontWeight: 'bold',
+                                      color: isLabResultAbnormal(
+                                        row.hasil,
+                                        row.nilaiRujukan,
+                                        previewItem?.jenisKelamin,
+                                      )
+                                        ? '#dc2626'
+                                        : 'var(--color-primary)',
+                                      background: isLabResultAbnormal(
+                                        row.hasil,
+                                        row.nilaiRujukan,
+                                        previewItem?.jenisKelamin,
+                                      )
+                                        ? '#fef2f2'
+                                        : undefined,
+                                    }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.3rem 0.4rem' }}>
+                                  <input
+                                    type="text"
+                                    value={row.nilaiRujukan}
+                                    onChange={(e) => handleRowChange(index, 'nilaiRujukan', e.target.value)}
+                                    placeholder="Nilai rujukan..."
+                                    style={{ width: '100%', padding: '0.3rem 0.45rem', fontSize: '0.83rem' }}
+                                  />
+                                </td>
+                                <td style={{ padding: '0.3rem 0.4rem', textAlign: 'center' }}>
+                                  <button
+                                    type="button"
+                                    className="btn btn--ghost btn--sm"
+                                    onClick={() => handleRemoveRow(index)}
+                                    title="Hapus baris"
+                                    style={{ color: '#ef4444', padding: '0.2rem 0.45rem' }}
+                                  >
+                                    ✕
+                                  </button>
+                                </td>
+                              </tr>
+                            ))}
+                            {group.klasifikasi && (
+                              <tr>
+                                <td colSpan={5} style={{ padding: '0.15rem 0.4rem 0.35rem' }}>
+                                  <button
+                                    type="button"
+                                    className="btn btn--ghost btn--sm"
+                                    onClick={() => handleAddRowInGroup(group.klasifikasi)}
+                                    title={`Tambah pemeriksaan di klasifikasi ${group.klasifikasi}`}
+                                    style={{ color: '#0369a1', fontSize: '0.78rem', padding: '0.15rem 0.4rem' }}
+                                  >
+                                    + Tambah pemeriksaan ({group.klasifikasi})
+                                  </button>
+                                </td>
+                              </tr>
+                            )}
+                          </Fragment>
+                        ));
+                      })()}
                     </tbody>
                   </table>
                   <datalist id="list-klasifikasi-lab">
