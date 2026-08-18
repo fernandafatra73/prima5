@@ -165,6 +165,17 @@ export function IconBell({ className }: IconProps) {
   );
 }
 
+export function IconShare({ className }: IconProps) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
+      <circle cx="18" cy="5" r="2.6" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="6" cy="12" r="2.6" stroke="currentColor" strokeWidth="1.8" />
+      <circle cx="18" cy="19" r="2.6" stroke="currentColor" strokeWidth="1.8" />
+      <path d="M8.3 10.6 15.7 6.4M8.3 13.4l7.4 4.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 export function IconPuzzle({ className }: IconProps) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="none" aria-hidden>
