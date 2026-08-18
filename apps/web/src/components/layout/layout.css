@@ -541,7 +541,7 @@
   font-size: 0.95rem;
   font-weight: 700;
   color: #ffffff;
-  animation: autotext-bar-scroll 40s linear infinite;
+  animation: autotext-bar-scroll 80s linear infinite;
 }
 
 @keyframes autotext-bar-scroll {
