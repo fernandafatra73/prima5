@@ -363,6 +363,16 @@
   border-radius: var(--radius-card);
   background: #cfe8fb;
   box-shadow: var(--shadow-card);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dashboard-image-placeholder img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .chart-card__title {

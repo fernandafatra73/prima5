@@ -16,6 +16,11 @@ interface DashboardResponse {
   };
 }
 
+interface FotoDashboardItem {
+  readonly foto: string | null;
+  readonly createdAt: string;
+}
+
 function horizontalBarOptions(categories: string[], colors: string[], total: number): ApexOptions {
   return {
     ...baseChartOptions(),
@@ -55,6 +60,7 @@ export function DashboardPage() {
   const { version: listRefreshVersion } = useListRefresh();
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [dashboardFoto, setDashboardFoto] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -65,9 +71,22 @@ export function DashboardPage() {
     }
   }, []);
 
+  const loadFoto = useCallback(async () => {
+    try {
+      const res = await apiGet<{ items: FotoDashboardItem[] }>('/api/foto-dashboard?limit=200');
+      const latest = res.items
+        .filter((item) => item.foto)
+        .sort((a, b) => b.createdAt.localeCompare(a.createdAt))[0];
+      setDashboardFoto(latest?.foto ?? null);
+    } catch {
+      setDashboardFoto(null);
+    }
+  }, []);
+
   useEffect(() => {
     void load();
-  }, [load, listRefreshVersion]);
+    void loadFoto();
+  }, [load, loadFoto, listRefreshVersion]);
 
   const dokterPengirim = data?.charts.dokterPengirim ?? [];
   const totalPengirim = dokterPengirim.reduce((sum, d) => sum + d.count, 0);
@@ -101,7 +120,9 @@ export function DashboardPage() {
             )}
           </section>
 
-          <div className="dashboard-image-placeholder" aria-hidden="true" />
+          <div className="dashboard-image-placeholder">
+            {dashboardFoto && <img src={dashboardFoto} alt="Foto Dashboard" />}
+          </div>
         </div>
       )}
     </>
