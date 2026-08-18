@@ -2,6 +2,10 @@ import { Document, Image, Page, StyleSheet, Text, View } from '@react-pdf/render
 
 export interface LogoPerusahaanReportData {
   readonly namaKlinik: string;
+  readonly alamat?: string | null;
+  readonly noTelepon?: string | null;
+  readonly email?: string | null;
+  readonly penanggungJawab?: string | null;
   readonly logoPerusahaan: string | null;
   readonly logoTandaTangan: string | null;
   readonly tanggalCetak: string;
@@ -106,6 +110,10 @@ const styles = StyleSheet.create({
 });
 
 export function LogoPerusahaanReportDocument({ data }: { readonly data: LogoPerusahaanReportData }) {
+  const kontak = [data.alamat, data.noTelepon && `Telp: ${data.noTelepon}`, data.email]
+    .filter((part): part is string => Boolean(part && part.trim()))
+    .join('  •  ');
+
   return (
     <Document title={`Contoh_Kop_Surat_${data.namaKlinik.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}>
       <Page size="A4" style={styles.page}>
@@ -114,7 +122,7 @@ export function LogoPerusahaanReportDocument({ data }: { readonly data: LogoPeru
             {data.logoPerusahaan ? <Image style={styles.logo} src={data.logoPerusahaan} /> : null}
             <View style={styles.headerText}>
               <Text style={styles.clinicName}>{data.namaKlinik}</Text>
-              <Text style={styles.clinicSub}>Contoh tampilan kop surat &amp; tanda tangan resmi</Text>
+              <Text style={styles.clinicSub}>{kontak || 'Contoh tampilan kop surat & tanda tangan resmi'}</Text>
             </View>
           </View>
           <View style={styles.divider} />
@@ -140,7 +148,10 @@ export function LogoPerusahaanReportDocument({ data }: { readonly data: LogoPeru
               ) : (
                 <Text style={{ fontSize: 9, color: '#94a3b8' }}>( Logo Tanda Tangan belum diisi )</Text>
               )}
-              <Text style={styles.signatureName}>{data.namaKlinik}</Text>
+              <Text style={styles.signatureName}>{data.penanggungJawab || data.namaKlinik}</Text>
+              {data.penanggungJawab ? (
+                <Text style={{ fontSize: 8.5, color: '#64748b', marginTop: 1 }}>Penanggung Jawab</Text>
+              ) : null}
             </View>
           </View>
 

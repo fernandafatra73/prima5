@@ -122,6 +122,10 @@ model AdminPendaftaran {
 model LogoPerusahaan {
   id               String   @id @default(cuid())
   namaKlinik       String
+  alamat           String?
+  noTelepon        String?
+  email            String?
+  penanggungJawab  String?
   logoTandaTangan  String?
   logoPerusahaan   String?
   createdAt        DateTime @default(now())

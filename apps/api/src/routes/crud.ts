@@ -2836,12 +2836,24 @@ export async function registerCrudRoutes(app: FastifyInstance) {
   });
 
   app.post<{
-    Body: { namaKlinik: string; logoTandaTangan?: string | null; logoPerusahaan?: string | null };
+    Body: {
+      namaKlinik: string;
+      alamat?: string | null;
+      noTelepon?: string | null;
+      email?: string | null;
+      penanggungJawab?: string | null;
+      logoTandaTangan?: string | null;
+      logoPerusahaan?: string | null;
+    };
   }>('/api/logo-perusahaan', async (req, reply) => {
     if (!req.body.namaKlinik?.trim()) return badRequest(reply, 'namaKlinik wajib diisi');
     const item = await prisma.logoPerusahaan.create({
       data: {
         namaKlinik: req.body.namaKlinik.trim(),
+        alamat: req.body.alamat?.trim() || null,
+        noTelepon: req.body.noTelepon?.trim() || null,
+        email: req.body.email?.trim() || null,
+        penanggungJawab: req.body.penanggungJawab?.trim() || null,
         logoTandaTangan: req.body.logoTandaTangan ?? null,
         logoPerusahaan: req.body.logoPerusahaan ?? null,
       },
@@ -2851,7 +2863,15 @@ export async function registerCrudRoutes(app: FastifyInstance) {
 
   app.patch<{
     Params: { id: string };
-    Body: { namaKlinik?: string; logoTandaTangan?: string | null; logoPerusahaan?: string | null };
+    Body: {
+      namaKlinik?: string;
+      alamat?: string | null;
+      noTelepon?: string | null;
+      email?: string | null;
+      penanggungJawab?: string | null;
+      logoTandaTangan?: string | null;
+      logoPerusahaan?: string | null;
+    };
   }>('/api/logo-perusahaan/:id', async (req, reply) => {
     const existing = await prisma.logoPerusahaan.findUnique({ where: { id: req.params.id } });
     if (!existing) return reply.status(404).send({ error: 'Logo perusahaan tidak ditemukan' });
@@ -2859,6 +2879,11 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       where: { id: req.params.id },
       data: {
         namaKlinik: req.body.namaKlinik?.trim() ?? existing.namaKlinik,
+        alamat: req.body.alamat !== undefined ? req.body.alamat?.trim() || null : existing.alamat,
+        noTelepon: req.body.noTelepon !== undefined ? req.body.noTelepon?.trim() || null : existing.noTelepon,
+        email: req.body.email !== undefined ? req.body.email?.trim() || null : existing.email,
+        penanggungJawab:
+          req.body.penanggungJawab !== undefined ? req.body.penanggungJawab?.trim() || null : existing.penanggungJawab,
         logoTandaTangan:
           req.body.logoTandaTangan !== undefined ? req.body.logoTandaTangan : existing.logoTandaTangan,
         logoPerusahaan:

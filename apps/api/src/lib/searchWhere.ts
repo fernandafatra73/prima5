@@ -106,7 +106,11 @@ export function logoPerusahaanListWhere(q?: string): Prisma.LogoPerusahaanWhereI
   const term = searchTerm(q);
   if (!term) return {};
   return {
-    OR: [{ namaKlinik: { contains: term } }],
+    OR: [
+      { namaKlinik: { contains: term } },
+      { alamat: { contains: term } },
+      { email: { contains: term } },
+    ],
   };
 }
 
