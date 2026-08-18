@@ -82,23 +82,27 @@ export function DashboardPage() {
       {!data && !error && <p className="loading-text">Memuat data…</p>}
 
       {data && (
-        <section className="chart-card">
-          <h3 className="chart-card__title">Grafik Dokter Pengirim</h3>
-          {dokterPengirim.length > 0 ? (
-            <Chart
-              type="bar"
-              height={Math.max(300, dokterPengirim.length * 48)}
-              options={horizontalBarOptions(
-                dokterPengirim.map((d) => d.nama),
-                paletteColors(dokterPengirim.length),
-                totalPengirim,
-              )}
-              series={[{ name: 'Pasien', data: dokterPengirim.map((d) => d.count) }]}
-            />
-          ) : (
-            <p className="loading-text">Belum ada data dokter pengirim.</p>
-          )}
-        </section>
+        <div className="dashboard-row">
+          <section className="chart-card dashboard-row__chart">
+            <h3 className="chart-card__title">Grafik Dokter Pengirim</h3>
+            {dokterPengirim.length > 0 ? (
+              <Chart
+                type="bar"
+                height={Math.max(300, dokterPengirim.length * 48)}
+                options={horizontalBarOptions(
+                  dokterPengirim.map((d) => d.nama),
+                  paletteColors(dokterPengirim.length),
+                  totalPengirim,
+                )}
+                series={[{ name: 'Pasien', data: dokterPengirim.map((d) => d.count) }]}
+              />
+            ) : (
+              <p className="loading-text">Belum ada data dokter pengirim.</p>
+            )}
+          </section>
+
+          <div className="dashboard-image-placeholder" aria-hidden="true" />
+        </div>
       )}
     </>
   );

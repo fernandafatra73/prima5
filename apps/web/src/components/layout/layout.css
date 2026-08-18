@@ -344,6 +344,27 @@
   box-shadow: var(--shadow-card);
 }
 
+.dashboard-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.dashboard-row__chart {
+  flex: 1 1 420px;
+  min-width: 0;
+}
+
+.dashboard-image-placeholder {
+  flex-shrink: 0;
+  width: 6cm;
+  height: 6cm;
+  border-radius: var(--radius-card);
+  background: #cfe8fb;
+  box-shadow: var(--shadow-card);
+}
+
 .chart-card__title {
   margin: 0 0 1rem;
   font-size: 1rem;
