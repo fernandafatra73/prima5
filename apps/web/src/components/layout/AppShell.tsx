@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import type { AppViewId } from '../../config/navigation.ts';
 import type { AuthUser } from '../../lib/auth.ts';
 import { useListRefresh } from '../../context/ListRefreshContext.tsx';
+import { useMusicPlayer } from '../../context/MusicPlayerContext.tsx';
 import { apiGet } from '../../lib/api.ts';
 import { AutoTextBar } from './AutoTextBar.tsx';
 import { TopNavbar } from './TopNavbar.tsx';
@@ -24,6 +25,7 @@ interface AppShellProps {
 export function AppShell({ activeView, authUser, onNavigate, onLogout, children }: AppShellProps) {
   const { version: listRefreshVersion } = useListRefresh();
   const [marqueeText, setMarqueeText] = useState(CLINIC_MARQUEE_TEXT);
+  const { playlist, playingId } = useMusicPlayer();
 
   const loadAutoText = useCallback(async () => {
     try {
@@ -38,6 +40,8 @@ export function AppShell({ activeView, authUser, onNavigate, onLogout, children 
     void loadAutoText();
   }, [loadAutoText, listRefreshVersion]);
 
+  const playingLirik = playlist.find((s) => s.id === playingId)?.lirik?.trim() || null;
+
   return (
     <div className="app-shell">
       <TopNavbar
@@ -48,7 +52,7 @@ export function AppShell({ activeView, authUser, onNavigate, onLogout, children 
         onLogout={onLogout}
       />
       <main className="app-content">{children}</main>
-      <AutoTextBar text={marqueeText} />
+      <AutoTextBar text={playingLirik ?? marqueeText} />
     </div>
   );
 }
