@@ -86,6 +86,17 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
   const [period, setPeriod] = useState<PeriodType>('all');
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
+  const [adminNama, setAdminNama] = useState('');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('sharing_admin_nama');
+    if (saved) setAdminNama(saved);
+  }, []);
+
+  function handleAdminNamaChange(value: string) {
+    setAdminNama(value);
+    localStorage.setItem('sharing_admin_nama', value);
+  }
 
   const { startDate, endDate } = useMemo(
     () => getPeriodDates(period, customStart, customEnd),
@@ -243,7 +254,7 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
       items: pdfItems,
       totalPasien: pagination.total,
       totalSharingFormatted: formatRupiah(totalSharing),
-      adminNama: '',
+      adminNama,
     };
   }
 
@@ -428,6 +439,17 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
               </div>
             </>
           )}
+
+          <div className="form-field">
+            <label htmlFor="arsip-admin-nama">Nama Admin</label>
+            <input
+              id="arsip-admin-nama"
+              type="text"
+              placeholder="Nama petugas admin"
+              value={adminNama}
+              onChange={(e) => handleAdminNamaChange(e.target.value)}
+            />
+          </div>
 
           <div
             className="form-field"
