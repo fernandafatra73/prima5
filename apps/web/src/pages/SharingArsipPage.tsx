@@ -22,7 +22,7 @@ import {
   generateSharingRingkasanReportBlob,
   printSharingRingkasanReport,
 } from '../pdf/printSharingRingkasanReport.tsx';
-import type { SharingRingkasanReportRow } from '../pdf/SharingRingkasanReportDocument.tsx';
+import type { SharingRingkasanReportItem } from '../pdf/SharingRingkasanReportDocument.tsx';
 import '../components/ui/ui.css';
 
 interface DokterItem {
@@ -34,6 +34,7 @@ interface ArsipPasienItem {
   readonly id: string;
   readonly regCode: string;
   readonly nama: string;
+  readonly umur: number;
   readonly alamat: string | null;
   readonly pengirimNama: string;
   readonly pemeriksaanNama: string;
@@ -298,37 +299,28 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
     if (ed) params.endDate = ed;
 
     const allItems = sharingEiDokterNames.length > 0 ? await fetchAllPasienDuplikat(params) : [];
+    const sortedItems = [...allItems].sort(
+      (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+    );
 
-    const grouped = new Map<string, { count: number; total: number }>();
-    for (const name of sharingEiDokterNames) {
-      grouped.set(name, { count: 0, total: 0 });
-    }
-    for (const item of allItems) {
-      const g = grouped.get(item.pengirimNama) ?? { count: 0, total: 0 };
-      g.count += 1;
-      g.total += Number(item.totalSharing) || 0;
-      grouped.set(item.pengirimNama, g);
-    }
+    const pdfItems: SharingRingkasanReportItem[] = sortedItems.map((p, idx) => ({
+      no: idx + 1,
+      nama: p.nama,
+      umur: p.umur,
+      alamat: p.alamat || '—',
+      tanggal: formatDateShort(p.createdAt),
+      totalSharingFormatted: formatRupiah(p.totalSharing),
+    }));
 
-    const rows: SharingRingkasanReportRow[] = sharingEiDokterNames.map((name) => {
-      const g = grouped.get(name) ?? { count: 0, total: 0 };
-      return {
-        dokterNama: name,
-        totalPasien: g.count,
-        totalSharingFormatted: formatRupiah(g.total),
-      };
-    });
-
-    const totalPasienSum = rows.reduce((sum, r) => sum + r.totalPasien, 0);
     const totalSharingSum = allItems.reduce((sum, i) => sum + (Number(i.totalSharing) || 0), 0);
 
     return {
       moduleLabel,
-      reportLabel: 'Sharing E&I',
+      dokterNama: sharingEiDokterNames.join(' & ') || 'Dr. Eva Christiani & Dr. Iman Purnawan',
       periodeLabel: 'Minggu Ini',
       tanggalCetak: formatDateShort(new Date().toISOString()),
-      rows,
-      totalPasien: totalPasienSum,
+      items: pdfItems,
+      totalPasien: allItems.length,
       totalSharingFormatted: formatRupiah(totalSharingSum),
       adminNama: findMostCommonPetugasAdminKlinik(allItems) || adminNama,
     };

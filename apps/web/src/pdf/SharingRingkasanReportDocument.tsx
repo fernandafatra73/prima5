@@ -6,20 +6,24 @@ import {
   Text,
   View,
 } from '@react-pdf/renderer';
+import { truncatePdfCell } from './pdfText.ts';
 
-export interface SharingRingkasanReportRow {
-  readonly dokterNama: string;
-  readonly totalPasien: number;
+export interface SharingRingkasanReportItem {
+  readonly no: number;
+  readonly nama: string;
+  readonly umur: number;
+  readonly alamat: string;
+  readonly tanggal: string;
   readonly totalSharingFormatted: string;
 }
 
 export interface SharingRingkasanReportData {
   readonly logoSrc: string;
   readonly moduleLabel: string;
-  readonly reportLabel: string;
+  readonly dokterNama: string;
   readonly periodeLabel: string;
   readonly tanggalCetak: string;
-  readonly rows: readonly SharingRingkasanReportRow[];
+  readonly items: readonly SharingRingkasanReportItem[];
   readonly totalPasien: number;
   readonly totalSharingFormatted: string;
   readonly adminNama: string;
@@ -106,27 +110,50 @@ const styles = StyleSheet.create({
     backgroundColor: '#e2e8f0',
     borderBottomWidth: 0.8,
     borderColor: BLACK,
-    paddingVertical: 5,
+    paddingVertical: 4,
     fontWeight: 'bold',
-    fontSize: 9,
+    fontSize: 8,
   },
   trRow: {
     flexDirection: 'row',
     borderBottomWidth: 0.5,
     borderColor: '#cbd5e1',
-    paddingVertical: 5,
-    fontSize: 9,
+    paddingVertical: 3,
+    fontSize: 8,
   },
-  totalRow: {
+  colNo: { width: '6%', textAlign: 'center' },
+  colNama: { width: '26%', paddingLeft: 3 },
+  colUmur: { width: '10%', textAlign: 'center' },
+  colAlamat: { width: '24%', paddingLeft: 3 },
+  colTanggal: { width: '14%', textAlign: 'center' },
+  colSharing: { width: '20%', textAlign: 'right', paddingRight: 3 },
+
+  summaryContainer: {
+    marginTop: 8,
+    alignSelf: 'flex-end',
+    width: 220,
+    borderWidth: 0.8,
+    borderColor: BLACK,
+    padding: 6,
+    flexDirection: 'column',
+    gap: 3,
+  },
+  summaryRow: {
     flexDirection: 'row',
-    paddingVertical: 6,
-    fontSize: 9.5,
-    fontWeight: 'bold',
-    backgroundColor: '#f1f5f9',
+    justifyContent: 'space-between',
+    fontSize: 8,
   },
-  colDokter: { width: '52%', paddingLeft: 5 },
-  colPasien: { width: '20%', textAlign: 'center' },
-  colSharing: { width: '28%', textAlign: 'right', paddingRight: 5 },
+  summaryRowTotal: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    fontSize: 9,
+    fontWeight: 'bold',
+    color: BLUE,
+    paddingTop: 3,
+    borderTopWidth: 0.8,
+    borderColor: BLACK,
+    marginTop: 2,
+  },
   signatureSection: {
     flexDirection: 'row',
     justifyContent: 'flex-end',
@@ -154,7 +181,7 @@ const styles = StyleSheet.create({
 
 export function SharingRingkasanReportDocument({ data }: { readonly data: SharingRingkasanReportData }) {
   return (
-    <Document title={`Laporan_${data.reportLabel.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}>
+    <Document title={`Laporan_Sharing_Ringkasan_${data.moduleLabel.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}>
       <Page size="A4" style={styles.page}>
         <View style={styles.frame}>
           <View style={styles.headerRow}>
@@ -169,12 +196,13 @@ export function SharingRingkasanReportDocument({ data }: { readonly data: Sharin
           <View style={styles.divider} />
 
           <View style={styles.titleSection}>
-            <Text style={styles.reportTitle}>
-              LAPORAN {data.reportLabel} — RINGKASAN {data.moduleLabel}
-            </Text>
+            <Text style={styles.reportTitle}>LAPORAN SHARING</Text>
           </View>
 
           <View style={styles.infoGrid}>
+            <Text style={styles.infoText}>
+              Dokter Pengirim: <Text style={styles.bold}>{data.dokterNama}</Text>
+            </Text>
             <Text style={styles.infoText}>
               Periode: <Text style={styles.bold}>{data.periodeLabel}</Text>
             </Text>
@@ -185,29 +213,41 @@ export function SharingRingkasanReportDocument({ data }: { readonly data: Sharin
 
           <View style={styles.table}>
             <View style={styles.thRow}>
-              <Text style={styles.colDokter}>Dokter Pengirim</Text>
-              <Text style={styles.colPasien}>Jumlah Pasien</Text>
-              <Text style={styles.colSharing}>Total Sharing</Text>
+              <Text style={styles.colNo}>No</Text>
+              <Text style={styles.colNama}>Nama Pasien</Text>
+              <Text style={styles.colUmur}>Umur</Text>
+              <Text style={styles.colAlamat}>Alamat</Text>
+              <Text style={styles.colTanggal}>Tanggal</Text>
+              <Text style={styles.colSharing}>Jumlah Sharing</Text>
             </View>
-            {data.rows.length === 0 ? (
+            {data.items.length === 0 ? (
               <View style={styles.trRow}>
                 <Text style={{ width: '100%', textAlign: 'center', paddingVertical: 4 }}>
                   Belum ada data pasien untuk kriteria ini.
                 </Text>
               </View>
             ) : (
-              data.rows.map((row) => (
-                <View key={row.dokterNama} style={styles.trRow}>
-                  <Text style={styles.colDokter}>{row.dokterNama}</Text>
-                  <Text style={styles.colPasien}>{row.totalPasien}</Text>
+              data.items.map((row) => (
+                <View key={row.no} style={styles.trRow}>
+                  <Text style={styles.colNo}>{row.no}</Text>
+                  <Text style={styles.colNama}>{truncatePdfCell(row.nama, 26)}</Text>
+                  <Text style={styles.colUmur}>{row.umur}</Text>
+                  <Text style={styles.colAlamat}>{truncatePdfCell(row.alamat, 24)}</Text>
+                  <Text style={styles.colTanggal}>{row.tanggal}</Text>
                   <Text style={styles.colSharing}>{row.totalSharingFormatted}</Text>
                 </View>
               ))
             )}
-            <View style={styles.totalRow}>
-              <Text style={styles.colDokter}>Total Gabungan</Text>
-              <Text style={styles.colPasien}>{data.totalPasien}</Text>
-              <Text style={styles.colSharing}>{data.totalSharingFormatted}</Text>
+          </View>
+
+          <View style={styles.summaryContainer}>
+            <View style={styles.summaryRow}>
+              <Text>Total Pasien:</Text>
+              <Text style={styles.bold}>{data.totalPasien} Pasien</Text>
+            </View>
+            <View style={styles.summaryRowTotal}>
+              <Text>Total Sharing:</Text>
+              <Text>{data.totalSharingFormatted}</Text>
             </View>
           </View>
 

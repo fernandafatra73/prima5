@@ -27,7 +27,7 @@ export async function printSharingRingkasanReport(
   input: PrintSharingRingkasanReportInput,
 ): Promise<void> {
   const blob = await generateSharingRingkasanReportBlob(input);
-  const cleanLabel = input.reportLabel.trim().replace(/[/\\?%*:|"<>]/g, '_') || 'Ringkasan';
-  const filename = `Laporan_${cleanLabel}.pdf`;
+  const cleanModule = input.moduleLabel.trim().replace(/[/\\?%*:|"<>]/g, '_') || 'Ringkasan';
+  const filename = `Laporan_Sharing_Ringkasan_${cleanModule}.pdf`;
   downloadBlob(blob, filename);
 }
