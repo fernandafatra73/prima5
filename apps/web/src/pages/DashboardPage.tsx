@@ -1,24 +1,44 @@
 import { useCallback, useEffect, useState } from 'react';
-import { DashboardCharts } from '../components/charts/DashboardCharts.tsx';
-import { RevenueTrendChart } from '../components/charts/RevenueTrendChart.tsx';
+import Chart from 'react-apexcharts';
+import type { ApexOptions } from 'apexcharts';
+import { baseChartOptions, paletteColors } from '../components/charts/chartTheme.ts';
 import { useListRefresh } from '../context/ListRefreshContext.tsx';
 import { apiGet } from '../lib/api.ts';
 
+interface DokterPengirimSlice {
+  readonly nama: string;
+  readonly count: number;
+}
+
 interface DashboardResponse {
-  readonly metrics: {
-    readonly pasienHariIni: number;
-    readonly menungguHasil: number;
-    readonly selesaiHariIni: number;
-    readonly totalPemeriksaan: number;
-    readonly omzetHariIni: number;
-    readonly totalSharingHariIni: number;
-    readonly dokterPengirim: number;
-    readonly radiologAktif: number;
-  };
   readonly charts: {
-    readonly statusHasil: { readonly menunggu: number; readonly selesai: number; readonly percent: number };
-    readonly statusBayar: { readonly lunas: number; readonly belum: number; readonly percent: number };
-    readonly dokterPengirim: readonly { readonly nama: string; readonly count: number }[];
+    readonly dokterPengirim: readonly DokterPengirimSlice[];
+  };
+}
+
+function horizontalBarOptions(categories: string[], colors: string[]): ApexOptions {
+  return {
+    ...baseChartOptions(),
+    chart: { ...baseChartOptions().chart, type: 'bar' },
+    colors,
+    plotOptions: {
+      bar: {
+        horizontal: true,
+        borderRadius: 6,
+        barHeight: '55%',
+        distributed: true,
+      },
+    },
+    xaxis: {
+      categories,
+      labels: { style: { colors: '#64748b', fontSize: '12px' } },
+    },
+    yaxis: {
+      labels: { style: { colors: '#64748b', fontSize: '12px' } },
+    },
+    grid: { borderColor: '#e2e8f0', strokeDashArray: 4 },
+    legend: { show: false },
+    tooltip: { y: { formatter: (val: number) => `${Math.round(val)} pasien` } },
   };
 }
 
@@ -40,17 +60,7 @@ export function DashboardPage() {
     void load();
   }, [load, listRefreshVersion]);
 
-  const m = data?.metrics;
-  const charts = data?.charts;
-
-  const metrics = m
-    ? [
-        { label: 'Pasien Hari Ini', value: String(m.pasienHariIni) },
-        { label: 'Menunggu Hasil', value: String(m.menungguHasil) },
-        { label: 'Selesai Hari Ini', value: String(m.selesaiHariIni) },
-        { label: 'Total Pemeriksaan', value: String(m.totalPemeriksaan) },
-      ]
-    : [];
+  const dokterPengirim = data?.charts.dokterPengirim ?? [];
 
   return (
     <>
@@ -61,31 +71,23 @@ export function DashboardPage() {
       {error && <p className="alert alert--error">{error}</p>}
       {!data && !error && <p className="loading-text">Memuat data…</p>}
 
-      {data && m && charts && (
-        <>
-          <div className="metric-grid">
-            {metrics.map((metric) => (
-              <article key={metric.label} className="metric-card">
-                <p className="metric-card__label">{metric.label}</p>
-                <p className="metric-card__value">{metric.value}</p>
-              </article>
-            ))}
-          </div>
-
-          <DashboardCharts
-            statusHasil={charts.statusHasil}
-            statusBayar={charts.statusBayar}
-            dokterPengirim={charts.dokterPengirim}
-            omzetHariIni={m.omzetHariIni}
-            totalSharingHariIni={m.totalSharingHariIni}
-            pasienHariIni={m.pasienHariIni}
-            menungguHasil={m.menungguHasil}
-            selesaiHariIni={m.selesaiHariIni}
-            totalPemeriksaan={m.totalPemeriksaan}
-          />
-
-          <RevenueTrendChart />
-        </>
+      {data && (
+        <section className="chart-card">
+          <h3 className="chart-card__title">Grafik Dokter Pengirim</h3>
+          {dokterPengirim.length > 0 ? (
+            <Chart
+              type="bar"
+              height={Math.max(300, dokterPengirim.length * 48)}
+              options={horizontalBarOptions(
+                dokterPengirim.map((d) => d.nama),
+                paletteColors(dokterPengirim.length),
+              )}
+              series={[{ name: 'Pasien', data: dokterPengirim.map((d) => d.count) }]}
+            />
+          ) : (
+            <p className="loading-text">Belum ada data dokter pengirim.</p>
+          )}
+        </section>
       )}
     </>
   );
