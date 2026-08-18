@@ -3,6 +3,7 @@ import Chart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import { baseChartOptions, paletteColors } from '../components/charts/chartTheme.ts';
 import { useListRefresh } from '../context/ListRefreshContext.tsx';
+import { useMusicPlayer } from '../context/MusicPlayerContext.tsx';
 import { apiGet } from '../lib/api.ts';
 
 interface DokterPengirimSlice {
@@ -54,6 +55,66 @@ function horizontalBarOptions(categories: string[], colors: string[], total: num
     legend: { show: false },
     tooltip: { y: { formatter: (val: number) => `${Math.round(val)} pasien` } },
   };
+}
+
+function DashboardMusicPlayer() {
+  const { playlist, playlistLoading, playingId, playLoadingId, playItem, stopPlaylist } = useMusicPlayer();
+
+  const playingSong = playlist.find((s) => s.id === playingId) ?? null;
+
+  function playNext() {
+    if (playlist.length === 0) return;
+    const currentIndex = playingId ? playlist.findIndex((s) => s.id === playingId) : -1;
+    const next = playlist[(currentIndex + 1) % playlist.length];
+    if (next) playItem(next);
+  }
+
+  return (
+    <div className="dashboard-music-player">
+      <div className="dashboard-music-player__title">🎵 Pemutar Lagu</div>
+      {playlistLoading ? (
+        <p className="loading-text">Memuat daftar lagu…</p>
+      ) : playlist.length === 0 ? (
+        <p className="loading-text">Belum ada lagu di Musik-PH.</p>
+      ) : (
+        <>
+          <div className="dashboard-music-player__now-playing">
+            {playingSong ? `▶️ ${playingSong.judul}` : 'Tidak ada lagu diputar'}
+          </div>
+          <select
+            className="dashboard-music-player__select"
+            value={playingId ?? ''}
+            onChange={(e) => {
+              const item = playlist.find((s) => s.id === e.target.value);
+              if (item) playItem(item);
+            }}
+          >
+            <option value="" disabled>
+              Pilih lagu…
+            </option>
+            {playlist.map((song) => (
+              <option key={song.id} value={song.id}>
+                {song.judul}
+              </option>
+            ))}
+          </select>
+          <div className="dashboard-music-player__controls">
+            <button
+              type="button"
+              className="btn btn--sm btn--secondary"
+              disabled={playLoadingId !== null}
+              onClick={() => (playingId ? stopPlaylist() : playNext())}
+            >
+              {playLoadingId ? '⏳' : playingId ? '⏸️ Stop' : '▶️ Putar'}
+            </button>
+            <button type="button" className="btn btn--sm btn--secondary" onClick={playNext} disabled={playLoadingId !== null}>
+              ⏭️ Berikutnya
+            </button>
+          </div>
+        </>
+      )}
+    </div>
+  );
 }
 
 export function DashboardPage() {
@@ -120,8 +181,11 @@ export function DashboardPage() {
             )}
           </section>
 
-          <div className="dashboard-image-placeholder">
-            {dashboardFoto && <img src={dashboardFoto} alt="Foto Dashboard" />}
+          <div className="dashboard-row__side">
+            <div className="dashboard-image-placeholder">
+              {dashboardFoto && <img src={dashboardFoto} alt="Foto Dashboard" />}
+            </div>
+            <DashboardMusicPlayer />
           </div>
         </div>
       )}
