@@ -269,11 +269,11 @@ const styles = StyleSheet.create({
   },
 
   signatureWrap: {
-    marginTop: 'auto',
+    // Sejajar kanan, langsung mengikuti di bawah tabel/catatan terakhir —
+    // bukan dipaku ke dasar halaman (marginTop: 'auto' sebelumnya membuat
+    // celah kosong besar kalau tabelnya pendek).
     alignItems: 'flex-end',
     paddingTop: 6,
-    // Blok Divalidasi/Analis: naik 2cm dari batas bawah, lalu turun 1cm lagi (net 1cm).
-    marginBottom: 28.5,
   },
   signature: {
     width: 200,
