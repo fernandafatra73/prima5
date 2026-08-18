@@ -280,7 +280,7 @@ export function KwitansiReportDocument({ data }: { readonly data: KwitansiReport
             <View style={styles.thRow}>
               <Text style={styles.colNo}>No</Text>
               <Text style={styles.colUraian}>Uraian Pemeriksaan</Text>
-              <Text style={styles.colHarga}>Biaya</Text>
+              <Text style={styles.colHarga}>Harga</Text>
             </View>
             {items.map((item, i) => (
               <View key={i} style={styles.trRow}>
