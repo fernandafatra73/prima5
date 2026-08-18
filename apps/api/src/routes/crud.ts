@@ -34,7 +34,8 @@ import { computeUmur, serializeDecimal } from '../lib/serialize.js';
 
 type ListQuery = { page?: string; limit?: string; q?: string };
 type StaffListQuery = ListQuery & { role?: string };
-type StaffRoleInput = 'ADMIN' | 'KARYAWAN';
+type StaffRoleInput = 'ADMIN' | 'KARYAWAN' | 'CEO';
+type DepartemenInput = 'PENDAFTARAN' | 'RADIOLOGI' | 'LABORATORIUM' | 'KEUANGAN' | 'FARMASI';
 type PasienListQuery = ListQuery & {
   hasilStatus?: string;
   paymentStatus?: string;
@@ -60,6 +61,7 @@ const staffPublicSelect = {
   nama: true,
   email: true,
   role: true,
+  departemen: true,
 } as const;
 
 function badRequest(reply: FastifyReply, message: string) {
@@ -1902,10 +1904,12 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { items, pagination: buildPaginationMeta(total, page, limit) };
   });
 
-  app.post<{ Body: { nama: string; email: string; password: string; role: StaffRoleInput } }>(
+  app.post<{
+    Body: { nama: string; email: string; password: string; role: StaffRoleInput; departemen?: DepartemenInput | null };
+  }>(
     '/api/staff',
     async (req, reply) => {
-      const { nama, email, password, role } = req.body;
+      const { nama, email, password, role, departemen } = req.body;
       if (!nama?.trim() || !email?.trim() || !role || !password?.trim()) {
         return badRequest(reply, 'nama, email, password, role wajib');
       }
@@ -1918,6 +1922,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
           email: email.trim().toLowerCase(),
           passwordHash: await hashPassword(password),
           role,
+          departemen: departemen ?? null,
         },
         select: staffPublicSelect,
       });
@@ -1932,7 +1937,13 @@ export async function registerCrudRoutes(app: FastifyInstance) {
 
   app.patch<{
     Params: { id: string };
-    Body: { nama?: string; email?: string; password?: string; role?: StaffRoleInput };
+    Body: {
+      nama?: string;
+      email?: string;
+      password?: string;
+      role?: StaffRoleInput;
+      departemen?: DepartemenInput | null;
+    };
   }>('/api/staff/:id', async (req, reply) => {
     const existing = await prisma.staff.findUnique({ where: { id: req.params.id } });
     if (!existing) return reply.status(404).send({ error: 'Staff tidak ditemukan' });
@@ -1948,6 +1959,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
           ? { passwordHash: await hashPassword(req.body.password) }
           : {}),
         role: req.body.role ?? existing.role,
+        departemen: req.body.departemen !== undefined ? req.body.departemen : existing.departemen,
       },
       select: staffPublicSelect,
     });

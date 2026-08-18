@@ -10,6 +10,17 @@ datasource db {
 enum StaffRole {
   ADMIN
   KARYAWAN
+  CEO
+}
+
+/// Modul yang boleh diakses staff berdepartemen (KARYAWAN dengan departemen
+/// terkunci hanya ke modulnya sendiri). ADMIN dan CEO tidak dibatasi.
+enum Departemen {
+  PENDAFTARAN
+  RADIOLOGI
+  LABORATORIUM
+  KEUANGAN
+  FARMASI
 }
 
 enum HasilStatus {
@@ -514,13 +525,16 @@ model KesanBacaan {
 }
 
 model Staff {
-  id           String    @id @default(cuid())
+  id           String      @id @default(cuid())
   nama         String
-  email        String    @unique
-  passwordHash String    @default("")
-  role         StaffRole @default(KARYAWAN)
-  createdAt    DateTime  @default(now())
-  updatedAt    DateTime  @updatedAt
+  email        String      @unique
+  passwordHash String      @default("")
+  role         StaffRole   @default(KARYAWAN)
+  /// Jika diisi, staff (biasanya KARYAWAN) hanya boleh membuka modul
+  /// departemen ini. Null = tidak dibatasi (mis. ADMIN, CEO).
+  departemen   Departemen?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
 }
 
 model Pasien {

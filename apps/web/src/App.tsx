@@ -6,8 +6,10 @@ import {
   DASHBOARD_NAV_ID,
   getNavLabel,
   getViewFrameColor,
-  isViewAllowedForRole,
+  isViewAllowed,
   type AppViewId,
+  type Departemen,
+  type StaffRole,
 } from './config/navigation.ts';
 import { WindowFrame } from './components/ui/WindowFrame.tsx';
 import { useAppNavigation } from './hooks/useAppNavigation.ts';
@@ -75,6 +77,7 @@ import { AdminPendaftaranPage } from './pages/AdminPendaftaranPage.tsx';
 import { LogoPerusahaanPage } from './pages/LogoPerusahaanPage.tsx';
 import { ComingSoonPage } from './pages/ComingSoonPage.tsx';
 import { DataTerbesarPage } from './pages/DataTerbesarPage.tsx';
+import { HakAksesPage } from './pages/HakAksesPage.tsx';
 import { useState } from 'react';
 
 function AccessDenied({ viewId }: { readonly viewId: AppViewId }) {
@@ -102,10 +105,11 @@ function AccessDenied({ viewId }: { readonly viewId: AppViewId }) {
 
 function renderViewContent(
   viewId: AppViewId,
-  role: 'ADMIN' | 'KARYAWAN',
+  role: StaffRole,
+  departemen: Departemen | null,
   navigate: (view: AppViewId) => void,
 ) {
-  if (!isViewAllowedForRole(viewId, role)) {
+  if (!isViewAllowed(viewId, role, departemen)) {
     return <AccessDenied viewId={viewId} />;
   }
 
@@ -224,6 +228,8 @@ function renderViewContent(
       return <RolePage />;
     case 'admin':
       return <AdminPage />;
+    case 'hak-akses':
+      return <HakAksesPage />;
     case 'farmasi-bhp':
       return <FarmasiBhpPage />;
     case 'kwitansi-farmasi':
@@ -259,11 +265,16 @@ function renderViewContent(
   }
 }
 
-function renderView(viewId: AppViewId, role: 'ADMIN' | 'KARYAWAN', navigate: (view: AppViewId) => void) {
-  const content = renderViewContent(viewId, role, navigate);
+function renderView(
+  viewId: AppViewId,
+  role: StaffRole,
+  departemen: Departemen | null,
+  navigate: (view: AppViewId) => void,
+) {
+  const content = renderViewContent(viewId, role, departemen, navigate);
 
   // Dashboard dan halaman "akses ditolak" tidak dibungkus jendela.
-  if (viewId === DASHBOARD_NAV_ID || !isViewAllowedForRole(viewId, role)) {
+  if (viewId === DASHBOARD_NAV_ID || !isViewAllowed(viewId, role, departemen)) {
     return content;
   }
 
@@ -301,7 +312,7 @@ export function App() {
       <MusicPlayerProvider>
         <PdfPreviewHost>
           <AppShell activeView={activeView} authUser={authUser} onNavigate={navigate} onLogout={handleLogout}>
-            {renderView(activeView, authUser.role, navigate)}
+            {renderView(activeView, authUser.role, authUser.departemen, navigate)}
           </AppShell>
         </PdfPreviewHost>
       </MusicPlayerProvider>

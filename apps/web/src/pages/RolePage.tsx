@@ -8,13 +8,23 @@ import { useListQueryParams, useListSearch } from '../hooks/useListQueryParams.t
 import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
 import { apiDelete, apiPatch, apiPost } from '../lib/api.ts';
+import type { Departemen } from '../config/navigation.ts';
 import '../components/ui/ui.css';
+
+const DEPARTEMEN_LABEL: Record<Departemen, string> = {
+  PENDAFTARAN: 'Pendaftaran',
+  RADIOLOGI: 'Radiologi',
+  LABORATORIUM: 'Laboratorium',
+  KEUANGAN: 'Keuangan',
+  FARMASI: 'Farmasi',
+};
 
 interface Staff {
   readonly id: string;
   readonly nama: string;
   readonly email: string;
-  readonly role: 'ADMIN' | 'KARYAWAN';
+  readonly role: 'ADMIN' | 'KARYAWAN' | 'CEO';
+  readonly departemen: Departemen | null;
 }
 
 export function RolePage() {
@@ -30,7 +40,7 @@ export function RolePage() {
   const [nama, setNama] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState<'ADMIN' | 'KARYAWAN'>('KARYAWAN');
+  const [role, setRole] = useState<'ADMIN' | 'KARYAWAN' | 'CEO'>('KARYAWAN');
   const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
@@ -120,6 +130,7 @@ export function RolePage() {
             options: [
               { value: 'ADMIN', label: 'Admin' },
               { value: 'KARYAWAN', label: 'Karyawan' },
+              { value: 'CEO', label: 'CEO' },
             ],
             onChange: setRoleFilter,
           },
@@ -139,13 +150,14 @@ export function RolePage() {
               <th>Nama</th>
               <th>Email</th>
               <th>Role</th>
+              <th>Departemen</th>
               <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={4}>Belum ada staff.</td>
+                <td colSpan={5}>Belum ada staff.</td>
               </tr>
             ) : (
               items.map((s) => (
@@ -153,10 +165,11 @@ export function RolePage() {
                   <td>{s.nama}</td>
                   <td>{s.email}</td>
                   <td>
-                    <span className={`badge ${s.role === 'ADMIN' ? 'badge--ok' : 'badge--muted'}`}>
+                    <span className={`badge ${s.role === 'KARYAWAN' ? 'badge--muted' : 'badge--ok'}`}>
                       {s.role}
                     </span>
                   </td>
+                  <td>{s.departemen ? DEPARTEMEN_LABEL[s.departemen] : '—'}</td>
                   <td>
                     <TableRowActions
                       onEdit={() => openEdit(s)}
@@ -199,9 +212,10 @@ export function RolePage() {
           </div>
           <div className="form-field">
             <label htmlFor="sr">Role</label>
-            <select id="sr" value={role} onChange={(e) => setRole(e.target.value as 'ADMIN' | 'KARYAWAN')}>
+            <select id="sr" value={role} onChange={(e) => setRole(e.target.value as 'ADMIN' | 'KARYAWAN' | 'CEO')}>
               <option value="ADMIN">Admin</option>
               <option value="KARYAWAN">Karyawan</option>
+              <option value="CEO">CEO</option>
             </select>
           </div>
           <ModalFormFooter

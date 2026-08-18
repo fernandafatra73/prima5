@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { PrismaLibSql } from '@prisma/adapter-libsql';
-import { PrismaClient, StaffRole } from '../src/generated/prisma/client.js';
+import { PrismaClient, StaffRole, Departemen } from '../src/generated/prisma/client.js';
 import { hashPassword } from '../src/lib/password.js';
 
 const url = process.env.DATABASE_URL ?? 'file:dev.db';
@@ -17,8 +17,25 @@ async function main() {
   await prisma.radiolog.deleteMany();
   await prisma.staff.deleteMany();
 
-  const adminPasswordHash = await hashPassword('admin123');
-  const karyawanPasswordHash = await hashPassword('karyawan123');
+  const [
+    adminPasswordHash,
+    karyawanPasswordHash,
+    pendaftaranPasswordHash,
+    radiologiPasswordHash,
+    labPasswordHash,
+    keuanganPasswordHash,
+    farmasiPasswordHash,
+    ceoPasswordHash,
+  ] = await Promise.all([
+    hashPassword('admin123'),
+    hashPassword('karyawan123'),
+    hashPassword('pendaftaran123'),
+    hashPassword('radiologi123'),
+    hashPassword('lab123'),
+    hashPassword('keuangan123'),
+    hashPassword('farmasi123'),
+    hashPassword('ceo123'),
+  ]);
 
   await prisma.staff.createMany({
     data: [
@@ -33,6 +50,50 @@ async function main() {
         email: 'karyawan@labprima.local',
         passwordHash: karyawanPasswordHash,
         role: StaffRole.KARYAWAN,
+      },
+      // Akun berdepartemen: masing-masing hanya boleh membuka modulnya
+      // sendiri (lihat DEPARTMENT_NAV_IDS di frontend config/navigation.ts).
+      {
+        nama: 'Pendaftaran',
+        email: 'pendaftaran@labprima.local',
+        passwordHash: pendaftaranPasswordHash,
+        role: StaffRole.KARYAWAN,
+        departemen: Departemen.PENDAFTARAN,
+      },
+      {
+        nama: 'Radiologi',
+        email: 'radiologi@labprima.local',
+        passwordHash: radiologiPasswordHash,
+        role: StaffRole.KARYAWAN,
+        departemen: Departemen.RADIOLOGI,
+      },
+      {
+        nama: 'Laboratorium',
+        email: 'lab@labprima.local',
+        passwordHash: labPasswordHash,
+        role: StaffRole.KARYAWAN,
+        departemen: Departemen.LABORATORIUM,
+      },
+      {
+        nama: 'Keuangan',
+        email: 'keuangan@labprima.local',
+        passwordHash: keuanganPasswordHash,
+        role: StaffRole.KARYAWAN,
+        departemen: Departemen.KEUANGAN,
+      },
+      {
+        nama: 'Farmasi',
+        email: 'farmasi@labprima.local',
+        passwordHash: farmasiPasswordHash,
+        role: StaffRole.KARYAWAN,
+        departemen: Departemen.FARMASI,
+      },
+      // CEO: role terpisah, tidak dibatasi departemen — bisa buka semua modul.
+      {
+        nama: 'CEO',
+        email: 'ceo@labprima.local',
+        passwordHash: ceoPasswordHash,
+        role: StaffRole.CEO,
       },
     ],
   });

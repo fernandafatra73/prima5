@@ -189,6 +189,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'analisa-foto-rontgen', label: 'Analisa Foto Rontgen', shortLabel: 'Analisa Foto Rontgen' },
   { id: 'role', label: 'Manajemen Role', shortLabel: 'Role' },
   { id: 'admin', label: 'Manajemen Admin', shortLabel: 'Admin' },
+  { id: 'hak-akses', label: 'Hak Akses', shortLabel: 'Hak Akses' },
   { id: 'karyawan-klinik', label: 'Manajemen Karyawan Klinik', shortLabel: 'Karyawan Klinik' },
   { id: 'daftar-telpon', label: 'Daftar Telpon', shortLabel: 'Daftar Telpon' },
   { id: 'kalender', label: 'Kalender', shortLabel: 'Kalender' },
@@ -259,9 +260,13 @@ export function getViewFrameColor(id: AppViewId): WindowFrameColor {
   return 'default';
 }
 
-export type StaffRole = 'ADMIN' | 'KARYAWAN';
+export type StaffRole = 'ADMIN' | 'KARYAWAN' | 'CEO';
 
-/** Menu/halaman yang hanya boleh diakses role manajemen (ADMIN). */
+/** Departemen yang menjadi kunci akses staff KARYAWAN berdepartemen — hanya
+ * boleh membuka modulnya sendiri. ADMIN dan CEO tidak dibatasi departemen. */
+export type Departemen = 'PENDAFTARAN' | 'RADIOLOGI' | 'LABORATORIUM' | 'KEUANGAN' | 'FARMASI';
+
+/** Menu/halaman yang hanya boleh diakses role manajemen (ADMIN atau CEO). */
 export const MANAGEMENT_ONLY_NAV_IDS: ReadonlySet<AppViewId> = new Set([
   'keuangan-pembukuan',
   'penggajian',
@@ -275,9 +280,33 @@ export const MANAGEMENT_ONLY_NAV_IDS: ReadonlySet<AppViewId> = new Set([
   'neracarad',
   'role',
   'admin',
+  'hak-akses',
 ]);
 
+function navIdsForCategory(categoryId: string): ReadonlySet<AppViewId> {
+  const items = MAIN_NAV_CATEGORIES.find((c) => c.id === categoryId)?.items ?? [];
+  return new Set(items.map((item) => item.id as AppViewId));
+}
+
+/** Modul yang boleh dibuka tiap departemen (di luar Dashboard, yang selalu
+ * boleh). Staff KARYAWAN berdepartemen hanya boleh membuka modul ini. */
+export const DEPARTMENT_NAV_IDS: Readonly<Record<Departemen, ReadonlySet<AppViewId>>> = {
+  PENDAFTARAN: navIdsForCategory('pendaftaran'),
+  RADIOLOGI: navIdsForCategory('radiologi'),
+  LABORATORIUM: navIdsForCategory('laboratorium'),
+  KEUANGAN: navIdsForCategory('keuangan'),
+  FARMASI: navIdsForCategory('farmasi'),
+};
+
 export function isViewAllowedForRole(id: AppViewId, role: StaffRole): boolean {
-  if (role === 'ADMIN') return true;
+  if (role === 'ADMIN' || role === 'CEO') return true;
   return !MANAGEMENT_ONLY_NAV_IDS.has(id);
+}
+
+/** Gabungan pengecekan menu-manajemen (role) dan kunci modul per departemen. */
+export function isViewAllowed(id: AppViewId, role: StaffRole, departemen: Departemen | null): boolean {
+  if (!isViewAllowedForRole(id, role)) return false;
+  if (role === 'ADMIN' || role === 'CEO' || !departemen) return true;
+  if (id === DASHBOARD_NAV_ID) return true;
+  return DEPARTMENT_NAV_IDS[departemen].has(id);
 }

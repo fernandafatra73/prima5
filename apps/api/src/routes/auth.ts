@@ -31,6 +31,7 @@ export async function registerAuthRoutes(app: FastifyInstance): Promise<void> {
         nama: true,
         email: true,
         role: true,
+        departemen: true,
       },
     });
 

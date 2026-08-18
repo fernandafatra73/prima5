@@ -175,7 +175,7 @@ export function kesanListWhere(q?: string): Prisma.KesanTemplateWhereInput {
 
 export function staffListWhere(q?: string, role?: string): Prisma.StaffWhereInput {
   const parts: Prisma.StaffWhereInput[] = [];
-  if (role === 'ADMIN' || role === 'KARYAWAN') {
+  if (role === 'ADMIN' || role === 'KARYAWAN' || role === 'CEO') {
     parts.push({ role });
   }
   const term = searchTerm(q);

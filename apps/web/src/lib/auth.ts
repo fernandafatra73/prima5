@@ -1,11 +1,23 @@
+import type { Departemen, StaffRole } from '../config/navigation.ts';
+
 export interface AuthUser {
   readonly id: string;
   readonly nama: string;
   readonly email: string;
-  readonly role: 'ADMIN' | 'KARYAWAN';
+  readonly role: StaffRole;
+  readonly departemen: Departemen | null;
 }
 
 const AUTH_STORAGE_KEY = 'labprima.authUser';
+
+const STAFF_ROLES: readonly StaffRole[] = ['ADMIN', 'KARYAWAN', 'CEO'];
+const DEPARTEMEN_VALUES: readonly Departemen[] = [
+  'PENDAFTARAN',
+  'RADIOLOGI',
+  'LABORATORIUM',
+  'KEUANGAN',
+  'FARMASI',
+];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
@@ -17,7 +29,10 @@ export function isAuthUser(value: unknown): value is AuthUser {
     typeof value.id === 'string' &&
     typeof value.nama === 'string' &&
     typeof value.email === 'string' &&
-    (value.role === 'ADMIN' || value.role === 'KARYAWAN')
+    typeof value.role === 'string' &&
+    (STAFF_ROLES as readonly string[]).includes(value.role) &&
+    (value.departemen === null ||
+      (typeof value.departemen === 'string' && (DEPARTEMEN_VALUES as readonly string[]).includes(value.departemen)))
   );
 }
 

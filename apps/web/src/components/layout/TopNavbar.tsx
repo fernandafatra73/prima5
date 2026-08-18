@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState, type JSX } from 'react';
 import logoLabprima from '@src/image/logo-labprima.png';
 import {
-  isViewAllowedForRole,
+  isViewAllowed,
   MAIN_NAV_CATEGORIES,
   type AppViewId,
+  type Departemen,
   type StaffRole,
 } from '../../config/navigation.ts';
 import {
@@ -21,6 +22,7 @@ interface TopNavbarProps {
   readonly activeId: AppViewId;
   readonly onNavigate: (id: AppViewId) => void;
   readonly role: StaffRole;
+  readonly departemen: Departemen | null;
   readonly onLogout: () => void;
 }
 
@@ -60,9 +62,10 @@ const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'group', groupId: 'mega-data', label: 'Mega Data', icon: IconTag, items: MEGA_DATA_ITEMS },
   { type: 'category', categoryId: 'anatomi', icon: IconStethoscope },
   { type: 'link', id: 'ai-radiologi', label: 'AI Radiologi', icon: IconStethoscope },
+  { type: 'link', id: 'hak-akses', label: 'Hak Akses', icon: IconShield },
 ];
 
-export function TopNavbar({ activeId, onNavigate, role, onLogout }: TopNavbarProps) {
+export function TopNavbar({ activeId, onNavigate, role, departemen, onLogout }: TopNavbarProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
 
@@ -92,7 +95,7 @@ export function TopNavbar({ activeId, onNavigate, role, onLogout }: TopNavbarPro
       <nav className="app-navbar__nav" ref={navRef} aria-label="Navigasi utama">
         {NAVBAR_SPECS.map((spec) => {
           if (spec.type === 'link') {
-            if (!isViewAllowedForRole(spec.id, role)) return null;
+            if (!isViewAllowed(spec.id, role, departemen)) return null;
             const Icon = spec.icon;
             const isActive = activeId === spec.id;
             return (
@@ -122,7 +125,7 @@ export function TopNavbar({ activeId, onNavigate, role, onLogout }: TopNavbarPro
               : { key: spec.groupId, label: spec.label, items: spec.items };
 
           if (!menu) return null;
-          const visibleItems = menu.items.filter((item) => isViewAllowedForRole(item.id, role));
+          const visibleItems = menu.items.filter((item) => isViewAllowed(item.id, role, departemen));
           if (visibleItems.length === 0) return null;
 
           const Icon = spec.icon;

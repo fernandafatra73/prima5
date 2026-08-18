@@ -18,7 +18,13 @@ interface AppShellProps {
 export function AppShell({ activeView, authUser, onNavigate, onLogout, children }: AppShellProps) {
   return (
     <div className="app-shell">
-      <TopNavbar activeId={activeView} onNavigate={onNavigate} role={authUser.role} onLogout={onLogout} />
+      <TopNavbar
+        activeId={activeView}
+        onNavigate={onNavigate}
+        role={authUser.role}
+        departemen={authUser.departemen}
+        onLogout={onLogout}
+      />
       <main className="app-content">{children}</main>
       <AutoTextBar text={CLINIC_MARQUEE_TEXT} />
     </div>
