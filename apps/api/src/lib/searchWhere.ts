@@ -310,7 +310,15 @@ export function pasienDuplikatListWhere(query: {
     where.paymentStatus = query.paymentStatus;
   }
   if (query.pengirimNama) {
-    where.pengirimNama = query.pengirimNama;
+    const names = query.pengirimNama
+      .split(',')
+      .map((s) => s.trim())
+      .filter(Boolean);
+    if (names.length === 1) {
+      where.pengirimNama = names[0];
+    } else if (names.length > 1) {
+      where.pengirimNama = { in: names };
+    }
   }
   if (query.startDate || query.endDate) {
     const registeredAt: Prisma.DateTimeFilter = {};

@@ -88,6 +88,15 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
   const [customStart, setCustomStart] = useState('');
   const [customEnd, setCustomEnd] = useState('');
   const [adminNama, setAdminNama] = useState('');
+  const [isSharingEi, setIsSharingEi] = useState(false);
+
+  const sharingEiDokterNames = useMemo(
+    () =>
+      dokterList
+        .filter((d) => /eva christiani/i.test(d.nama) || /iman/i.test(d.nama))
+        .map((d) => d.nama),
+    [dokterList],
+  );
 
   useEffect(() => {
     const saved = localStorage.getItem('sharing_admin_nama');
@@ -106,11 +115,17 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
 
   const listParams = useMemo(() => {
     const params: Record<string, string> = { modul };
-    if (selectedDokterNama !== 'all') params.pengirimNama = selectedDokterNama;
+    if (isSharingEi) {
+      if (sharingEiDokterNames.length > 0) {
+        params.pengirimNama = sharingEiDokterNames.join(',');
+      }
+    } else if (selectedDokterNama !== 'all') {
+      params.pengirimNama = selectedDokterNama;
+    }
     if (startDate) params.startDate = startDate;
     if (endDate) params.endDate = endDate;
     return params;
-  }, [modul, selectedDokterNama, startDate, endDate]);
+  }, [modul, selectedDokterNama, startDate, endDate, isSharingEi, sharingEiDokterNames]);
 
   const queryParams = useListQueryParams(listParams, search);
   const {
@@ -269,8 +284,11 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
 
     return {
       moduleLabel,
-      dokterNama:
-        selectedDokterNama === 'all' ? 'Semua Dokter' : selectedDokterNama,
+      dokterNama: isSharingEi
+        ? `Sharing E&I (${sharingEiDokterNames.join(' & ') || 'Dr. Eva Christiani & Dr. Iman Purnawan'})`
+        : selectedDokterNama === 'all'
+          ? 'Semua Dokter'
+          : selectedDokterNama,
       periodeLabel,
       tanggalCetak: todayStr,
       items: pdfItems,
@@ -328,8 +346,9 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
           },
           {
             label: 'Dokter dipilih',
-            value:
-              selectedDokterNama === 'all'
+            value: isSharingEi
+              ? 'Sharing E&I'
+              : selectedDokterNama === 'all'
                 ? 'Semua Dokter'
                 : selectedDokterNama,
             tone: 'green',
@@ -365,6 +384,7 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
               value={selectedDokterNama}
               onChange={(e) => {
                 setSelectedDokterNama(e.target.value);
+                setIsSharingEi(false);
                 setPage(1);
               }}
             >
@@ -382,9 +402,10 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
             <div className="filter-pills">
               <button
                 type="button"
-                className={`filter-pill ${period === 'all' ? 'filter-pill--active' : ''}`}
+                className={`filter-pill ${period === 'all' && !isSharingEi ? 'filter-pill--active' : ''}`}
                 onClick={() => {
                   setPeriod('all');
+                  setIsSharingEi(false);
                   setPage(1);
                 }}
               >
@@ -392,9 +413,10 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
               </button>
               <button
                 type="button"
-                className={`filter-pill ${period === 'today' ? 'filter-pill--active' : ''}`}
+                className={`filter-pill ${period === 'today' && !isSharingEi ? 'filter-pill--active' : ''}`}
                 onClick={() => {
                   setPeriod('today');
+                  setIsSharingEi(false);
                   setPage(1);
                 }}
               >
@@ -402,9 +424,10 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
               </button>
               <button
                 type="button"
-                className={`filter-pill ${period === 'week' ? 'filter-pill--active' : ''}`}
+                className={`filter-pill ${period === 'week' && !isSharingEi ? 'filter-pill--active' : ''}`}
                 onClick={() => {
                   setPeriod('week');
+                  setIsSharingEi(false);
                   setPage(1);
                 }}
               >
@@ -412,9 +435,10 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
               </button>
               <button
                 type="button"
-                className={`filter-pill ${period === 'month' ? 'filter-pill--active' : ''}`}
+                className={`filter-pill ${period === 'month' && !isSharingEi ? 'filter-pill--active' : ''}`}
                 onClick={() => {
                   setPeriod('month');
+                  setIsSharingEi(false);
                   setPage(1);
                 }}
               >
@@ -422,14 +446,29 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
               </button>
               <button
                 type="button"
-                className={`filter-pill ${period === 'custom' ? 'filter-pill--active' : ''}`}
+                className={`filter-pill ${period === 'custom' && !isSharingEi ? 'filter-pill--active' : ''}`}
                 onClick={() => {
                   setPeriod('custom');
+                  setIsSharingEi(false);
                   setPage(1);
                 }}
               >
                 Kustom
               </button>
+              {modul === 'LABORATORIUM' && (
+                <button
+                  type="button"
+                  className={`filter-pill ${isSharingEi ? 'filter-pill--active' : ''}`}
+                  onClick={() => {
+                    setPeriod('week');
+                    setIsSharingEi(true);
+                    setPage(1);
+                  }}
+                  title="Gabungkan sharing Dr. Eva Christiani & Dr. Iman Purnawan dalam 1 laporan mingguan"
+                >
+                  Sharing E&amp;I
+                </button>
+              )}
             </div>
           </div>
 
