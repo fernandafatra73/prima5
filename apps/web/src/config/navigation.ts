@@ -152,6 +152,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'petugas-admin-klinik', label: 'Petugas Admin Klinik', shortLabel: 'Petugas Admin Klinik' },
   { id: 'logo-perusahaan', label: 'Logo Perusahaan', shortLabel: 'Logo Perusahaan' },
   { id: 'foto-dashboard', label: 'Foto untuk Dashboard', shortLabel: 'Foto Dashboard' },
+  { id: 'backup-database', label: 'Backup & Restore Database', shortLabel: 'Backup Database' },
   { id: 'lab', label: 'Registrasi Lab', shortLabel: 'Registrasi Lab' },
   { id: 'lab-duplikat', label: 'Duplikat Registrasi Lab', shortLabel: 'Duplikat Registrasi' },
   { id: 'kwitansi-laboratorium', label: 'Kwitansi Laboratorium', shortLabel: 'Kwitansi' },
@@ -285,6 +286,7 @@ export const MANAGEMENT_ONLY_NAV_IDS: ReadonlySet<AppViewId> = new Set([
   'role',
   'admin',
   'hak-akses',
+  'backup-database',
 ]);
 
 function navIdsForCategory(categoryId: string): ReadonlySet<AppViewId> {

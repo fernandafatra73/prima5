@@ -8,6 +8,7 @@ import Fastify from 'fastify';
 import { registerAnalisaFotoAiRoutes } from './routes/analisaFotoAi.js';
 import { registerAnalisaRadiologiAiRoutes } from './routes/analisaRadiologiAi.js';
 import { registerAuthRoutes } from './routes/auth.js';
+import { registerBackupRoutes } from './routes/backup.js';
 import { registerCrudRoutes } from './routes/crud.js';
 import { registerDashboardRoutes } from './routes/dashboard.js';
 import { registerKlinikRoutes } from './routes/klinik.js';
@@ -31,6 +32,7 @@ await app.register(cors, {
 app.get('/api/health', async () => ({ ok: true }));
 
 await registerAuthRoutes(app);
+await registerBackupRoutes(app);
 await registerAnalisaFotoAiRoutes(app);
 await registerAnalisaRadiologiAiRoutes(app);
 await registerDashboardRoutes(app);
