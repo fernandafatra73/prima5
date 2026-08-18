@@ -36,7 +36,8 @@
       "target": [
         "portable"
       ],
-      "artifactName": "aplikasi-ph-2026.exe"
+      "artifactName": "aplikasi-ph-2026.exe",
+      "signAndEditExecutable": false
     },
     "directories": {
       "output": "dist"
