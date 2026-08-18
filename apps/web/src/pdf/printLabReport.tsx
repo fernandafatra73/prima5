@@ -47,7 +47,15 @@ export async function fetchPasienDetail(pasienId: string): Promise<PasienDetailA
   return res.item;
 }
 
-export async function generateLabReportBlob(pasienId: string): Promise<Blob> {
+export interface LabReportPrintOptions {
+  readonly pageSize?: 'A4' | 'F4';
+  readonly showSignature?: boolean;
+}
+
+export async function generateLabReportBlob(
+  pasienId: string,
+  options: LabReportPrintOptions = {},
+): Promise<Blob> {
   const [logoSrc, pasien] = await Promise.all([
     loadLogoDataUrl().catch(() => ''),
     fetchPasienDetail(pasienId),
@@ -73,13 +81,15 @@ export async function generateLabReportBlob(pasienId: string): Promise<Blob> {
     petugasLabNama: parsed.analisNama || undefined,
   };
 
-  return pdf(<LabReportDocument data={data} />).toBlob();
+  return pdf(
+    <LabReportDocument data={data} pageSize={options.pageSize} showSignature={options.showSignature} />,
+  ).toBlob();
 }
 
-export async function printLabReport(pasienId: string): Promise<void> {
+export async function printLabReport(pasienId: string, options: LabReportPrintOptions = {}): Promise<void> {
   const [pasien, blob] = await Promise.all([
     fetchPasienDetail(pasienId),
-    generateLabReportBlob(pasienId),
+    generateLabReportBlob(pasienId, options),
   ]);
   const cleanName = (pasien.nama || 'Pasien').trim().replace(/[/\\?%*:|"<>]/g, '_');
   const filename = `Hasil_Lab_${cleanName}.pdf`;

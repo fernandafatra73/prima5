@@ -263,9 +263,9 @@ const styles = StyleSheet.create({
     color: BLUE,
     lineHeight: 1.35,
   },
-  // 5 baris kosong (setara 5x enter) sebelum blok tanda tangan.
+  // Jarak pasti 1cm antara tabel/catatan terakhir dan blok tanda tangan.
   notesSpacer: {
-    height: 9 * 5,
+    height: '1cm',
   },
 
   signatureWrap: {
@@ -273,7 +273,6 @@ const styles = StyleSheet.create({
     // bukan dipaku ke dasar halaman (marginTop: 'auto' sebelumnya membuat
     // celah kosong besar kalau tabelnya pendek).
     alignItems: 'flex-end',
-    paddingTop: 6,
   },
   signature: {
     width: 200,
@@ -366,8 +365,9 @@ export function chunkLabRowsForPdf(
   let idx = 0;
   let remaining = rows.length;
 
-  // Fill interior pages at full size, stopping once what's left can be
-  // settled into a final one or two pages without exceeding lastPageSize.
+  // Fill every page before the last at full size, so page 1 (and any page
+  // before the last) reaches all the way down the sheet instead of being
+  // split evenly with the final page.
   while (remaining > pageSize + lastPageSize) {
     pages.push(rows.slice(idx, idx + pageSize));
     idx += pageSize;
@@ -377,10 +377,11 @@ export function chunkLabRowsForPdf(
   if (remaining <= lastPageSize) {
     pages.push(rows.slice(idx, idx + remaining));
   } else {
-    // Balance the tail across two pages instead of dumping most of it onto
-    // a near-empty page ahead of a nearly-full last page.
-    const half = Math.ceil(remaining / 2);
-    const firstTake = Math.min(pageSize, Math.max(half, remaining - lastPageSize));
+    // remaining is now in (lastPageSize, pageSize + lastPageSize]. Pack the
+    // second-to-last page as full as possible and leave only what's left
+    // over (guaranteed <= lastPageSize) for the true last page, instead of
+    // splitting the tail evenly.
+    const firstTake = Math.min(pageSize, remaining - 1);
     pages.push(rows.slice(idx, idx + firstTake));
     pages.push(rows.slice(idx + firstTake, idx + remaining));
   }
@@ -388,16 +389,25 @@ export function chunkLabRowsForPdf(
   return pages;
 }
 
-export function LabReportDocument({ data }: { readonly data: LabReportData }) {
+export interface LabReportDocumentProps {
+  readonly data: LabReportData;
+  readonly pageSize?: 'A4' | 'F4';
+  readonly showSignature?: boolean;
+}
+
+export function LabReportDocument({ data, pageSize = 'A4', showSignature = true }: LabReportDocumentProps) {
   const allRows = data.rows && data.rows.length > 0 ? data.rows : DEFAULT_LAB_ROWS;
   const pages = chunkLabRowsForPdf(allRows);
+  // react-pdf punya preset "FOLIO" = 612x936pt (8.5x13in), setara kertas F4
+  // yang lazim dipakai printer di Indonesia.
+  const resolvedPageSize = pageSize === 'F4' ? 'FOLIO' : 'A4';
 
   return (
     <Document title={`Hasil_Lab_${data.namaPasien.replace(/[^a-zA-Z0-9]/g, '_')}.pdf`}>
       {pages.map((pageRows, pageIdx) => {
         const isLastPage = pageIdx === pages.length - 1;
         return (
-          <Page key={pageIdx} size="A4" style={styles.page}>
+          <Page key={pageIdx} size={resolvedPageSize} style={styles.page}>
             <View style={styles.frame}>
               {/* Header Kop */}
               <View style={styles.headerRow}>
@@ -474,10 +484,10 @@ export function LabReportDocument({ data }: { readonly data: LabReportData }) {
 
               {/* 5 baris kosong (setara 5x enter) setelah hasil pemeriksaan,
                   sebelum blok tanda tangan. */}
-              {isLastPage ? <View style={styles.notesSpacer} /> : null}
+              {isLastPage && showSignature ? <View style={styles.notesSpacer} /> : null}
 
               {/* Signature Wrap */}
-              {isLastPage ? (
+              {isLastPage && showSignature ? (
                 // wrap={false}: keep the signature block atomic — if it doesn't
                 // fully fit in the space left on this page, move the whole
                 // block to the next page instead of squeezing/cutting it off.

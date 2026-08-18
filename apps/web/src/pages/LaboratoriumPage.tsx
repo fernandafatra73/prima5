@@ -13,7 +13,7 @@ import { formatRupiah, formatUmurDetail, formatUmurTahun, parseUmurManualToTangg
 import type { PaginatedResponse } from '../lib/pagination.ts';
 import { LabReportDocument, type LabReportData } from '../pdf/LabReportDocument.tsx';
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
-import { printLabReport } from '../pdf/printLabReport.tsx';
+import { printLabReport, type LabReportPrintOptions } from '../pdf/printLabReport.tsx';
 import {
   DEFAULT_LAB_TABLE_ROWS,
   PAKET_PEMERIKSAAN_LAB,
@@ -470,10 +470,10 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
     }
   }
 
-  async function handlePrint(item: LabPasienItem) {
+  async function handlePrint(item: LabPasienItem, options?: LabReportPrintOptions) {
     setPrintingId(item.id);
     try {
-      await printLabReport(item.id);
+      await printLabReport(item.id, options);
     } catch (err) {
       console.error('Print error:', err);
     } finally {
@@ -1282,11 +1282,11 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
           size="xl"
         >
           {/* Header: label + Cetak button */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <label style={{ fontWeight: 'bold', color: 'var(--color-primary)', display: 'flex', alignItems: 'center', gap: '0.4rem', margin: 0 }}>
               🖨️ Pratinjau Cetak PDF
             </label>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               <button
                 type="button"
                 className="btn btn--secondary btn--sm"
@@ -1297,11 +1297,44 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
               <button
                 type="button"
                 className="btn btn--primary btn--sm"
-                onClick={() => void handlePrint(previewItem)}
+                onClick={() => void handlePrint(previewItem, { pageSize: 'A4', showSignature: true })}
                 disabled={printingId === previewItem.id}
+                title="Cetak dengan ukuran kertas A4"
               >
-                {printingId === previewItem.id ? 'Membuat PDF...' : '🖨️ Cetak PDF'}
+                🖨️ Cetak A4
               </button>
+              <button
+                type="button"
+                className="btn btn--primary btn--sm"
+                onClick={() => void handlePrint(previewItem, { pageSize: 'F4', showSignature: true })}
+                disabled={printingId === previewItem.id}
+                title="Cetak dengan ukuran kertas F4 (folio)"
+              >
+                🖨️ Cetak F4
+              </button>
+              <button
+                type="button"
+                className="btn btn--secondary btn--sm"
+                onClick={() => void handlePrint(previewItem, { pageSize: 'A4', showSignature: false })}
+                disabled={printingId === previewItem.id}
+                title="Cetak tanpa blok tanda tangan Analis"
+              >
+                ✎ Tanpa TTD
+              </button>
+              <button
+                type="button"
+                className="btn btn--secondary btn--sm"
+                onClick={() => void handlePrint(previewItem, { pageSize: 'A4', showSignature: true })}
+                disabled={printingId === previewItem.id}
+                title="Cetak dengan blok tanda tangan Analis"
+              >
+                ✍️ Dengan TTD
+              </button>
+              {printingId === previewItem.id && (
+                <span style={{ alignSelf: 'center', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                  Membuat PDF...
+                </span>
+              )}
             </div>
           </div>
 
