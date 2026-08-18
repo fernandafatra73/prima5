@@ -18,6 +18,7 @@ interface DashboardResponse {
   readonly charts: {
     readonly statusHasil: { readonly menunggu: number; readonly selesai: number; readonly percent: number };
     readonly statusBayar: { readonly lunas: number; readonly belum: number; readonly percent: number };
+    readonly dokterPengirim: readonly { readonly nama: string; readonly count: number }[];
   };
 }
 
@@ -74,6 +75,7 @@ export function DashboardPage() {
           <DashboardCharts
             statusHasil={charts.statusHasil}
             statusBayar={charts.statusBayar}
+            dokterPengirim={charts.dokterPengirim}
             omzetHariIni={m.omzetHariIni}
             totalSharingHariIni={m.totalSharingHariIni}
             pasienHariIni={m.pasienHariIni}

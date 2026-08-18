@@ -1,6 +1,6 @@
 import Chart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
-import { CHART_COLORS, baseChartOptions } from './chartTheme.ts';
+import { CHART_COLORS, baseChartOptions, paletteColors } from './chartTheme.ts';
 
 interface StatusSlice {
   readonly menunggu: number;
@@ -12,9 +12,15 @@ interface PaymentSlice {
   readonly belum: number;
 }
 
+interface DokterPengirimSlice {
+  readonly nama: string;
+  readonly count: number;
+}
+
 interface DashboardChartsProps {
   readonly statusHasil: StatusSlice;
   readonly statusBayar: PaymentSlice;
+  readonly dokterPengirim: readonly DokterPengirimSlice[];
   readonly omzetHariIni: number;
   readonly totalSharingHariIni: number;
   readonly pasienHariIni: number;
@@ -90,9 +96,45 @@ function barOptions(categories: string[], colors: string[]): ApexOptions {
   };
 }
 
+function countBarOptions(categories: string[], colors: string[]): ApexOptions {
+  return {
+    ...baseChartOptions(),
+    chart: { ...baseChartOptions().chart, type: 'bar', height: 300 },
+    colors,
+    plotOptions: {
+      bar: {
+        borderRadius: 6,
+        columnWidth: '55%',
+        distributed: true,
+      },
+    },
+    xaxis: {
+      categories,
+      labels: { style: { colors: '#64748b', fontSize: '12px' } },
+    },
+    yaxis: {
+      labels: {
+        style: { colors: '#64748b', fontSize: '12px' },
+        formatter: (val: number) => String(Math.round(val)),
+      },
+    },
+    grid: {
+      borderColor: '#e2e8f0',
+      strokeDashArray: 4,
+    },
+    legend: { show: false },
+    tooltip: {
+      y: {
+        formatter: (val: number) => `${Math.round(val)} pasien`,
+      },
+    },
+  };
+}
+
 export function DashboardCharts({
   statusHasil,
   statusBayar,
+  dokterPengirim,
   omzetHariIni,
   totalSharingHariIni,
   pasienHariIni,
@@ -164,6 +206,25 @@ export function DashboardCharts({
               },
             ]}
           />
+        </section>
+      </div>
+
+      <div className="chart-grid">
+        <section className="chart-card" style={{ gridColumn: '1 / -1' }}>
+          <h3 className="chart-card__title">Grafik Dokter Pengirim</h3>
+          {dokterPengirim.length > 0 ? (
+            <Chart
+              type="bar"
+              height={300}
+              options={countBarOptions(
+                dokterPengirim.map((d) => d.nama),
+                paletteColors(dokterPengirim.length),
+              )}
+              series={[{ name: 'Pasien', data: dokterPengirim.map((d) => d.count) }]}
+            />
+          ) : (
+            <p className="loading-text">Belum ada data dokter pengirim.</p>
+          )}
         </section>
       </div>
     </>
