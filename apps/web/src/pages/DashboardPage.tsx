@@ -16,7 +16,7 @@ interface DashboardResponse {
   };
 }
 
-function horizontalBarOptions(categories: string[], colors: string[]): ApexOptions {
+function horizontalBarOptions(categories: string[], colors: string[], total: number): ApexOptions {
   return {
     ...baseChartOptions(),
     chart: { ...baseChartOptions().chart, type: 'bar' },
@@ -31,8 +31,11 @@ function horizontalBarOptions(categories: string[], colors: string[]): ApexOptio
     },
     dataLabels: {
       enabled: true,
-      formatter: (val: number) => `${Math.round(val)}`,
-      offsetX: 20,
+      formatter: (val: number) => {
+        const percent = total > 0 ? (val / total) * 100 : 0;
+        return `${Math.round(val)} (${percent.toFixed(1)}%)`;
+      },
+      offsetX: 40,
       style: { fontSize: '12px', fontWeight: 600, colors: ['#1e293b'] },
     },
     xaxis: {
@@ -67,6 +70,7 @@ export function DashboardPage() {
   }, [load, listRefreshVersion]);
 
   const dokterPengirim = data?.charts.dokterPengirim ?? [];
+  const totalPengirim = dokterPengirim.reduce((sum, d) => sum + d.count, 0);
 
   return (
     <>
@@ -87,6 +91,7 @@ export function DashboardPage() {
               options={horizontalBarOptions(
                 dokterPengirim.map((d) => d.nama),
                 paletteColors(dokterPengirim.length),
+                totalPengirim,
               )}
               series={[{ name: 'Pasien', data: dokterPengirim.map((d) => d.count) }]}
             />
