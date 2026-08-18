@@ -18,6 +18,11 @@ import {
   generateSharingArsipReportBlob,
   printSharingArsipReport,
 } from '../pdf/printSharingArsipReport.tsx';
+import {
+  generateSharingRingkasanReportBlob,
+  printSharingRingkasanReport,
+} from '../pdf/printSharingRingkasanReport.tsx';
+import type { SharingRingkasanReportRow } from '../pdf/SharingRingkasanReportDocument.tsx';
 import '../components/ui/ui.css';
 
 interface DokterItem {
@@ -253,9 +258,9 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
     return 'Semua Periode';
   }, [period, customStart, customEnd]);
 
-  function findPetugasAdminKlinik(): string {
+  function findMostCommonPetugasAdminKlinik(list: readonly ArsipPasienItem[]): string {
     const counts = new Map<string, number>();
-    for (const p of items) {
+    for (const p of list) {
       const nama = p.petugasAdminKlinik?.trim();
       if (!nama) continue;
       counts.set(nama, (counts.get(nama) ?? 0) + 1);
@@ -271,6 +276,64 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
     return best;
   }
 
+  async function fetchAllPasienDuplikat(params: Record<string, string>): Promise<ArsipPasienItem[]> {
+    const all: ArsipPasienItem[] = [];
+    let page = 1;
+    const limit = 100;
+    for (;;) {
+      const query = new URLSearchParams({ ...params, page: String(page), limit: String(limit) });
+      const res = await apiGet<PaginatedResponse<ArsipPasienItem>>(`/api/pasien-duplikat?${query.toString()}`);
+      all.push(...res.items);
+      if (res.items.length === 0 || all.length >= res.pagination.total) break;
+      page += 1;
+    }
+    return all;
+  }
+
+  async function buildRingkasanReportInput() {
+    const { startDate: sd, endDate: ed } = getPeriodDates('week', '', '');
+    const params: Record<string, string> = { modul };
+    if (sharingEiDokterNames.length > 0) params.pengirimNama = sharingEiDokterNames.join(',');
+    if (sd) params.startDate = sd;
+    if (ed) params.endDate = ed;
+
+    const allItems = sharingEiDokterNames.length > 0 ? await fetchAllPasienDuplikat(params) : [];
+
+    const grouped = new Map<string, { count: number; total: number }>();
+    for (const name of sharingEiDokterNames) {
+      grouped.set(name, { count: 0, total: 0 });
+    }
+    for (const item of allItems) {
+      const g = grouped.get(item.pengirimNama) ?? { count: 0, total: 0 };
+      g.count += 1;
+      g.total += Number(item.totalSharing) || 0;
+      grouped.set(item.pengirimNama, g);
+    }
+
+    const rows: SharingRingkasanReportRow[] = sharingEiDokterNames.map((name) => {
+      const g = grouped.get(name) ?? { count: 0, total: 0 };
+      return {
+        dokterNama: name,
+        totalPasien: g.count,
+        totalSharingFormatted: formatRupiah(g.total),
+      };
+    });
+
+    const totalPasienSum = rows.reduce((sum, r) => sum + r.totalPasien, 0);
+    const totalSharingSum = allItems.reduce((sum, i) => sum + (Number(i.totalSharing) || 0), 0);
+
+    return {
+      moduleLabel,
+      reportLabel: 'Sharing E&I',
+      periodeLabel: 'Minggu Ini',
+      tanggalCetak: formatDateShort(new Date().toISOString()),
+      rows,
+      totalPasien: totalPasienSum,
+      totalSharingFormatted: formatRupiah(totalSharingSum),
+      adminNama: findMostCommonPetugasAdminKlinik(allItems) || adminNama,
+    };
+  }
+
   function buildReportInput() {
     const todayStr = formatDateShort(new Date().toISOString());
     const pdfItems = items.map((p, idx) => ({
@@ -284,24 +347,25 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
 
     return {
       moduleLabel,
-      dokterNama: isSharingEi
-        ? `Sharing E&I (${sharingEiDokterNames.join(' & ') || 'Dr. Eva Christiani & Dr. Iman Purnawan'})`
-        : selectedDokterNama === 'all'
-          ? 'Semua Dokter'
-          : selectedDokterNama,
+      dokterNama:
+        selectedDokterNama === 'all' ? 'Semua Dokter' : selectedDokterNama,
       periodeLabel,
       tanggalCetak: todayStr,
       items: pdfItems,
       totalPasien: pagination.total,
       totalSharingFormatted: formatRupiah(totalSharing),
-      adminNama: findPetugasAdminKlinik() || adminNama,
+      adminNama: findMostCommonPetugasAdminKlinik(items) || adminNama,
     };
   }
 
   async function handlePrintPdf() {
     setPrintingPdf(true);
     try {
-      await printSharingArsipReport(buildReportInput());
+      if (isSharingEi) {
+        await printSharingRingkasanReport(await buildRingkasanReportInput());
+      } else {
+        await printSharingArsipReport(buildReportInput());
+      }
     } catch (err) {
       console.error('Gagal mencetak PDF sharing:', err);
     } finally {
@@ -312,13 +376,21 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
   async function handlePreviewPdf() {
     setPreviewingPdf(true);
     try {
-      const input = buildReportInput();
-      const blob = await generateSharingArsipReportBlob(input);
-      const cleanDokter =
-        input.dokterNama.trim().replace(/[/\\?%*:|"<>]/g, '_') || 'Dokter';
-      setPreviewFilename(`Laporan_Sharing_${moduleLabel}_${cleanDokter}.pdf`);
-      setPreviewBlob(blob);
-      setPreviewModalOpen(true);
+      if (isSharingEi) {
+        const input = await buildRingkasanReportInput();
+        const blob = await generateSharingRingkasanReportBlob(input);
+        setPreviewFilename('Laporan_Sharing_E_I.pdf');
+        setPreviewBlob(blob);
+        setPreviewModalOpen(true);
+      } else {
+        const input = buildReportInput();
+        const blob = await generateSharingArsipReportBlob(input);
+        const cleanDokter =
+          input.dokterNama.trim().replace(/[/\\?%*:|"<>]/g, '_') || 'Dokter';
+        setPreviewFilename(`Laporan_Sharing_${moduleLabel}_${cleanDokter}.pdf`);
+        setPreviewBlob(blob);
+        setPreviewModalOpen(true);
+      }
     } catch (err) {
       console.error('Gagal membuat pratinjau PDF sharing:', err);
     } finally {
