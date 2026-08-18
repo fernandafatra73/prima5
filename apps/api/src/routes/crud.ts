@@ -246,28 +246,43 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     },
   );
 
-  app.get<{ Querystring: ListQuery }>('/api/sharing-radiolog', async (req) => {
-    const { page, limit, skip } = parsePagination(req.query);
-    const where = sharingRadiologListWhere(req.query.q);
-    const [total, items] = await Promise.all([
-      prisma.sharingRadiolog.count({ where }),
-      prisma.sharingRadiolog.findMany({
-        where,
-        include: { radiolog: true },
-        orderBy: { createdAt: 'desc' },
-        skip,
-        take: limit,
-      }),
-    ]);
-    return {
-      items: items.map((item) => ({
-        ...item,
-        sharingNominal: serializeDecimal(item.sharingNominal),
-        totalSharing: serializeDecimal(item.totalSharing),
-      })),
-      pagination: buildPaginationMeta(total, page, limit),
-    };
-  });
+  app.get<{ Querystring: ListQuery & { radiologId?: string; tanggal?: string } }>(
+    '/api/sharing-radiolog',
+    async (req) => {
+      const { page, limit, skip } = parsePagination(req.query);
+      const { radiologId, tanggal } = req.query;
+      let tanggalRange: { gte: Date; lt: Date } | undefined;
+      if (tanggal) {
+        const start = new Date(`${tanggal}T00:00:00`);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 1);
+        tanggalRange = { gte: start, lt: end };
+      }
+      const where = {
+        ...sharingRadiologListWhere(req.query.q),
+        ...(radiologId ? { radiologId } : {}),
+        ...(tanggalRange ? { createdAt: tanggalRange } : {}),
+      };
+      const [total, items] = await Promise.all([
+        prisma.sharingRadiolog.count({ where }),
+        prisma.sharingRadiolog.findMany({
+          where,
+          include: { radiolog: true },
+          orderBy: { createdAt: 'desc' },
+          skip,
+          take: limit,
+        }),
+      ]);
+      return {
+        items: items.map((item) => ({
+          ...item,
+          sharingNominal: serializeDecimal(item.sharingNominal),
+          totalSharing: serializeDecimal(item.totalSharing),
+        })),
+        pagination: buildPaginationMeta(total, page, limit),
+      };
+    },
+  );
 
   app.post<{
     Body: {

@@ -20,6 +20,11 @@ interface RadiologOption {
   readonly nama: string;
 }
 
+interface AdminKlinikOption {
+  readonly id: string;
+  readonly nama: string;
+}
+
 interface SharingRadiologItem {
   readonly id: string;
   readonly namaPemeriksaan: string;
@@ -32,7 +37,12 @@ interface SharingRadiologItem {
 
 export function SharingRadiologPage() {
   const { search, setSearch } = useListSearch();
-  const queryParams = useListQueryParams({}, search);
+  const [filterRadiologId, setFilterRadiologId] = useState('');
+  const [filterTanggal, setFilterTanggal] = useState('');
+  const queryParams = useListQueryParams(
+    { radiologId: filterRadiologId, tanggal: filterTanggal },
+    search,
+  );
   const { items, pagination, setPage, loading, error, setError, reload: reloadList } =
     usePaginatedList<SharingRadiologItem>('/api/sharing-radiolog', queryParams);
   const reload = useMutationReload(reloadList);
@@ -49,6 +59,20 @@ export function SharingRadiologPage() {
   useEffect(() => {
     void loadRadiologOptions();
   }, [loadRadiologOptions]);
+
+  const [adminKlinikOptions, setAdminKlinikOptions] = useState<readonly AdminKlinikOption[]>([]);
+  const [adminKlinikId, setAdminKlinikId] = useState('');
+  const loadAdminKlinikOptions = useCallback(async () => {
+    try {
+      const res = await apiGet<{ items: AdminKlinikOption[] }>('/api/petugas-admin-klinik?limit=200');
+      setAdminKlinikOptions(res.items);
+    } catch {
+      setAdminKlinikOptions([]);
+    }
+  }, []);
+  useEffect(() => {
+    void loadAdminKlinikOptions();
+  }, [loadAdminKlinikOptions]);
 
   const [modalMode, setModalMode] = useState<'add' | 'edit' | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -137,6 +161,7 @@ export function SharingRadiologPage() {
     setPrinting(true);
     try {
       const totalSharingSum = items.reduce((sum, it) => sum + Number(it.totalSharing), 0);
+      const adminNama = adminKlinikOptions.find((a) => a.id === adminKlinikId)?.nama ?? '';
       const blob = await generateSharingRadiologReportBlob({
         tanggalCetak: new Date().toLocaleDateString('id-ID', {
           day: '2-digit',
@@ -153,7 +178,7 @@ export function SharingRadiologPage() {
         })),
         totalData: items.length,
         totalSharingFormatted: formatRupiah(totalSharingSum),
-        adminNama: '',
+        adminNama,
       });
       setPreviewBlob(blob);
       setPreviewOpen(true);
@@ -230,7 +255,22 @@ export function SharingRadiologPage() {
         title="Sharing Radiolog"
         subtitle="Data sharing radiolog per pemeriksaan yang diisi manual"
         action={
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '0.5rem' }}>
+            <div className="form-field" style={{ marginBottom: 0 }}>
+              <label htmlFor="sr-admin-klinik">Nama Admin Klinik</label>
+              <select
+                id="sr-admin-klinik"
+                value={adminKlinikId}
+                onChange={(e) => setAdminKlinikId(e.target.value)}
+              >
+                <option value="">Pilih admin klinik…</option>
+                {adminKlinikOptions.map((a) => (
+                  <option key={a.id} value={a.id}>
+                    {a.nama}
+                  </option>
+                ))}
+              </select>
+            </div>
             <button type="button" className="btn btn--primary" onClick={openAdd}>
               + Tambah
             </button>
@@ -253,6 +293,31 @@ export function SharingRadiologPage() {
             iconKind: 'clipboard',
           },
         ]}
+        selects={[
+          {
+            id: 'sr-filter-radiolog',
+            label: 'Filter Nama Radiolog',
+            value: filterRadiologId,
+            placeholder: 'Semua Radiolog',
+            options: radiologOptions.map((r) => ({ value: r.id, label: r.nama })),
+            onChange: (value) => {
+              setFilterRadiologId(value);
+              setPage(1);
+            },
+          },
+        ]}
+        filterExtra={
+          <input
+            type="date"
+            className="filter-control"
+            aria-label="Filter Tanggal"
+            value={filterTanggal}
+            onChange={(e) => {
+              setFilterTanggal(e.target.value);
+              setPage(1);
+            }}
+          />
+        }
         searchPlaceholder="Cari nama pemeriksaan atau radiolog…"
         searchValue={search}
         onSearchChange={setSearch}
