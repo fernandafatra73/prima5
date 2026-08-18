@@ -238,6 +238,24 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
     return 'Semua Periode';
   }, [period, customStart, customEnd]);
 
+  function findPetugasAdminKlinik(): string {
+    const counts = new Map<string, number>();
+    for (const p of items) {
+      const nama = p.petugasAdminKlinik?.trim();
+      if (!nama) continue;
+      counts.set(nama, (counts.get(nama) ?? 0) + 1);
+    }
+    let best = '';
+    let bestCount = 0;
+    for (const [nama, count] of counts) {
+      if (count > bestCount) {
+        best = nama;
+        bestCount = count;
+      }
+    }
+    return best;
+  }
+
   function buildReportInput() {
     const todayStr = formatDateShort(new Date().toISOString());
     const pdfItems = items.map((p, idx) => ({
@@ -258,7 +276,7 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
       items: pdfItems,
       totalPasien: pagination.total,
       totalSharingFormatted: formatRupiah(totalSharing),
-      adminNama,
+      adminNama: findPetugasAdminKlinik() || adminNama,
     };
   }
 
