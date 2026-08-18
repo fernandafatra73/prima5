@@ -1,5 +1,4 @@
 :root {
-  --sidebar-width: 260px;
   --header-height: 64px;
 
   --color-bg-page: #f5f5f5;
@@ -25,7 +24,6 @@
   --shadow-card: 0 4px 18px rgba(0, 0, 0, 0.1);
   --radius-card: 16px;
   --radius-button: 10px;
-  --radius-sidebar-item: 12px;
 
   font-family:
     'Segoe UI',

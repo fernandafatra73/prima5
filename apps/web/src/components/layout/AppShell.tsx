@@ -1,8 +1,7 @@
 import type { ReactNode } from 'react';
 import type { AppViewId } from '../../config/navigation.ts';
 import type { AuthUser } from '../../lib/auth.ts';
-import { Header } from './Header.tsx';
-import { Sidebar } from './Sidebar.tsx';
+import { TopNavbar } from './TopNavbar.tsx';
 import './layout.css';
 
 interface AppShellProps {
@@ -16,11 +15,14 @@ interface AppShellProps {
 export function AppShell({ activeView, authUser, onNavigate, onLogout, children }: AppShellProps) {
   return (
     <div className="app-shell">
-      <Sidebar activeId={activeView} onNavigate={onNavigate} role={authUser.role} />
-      <div className="app-main">
-        <Header activeView={activeView} authUser={authUser} onLogout={onLogout} />
-        <main className="app-content">{children}</main>
-      </div>
+      <TopNavbar
+        activeId={activeView}
+        onNavigate={onNavigate}
+        role={authUser.role}
+        authUser={authUser}
+        onLogout={onLogout}
+      />
+      <main className="app-content">{children}</main>
     </div>
   );
 }
