@@ -1307,8 +1307,6 @@ export function PasienPage() {
               <th>Pengirim</th>
               <th>Pemeriksaan</th>
               <th>Kesan</th>
-              <th>Total</th>
-              <th>Sharing</th>
               <th>Hasil</th>
               <th>Bayar</th>
               <th>Aksi</th>
@@ -1317,7 +1315,7 @@ export function PasienPage() {
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={10}>Belum ada pasien.</td>
+                <td colSpan={8}>Belum ada pasien.</td>
               </tr>
             ) : (
               items.map((p) => (
@@ -1348,8 +1346,6 @@ export function PasienPage() {
                     })()}
                   </td>
                   <td style={{ maxWidth: 220, whiteSpace: 'pre-wrap' }}>{p.kesan || '-'}</td>
-                  <td>{formatRupiah(p.totalHarga)}</td>
-                  <td>{formatRupiah(p.totalSharing)}</td>
                   <td>
                     <span
                       className={`badge ${p.hasilStatus === 'SELESAI' ? 'badge--ok' : 'badge--pending'}`}
