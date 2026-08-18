@@ -194,8 +194,8 @@ const styles = StyleSheet.create({
   },
   bottomSection: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginTop: 'auto',
+    justifyContent: 'flex-end',
+    marginTop: 24,
     paddingHorizontal: 10,
   },
   signatureBox: {
@@ -225,6 +225,8 @@ const styles = StyleSheet.create({
 
 export function KwitansiReportDocument({ data }: { readonly data: KwitansiReportData }) {
   const isLunas = data.paymentStatus === 'LUNAS';
+  const items: readonly KwitansiItem[] =
+    data.items.length > 0 ? data.items : [{ nama: 'Pemeriksaan', hargaFormatted: data.totalFormatted }];
 
   return (
     <Document title={`Kwitansi_${data.noKwitansi}.pdf`}>
@@ -280,21 +282,13 @@ export function KwitansiReportDocument({ data }: { readonly data: KwitansiReport
               <Text style={styles.colUraian}>Uraian Pemeriksaan</Text>
               <Text style={styles.colHarga}>Biaya</Text>
             </View>
-            {data.items.length === 0 ? (
-              <View style={styles.trRow}>
-                <Text style={{ width: '100%', textAlign: 'center', paddingVertical: 4 }}>
-                  Tidak ada rincian pemeriksaan.
-                </Text>
+            {items.map((item, i) => (
+              <View key={i} style={styles.trRow}>
+                <Text style={styles.colNo}>{i + 1}</Text>
+                <Text style={styles.colUraian}>{truncatePdfCell(item.nama, 55)}</Text>
+                <Text style={styles.colHarga}>{item.hargaFormatted}</Text>
               </View>
-            ) : (
-              data.items.map((item, i) => (
-                <View key={i} style={styles.trRow}>
-                  <Text style={styles.colNo}>{i + 1}</Text>
-                  <Text style={styles.colUraian}>{truncatePdfCell(item.nama, 55)}</Text>
-                  <Text style={styles.colHarga}>{item.hargaFormatted}</Text>
-                </View>
-              ))
-            )}
+            ))}
             <View style={styles.totalRow}>
               <Text style={styles.totalLabel}>TOTAL PEMBAYARAN</Text>
               <Text style={styles.totalValue}>{data.totalFormatted}</Text>
@@ -318,7 +312,6 @@ export function KwitansiReportDocument({ data }: { readonly data: KwitansiReport
           </View>
 
           <View style={styles.bottomSection}>
-            <View style={{ flex: 1 }} />
             <View style={styles.signatureBox}>
               <Text style={styles.signatureTitle}>Petugas Kasir,</Text>
               <Text style={styles.signatureName}>
