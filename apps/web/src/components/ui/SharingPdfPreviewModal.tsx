@@ -7,6 +7,9 @@ interface SharingPdfPreviewModalProps {
   readonly filename: string;
   readonly onClose: () => void;
   readonly title?: string;
+  /** Jika diisi, tombol "Edit" muncul di sebelah Unduh PDF — dipakai untuk
+   * menutup pratinjau dan kembali mengubah data/filter sebelum cetak ulang. */
+  readonly onEdit?: () => void;
 }
 
 export function SharingPdfPreviewModal({
@@ -15,6 +18,7 @@ export function SharingPdfPreviewModal({
   filename,
   onClose,
   title = 'Pratinjau Laporan Sharing Dokter',
+  onEdit,
 }: SharingPdfPreviewModalProps) {
   const [url, setUrl] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
@@ -57,6 +61,11 @@ export function SharingPdfPreviewModal({
           <button type="button" className="btn btn--ghost" onClick={handleDownload}>
             Unduh PDF
           </button>
+          {onEdit && (
+            <button type="button" className="btn btn--ghost" onClick={onEdit} style={{ border: '1px solid var(--color-border)' }}>
+              ✏️ Edit
+            </button>
+          )}
         </div>
         {url ? (
           <iframe

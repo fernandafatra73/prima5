@@ -714,6 +714,7 @@ export function SharingArsipPage({ modul }: SharingArsipPageProps) {
         filename={previewFilename}
         onClose={() => setPreviewModalOpen(false)}
         title={`Pratinjau Laporan Sharing ${moduleLabel}`}
+        onEdit={() => setPreviewModalOpen(false)}
       />
     </>
   );
