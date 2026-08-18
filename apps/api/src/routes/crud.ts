@@ -9,6 +9,7 @@ import {
   adminPendaftaranListWhere,
   aiRadiologiGrupListWhere,
   dokterListWhere,
+  fotoDashboardListWhere,
   hargaListWhere,
   jenisListWhere,
   karyawanKlinikListWhere,
@@ -2822,6 +2823,55 @@ export async function registerCrudRoutes(app: FastifyInstance) {
 
   app.delete<{ Params: { id: string } }>('/api/tanda-tangan-elektronik/:id', async (req) => {
     await prisma.tandaTanganElektronik.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
+  app.get<{ Querystring: ListQuery }>('/api/foto-dashboard', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const where = fotoDashboardListWhere(req.query.q);
+    const [total, items] = await Promise.all([
+      prisma.fotoDashboard.count({ where }),
+      prisma.fotoDashboard.findMany({
+        where,
+        orderBy: { nama: 'asc' },
+        skip,
+        take: limit,
+      }),
+    ]);
+    return { items, pagination: buildPaginationMeta(total, page, limit) };
+  });
+
+  app.post<{
+    Body: { nama: string; foto?: string | null };
+  }>('/api/foto-dashboard', async (req, reply) => {
+    if (!req.body.nama?.trim()) return badRequest(reply, 'nama wajib diisi');
+    const item = await prisma.fotoDashboard.create({
+      data: {
+        nama: req.body.nama.trim(),
+        foto: req.body.foto ?? null,
+      },
+    });
+    return reply.status(201).send({ item });
+  });
+
+  app.patch<{
+    Params: { id: string };
+    Body: { nama?: string; foto?: string | null };
+  }>('/api/foto-dashboard/:id', async (req, reply) => {
+    const existing = await prisma.fotoDashboard.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Foto dashboard tidak ditemukan' });
+    const item = await prisma.fotoDashboard.update({
+      where: { id: req.params.id },
+      data: {
+        nama: req.body.nama?.trim() ?? existing.nama,
+        foto: req.body.foto !== undefined ? req.body.foto : existing.foto,
+      },
+    });
+    return { item };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/foto-dashboard/:id', async (req) => {
+    await prisma.fotoDashboard.delete({ where: { id: req.params.id } });
     return { ok: true };
   });
 

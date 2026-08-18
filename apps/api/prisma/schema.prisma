@@ -396,6 +396,15 @@ model TandaTanganElektronik {
   updatedAt       DateTime @updatedAt
 }
 
+/// Daftar foto yang bisa ditampilkan pada kotak gambar di halaman Dashboard.
+model FotoDashboard {
+  id        String   @id @default(cuid())
+  nama      String
+  foto      String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 /// Arsip foto rontgen pasien beserta kesan/diagnosa yang diisi manual oleh
 /// radiolog/dokter (BUKAN deteksi otomatis AI — lihat catatan produk).
 model AnalisaFotoRontgen {

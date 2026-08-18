@@ -150,6 +150,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'petugas-kasir', label: 'Kasir', shortLabel: 'Kasir' },
   { id: 'petugas-admin-klinik', label: 'Petugas Admin Klinik', shortLabel: 'Petugas Admin Klinik' },
   { id: 'logo-perusahaan', label: 'Logo Perusahaan', shortLabel: 'Logo Perusahaan' },
+  { id: 'foto-dashboard', label: 'Foto untuk Dashboard', shortLabel: 'Foto Dashboard' },
   { id: 'lab', label: 'Registrasi Lab', shortLabel: 'Registrasi Lab' },
   { id: 'lab-duplikat', label: 'Duplikat Registrasi Lab', shortLabel: 'Duplikat Registrasi' },
   { id: 'kwitansi-laboratorium', label: 'Kwitansi Laboratorium', shortLabel: 'Kwitansi' },

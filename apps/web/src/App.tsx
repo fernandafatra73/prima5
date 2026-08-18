@@ -18,6 +18,7 @@ import { DashboardPage } from './pages/DashboardPage.tsx';
 import { DokterPage } from './pages/DokterPage.tsx';
 import { KaryawanKlinikPage } from './pages/KaryawanKlinikPage.tsx';
 import { TandaTanganElektronikPage } from './pages/TandaTanganElektronikPage.tsx';
+import { FotoDashboardPage } from './pages/FotoDashboardPage.tsx';
 import { JenisPemeriksaanPage } from './pages/JenisPemeriksaanPage.tsx';
 import { KesanPage } from './pages/KesanPage.tsx';
 import { LaboratoriumPage } from './pages/LaboratoriumPage.tsx';
@@ -201,6 +202,8 @@ function renderViewContent(
       return <KaryawanKlinikPage />;
     case 'tanda-tangan-elektronik':
       return <TandaTanganElektronikPage />;
+    case 'foto-dashboard':
+      return <FotoDashboardPage />;
     case 'jenis-pemeriksaan':
       return <JenisPemeriksaanPage />;
     case 'kesan':

@@ -125,6 +125,14 @@ export function tandaTanganElektronikListWhere(q?: string): Prisma.TandaTanganEl
   };
 }
 
+export function fotoDashboardListWhere(q?: string): Prisma.FotoDashboardWhereInput {
+  const term = searchTerm(q);
+  if (!term) return {};
+  return {
+    OR: [{ nama: { contains: term } }],
+  };
+}
+
 export function suratKeteranganSehatListWhere(q?: string): Prisma.SuratKeteranganSehatWhereInput {
   const term = searchTerm(q);
   if (!term) return {};
