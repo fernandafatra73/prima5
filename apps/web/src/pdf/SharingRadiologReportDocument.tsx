@@ -11,6 +11,7 @@ import { truncatePdfCell } from './pdfText.ts';
 export interface SharingRadiologReportItem {
   readonly no: number;
   readonly namaPemeriksaan: string;
+  readonly jumlahPemeriksaan: number;
   readonly namaRadiolog: string;
   readonly sharingFormatted: string;
   readonly totalSharingFormatted: string;
@@ -118,8 +119,9 @@ const styles = StyleSheet.create({
     fontSize: 8,
   },
   colNo: { width: '6%', textAlign: 'center' },
-  colPemeriksaan: { width: '32%', paddingLeft: 3 },
-  colRadiolog: { width: '26%', paddingLeft: 3 },
+  colPemeriksaan: { width: '28%', paddingLeft: 3 },
+  colJumlah: { width: '8%', textAlign: 'center' },
+  colRadiolog: { width: '22%', paddingLeft: 3 },
   colSharing: { width: '16%', textAlign: 'right', paddingRight: 3 },
   colTotalSharing: { width: '20%', textAlign: 'right', paddingRight: 3 },
 
@@ -204,6 +206,7 @@ export function SharingRadiologReportDocument({ data }: { readonly data: Sharing
             <View style={styles.thRow}>
               <Text style={styles.colNo}>No</Text>
               <Text style={styles.colPemeriksaan}>Nama Pemeriksaan</Text>
+              <Text style={styles.colJumlah}>Jumlah</Text>
               <Text style={styles.colRadiolog}>Nama Radiolog</Text>
               <Text style={styles.colSharing}>Sharing</Text>
               <Text style={styles.colTotalSharing}>Total Sharing</Text>
@@ -218,8 +221,9 @@ export function SharingRadiologReportDocument({ data }: { readonly data: Sharing
               data.items.map((row) => (
                 <View key={row.no} style={styles.trRow}>
                   <Text style={styles.colNo}>{row.no}</Text>
-                  <Text style={styles.colPemeriksaan}>{truncatePdfCell(row.namaPemeriksaan, 32)}</Text>
-                  <Text style={styles.colRadiolog}>{truncatePdfCell(row.namaRadiolog, 26)}</Text>
+                  <Text style={styles.colPemeriksaan}>{truncatePdfCell(row.namaPemeriksaan, 28)}</Text>
+                  <Text style={styles.colJumlah}>{row.jumlahPemeriksaan}</Text>
+                  <Text style={styles.colRadiolog}>{truncatePdfCell(row.namaRadiolog, 22)}</Text>
                   <Text style={styles.colSharing}>{row.sharingFormatted}</Text>
                   <Text style={styles.colTotalSharing}>{row.totalSharingFormatted}</Text>
                 </View>

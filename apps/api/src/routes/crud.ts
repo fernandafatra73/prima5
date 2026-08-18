@@ -272,8 +272,8 @@ export async function registerCrudRoutes(app: FastifyInstance) {
   app.post<{
     Body: {
       namaPemeriksaan: string;
+      jumlahPemeriksaan?: number;
       sharingNominal: string | number;
-      totalSharing: string | number;
       radiologId: string;
     };
   }>('/api/sharing-radiolog', async (req, reply) => {
@@ -281,11 +281,14 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     if (!req.body.radiologId) return badRequest(reply, 'radiologId wajib diisi');
     const radiolog = await prisma.radiolog.findUnique({ where: { id: req.body.radiologId } });
     if (!radiolog) return badRequest(reply, 'Radiolog tidak ditemukan');
+    const jumlahPemeriksaan = req.body.jumlahPemeriksaan ?? 1;
+    const sharingNominal = new Decimal(req.body.sharingNominal ?? 0);
     const item = await prisma.sharingRadiolog.create({
       data: {
         namaPemeriksaan: req.body.namaPemeriksaan.trim(),
-        sharingNominal: new Decimal(req.body.sharingNominal ?? 0),
-        totalSharing: new Decimal(req.body.totalSharing ?? 0),
+        jumlahPemeriksaan,
+        sharingNominal,
+        totalSharing: sharingNominal.mul(jumlahPemeriksaan),
         radiologId: req.body.radiologId,
       },
       include: { radiolog: true },
@@ -303,8 +306,8 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     Params: { id: string };
     Body: {
       namaPemeriksaan?: string;
+      jumlahPemeriksaan?: number;
       sharingNominal?: string | number;
-      totalSharing?: string | number;
       radiologId?: string;
     };
   }>('/api/sharing-radiolog/:id', async (req, reply) => {
@@ -314,14 +317,16 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       const radiolog = await prisma.radiolog.findUnique({ where: { id: req.body.radiologId } });
       if (!radiolog) return badRequest(reply, 'Radiolog tidak ditemukan');
     }
+    const jumlahPemeriksaan = req.body.jumlahPemeriksaan ?? existing.jumlahPemeriksaan;
+    const sharingNominal =
+      req.body.sharingNominal !== undefined ? new Decimal(req.body.sharingNominal) : existing.sharingNominal;
     const item = await prisma.sharingRadiolog.update({
       where: { id: req.params.id },
       data: {
         namaPemeriksaan: req.body.namaPemeriksaan?.trim() ?? existing.namaPemeriksaan,
-        sharingNominal:
-          req.body.sharingNominal !== undefined ? new Decimal(req.body.sharingNominal) : existing.sharingNominal,
-        totalSharing:
-          req.body.totalSharing !== undefined ? new Decimal(req.body.totalSharing) : existing.totalSharing,
+        jumlahPemeriksaan,
+        sharingNominal,
+        totalSharing: sharingNominal.mul(jumlahPemeriksaan),
         radiologId: req.body.radiologId ?? existing.radiologId,
       },
       include: { radiolog: true },

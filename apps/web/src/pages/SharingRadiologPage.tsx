@@ -23,6 +23,7 @@ interface RadiologOption {
 interface SharingRadiologItem {
   readonly id: string;
   readonly namaPemeriksaan: string;
+  readonly jumlahPemeriksaan: number;
   readonly sharingNominal: string;
   readonly totalSharing: string;
   readonly radiologId: string;
@@ -56,9 +57,10 @@ export function SharingRadiologPage() {
   const [deleteLoading, setDeleteLoading] = useState(false);
 
   const [namaPemeriksaan, setNamaPemeriksaan] = useState('');
+  const [jumlahPemeriksaan, setJumlahPemeriksaan] = useState('1');
   const [sharingNominal, setSharingNominal] = useState(String(SHARING_OPTIONS[0]));
-  const [totalSharing, setTotalSharing] = useState(String(SHARING_OPTIONS[0]));
   const [radiologId, setRadiologId] = useState('');
+  const totalSharing = (Number(jumlahPemeriksaan) || 0) * (Number(sharingNominal) || 0);
 
   const [printing, setPrinting] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -66,8 +68,8 @@ export function SharingRadiologPage() {
 
   function resetForm() {
     setNamaPemeriksaan('');
+    setJumlahPemeriksaan('1');
     setSharingNominal(String(SHARING_OPTIONS[0]));
-    setTotalSharing(String(SHARING_OPTIONS[0]));
     setRadiologId(radiologOptions[0]?.id ?? '');
     setEditingId(null);
   }
@@ -80,8 +82,8 @@ export function SharingRadiologPage() {
   function openEdit(item: SharingRadiologItem) {
     setEditingId(item.id);
     setNamaPemeriksaan(item.namaPemeriksaan);
+    setJumlahPemeriksaan(String(item.jumlahPemeriksaan));
     setSharingNominal(item.sharingNominal);
-    setTotalSharing(item.totalSharing);
     setRadiologId(item.radiologId);
     setModalMode('edit');
   }
@@ -96,8 +98,8 @@ export function SharingRadiologPage() {
     setError(null);
     const body = {
       namaPemeriksaan,
-      sharingNominal: Number(sharingNominal),
-      totalSharing: Number(totalSharing),
+      jumlahPemeriksaan: Number(jumlahPemeriksaan) || 1,
+      sharingNominal: Number(sharingNominal) || 0,
       radiologId,
     };
     try {
@@ -144,6 +146,7 @@ export function SharingRadiologPage() {
         items: items.map((it, idx) => ({
           no: idx + 1,
           namaPemeriksaan: it.namaPemeriksaan,
+          jumlahPemeriksaan: it.jumlahPemeriksaan,
           namaRadiolog: it.radiolog.nama,
           sharingFormatted: formatRupiah(it.sharingNominal),
           totalSharingFormatted: formatRupiah(it.totalSharing),
@@ -171,32 +174,38 @@ export function SharingRadiologPage() {
         />
       </div>
       <div className="form-field">
-        <label htmlFor="sr-sharing">Sharing</label>
-        <select
+        <label htmlFor="sr-jumlah">Jumlah Pemeriksaan</label>
+        <input
+          id="sr-jumlah"
+          type="number"
+          min="1"
+          required
+          value={jumlahPemeriksaan}
+          onChange={(e) => setJumlahPemeriksaan(e.target.value)}
+        />
+      </div>
+      <div className="form-field">
+        <label htmlFor="sr-sharing">Sharing (pilih atau ketik manual)</label>
+        <input
           id="sr-sharing"
+          type="number"
+          min="0"
+          required
+          list="sr-sharing-options"
           value={sharingNominal}
-          onChange={(e) => {
-            setSharingNominal(e.target.value);
-            setTotalSharing(e.target.value);
-          }}
-        >
+          onChange={(e) => setSharingNominal(e.target.value)}
+        />
+        <datalist id="sr-sharing-options">
           {SHARING_OPTIONS.map((opt) => (
             <option key={opt} value={opt}>
               {formatRupiah(opt)}
             </option>
           ))}
-        </select>
+        </datalist>
       </div>
       <div className="form-field">
-        <label htmlFor="sr-total">Total Sharing</label>
-        <input
-          id="sr-total"
-          type="number"
-          min="0"
-          required
-          value={totalSharing}
-          onChange={(e) => setTotalSharing(e.target.value)}
-        />
+        <label htmlFor="sr-total">Total Sharing (otomatis)</label>
+        <input id="sr-total" readOnly value={formatRupiah(totalSharing)} />
       </div>
       <div className="form-field form-field--full">
         <label htmlFor="sr-radiolog">Nama Radiolog</label>
@@ -257,6 +266,7 @@ export function SharingRadiologPage() {
           <thead>
             <tr>
               <th>Nama Pemeriksaan</th>
+              <th>Jumlah</th>
               <th>Nama Radiolog</th>
               <th>Sharing</th>
               <th>Total Sharing</th>
@@ -266,12 +276,13 @@ export function SharingRadiologPage() {
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={5}>Belum ada data sharing radiolog.</td>
+                <td colSpan={6}>Belum ada data sharing radiolog.</td>
               </tr>
             ) : (
               items.map((item) => (
                 <tr key={item.id}>
                   <td>{item.namaPemeriksaan}</td>
+                  <td>{item.jumlahPemeriksaan}</td>
                   <td>{item.radiolog.nama}</td>
                   <td>{formatRupiah(item.sharingNominal)}</td>
                   <td>{formatRupiah(item.totalSharing)}</td>
