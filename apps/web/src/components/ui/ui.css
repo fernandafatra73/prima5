@@ -535,6 +535,25 @@
   color: var(--color-primary);
 }
 
+.modal__header--orange {
+  background: #f97316;
+  border-bottom-color: #c2410c;
+}
+
+.modal__header--orange .modal__title {
+  color: #ffffff;
+}
+
+.modal__header--orange .modal__close {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+}
+
+.modal__header--orange .modal__close:hover {
+  background: #ffffff;
+  color: #c2410c;
+}
+
 .modal__body {
   overflow-y: auto;
   padding: 1.25rem 1.5rem 1.5rem;

@@ -1807,6 +1807,7 @@ export function PasienPage() {
         title="Edit Cepat: Nama & Kesan"
         onClose={() => setQuickEditOpen(false)}
         size="xl"
+        headerColor="orange"
       >
         <form onSubmit={(e) => void submitQuickEdit(e)} className="form-grid">
           {quickEditError && (

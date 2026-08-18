@@ -7,9 +7,10 @@ interface ModalProps {
   readonly onClose: () => void;
   readonly children: ReactNode;
   readonly size?: 'md' | 'lg' | 'xl';
+  readonly headerColor?: 'default' | 'orange';
 }
 
-export function Modal({ open, title, onClose, children, size = 'md' }: ModalProps) {
+export function Modal({ open, title, onClose, children, size = 'md', headerColor = 'default' }: ModalProps) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -34,7 +35,7 @@ export function Modal({ open, title, onClose, children, size = 'md' }: ModalProp
         aria-labelledby="modal-title"
         onClick={(e) => e.stopPropagation()}
       >
-        <header className="modal__header">
+        <header className={`modal__header${headerColor !== 'default' ? ` modal__header--${headerColor}` : ''}`}>
           <h2 id="modal-title" className="modal__title">
             {title}
           </h2>

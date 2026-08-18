@@ -758,6 +758,7 @@ export function RadiologWorkPage() {
         title="Edit Cepat: Nama & Kesan"
         onClose={() => setQuickEditItem(null)}
         size="xl"
+        headerColor="orange"
       >
         <form onSubmit={(e) => void submitQuickEdit(e)} className="form-grid">
           {quickEditError && (
