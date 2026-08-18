@@ -7,21 +7,16 @@ import {
   type AppViewId,
   type StaffRole,
 } from '../../config/navigation.ts';
-import { useMusicPlayer } from '../../context/MusicPlayerContext.tsx';
 import type { AuthUser } from '../../lib/auth.ts';
 import {
-  IconBell,
   IconClipboard,
   IconCurrency,
   IconDashboard,
   IconDocument,
   IconLogout,
-  IconMusic,
-  IconSettings,
   IconShield,
   IconStethoscope,
   IconTag,
-  IconUsers,
 } from '../icons/NavIcons.tsx';
 import './layout.css';
 
@@ -35,13 +30,31 @@ interface TopNavbarProps {
 
 type IconComponent = (props: { className?: string }) => JSX.Element;
 
+interface MenuItem {
+  readonly id: AppViewId;
+  readonly label: string;
+}
+
+const MEGA_DATA_ITEMS: readonly MenuItem[] = [
+  { id: 'fatra', label: 'Fatra' },
+  { id: 'musik-ph', label: 'Musik-PH' },
+  { id: 'templet', label: 'Templet' },
+  { id: 'transfer', label: 'Transfer' },
+  { id: 'daftar-telpon', label: 'Daftar Telpon' },
+  { id: 'kalender', label: 'Kalender' },
+  { id: 'whatsapp', label: 'WhatsApp' },
+  { id: 'telegram', label: 'Telegram' },
+  { id: 'kalkulator', label: 'Kalkulator' },
+  { id: 'ai-gemini', label: 'AI Gemini' },
+];
+
 type NavbarSpec =
   | { readonly type: 'link'; readonly id: AppViewId; readonly label: string; readonly icon: IconComponent }
-  | { readonly type: 'category'; readonly categoryId: string; readonly icon: IconComponent };
+  | { readonly type: 'category'; readonly categoryId: string; readonly icon: IconComponent }
+  | { readonly type: 'group'; readonly groupId: string; readonly label: string; readonly icon: IconComponent; readonly items: readonly MenuItem[] };
 
 const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'link', id: DASHBOARD_NAV_ID, label: 'Dashboard', icon: IconDashboard },
-  { type: 'link', id: 'data-terbesar', label: 'Data Terbesar', icon: IconTag },
   { type: 'category', categoryId: 'pendaftaran', icon: IconClipboard },
   { type: 'category', categoryId: 'radiologi', icon: IconStethoscope },
   { type: 'category', categoryId: 'laboratorium', icon: IconTag },
@@ -49,17 +62,8 @@ const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'category', categoryId: 'keuangan', icon: IconCurrency },
   { type: 'category', categoryId: 'master-sistem', icon: IconShield },
   { type: 'category', categoryId: 'farmasi', icon: IconDocument },
+  { type: 'group', groupId: 'mega-data', label: 'Mega Data', icon: IconTag, items: MEGA_DATA_ITEMS },
   { type: 'category', categoryId: 'anatomi', icon: IconStethoscope },
-  { type: 'link', id: 'fatra', label: 'Fatra', icon: IconUsers },
-  { type: 'link', id: 'musik-ph', label: 'Musik-PH', icon: IconMusic },
-  { type: 'category', categoryId: 'templet', icon: IconDocument },
-  { type: 'link', id: 'transfer', label: 'Transfer', icon: IconClipboard },
-  { type: 'link', id: 'daftar-telpon', label: 'Daftar Telpon', icon: IconClipboard },
-  { type: 'link', id: 'kalender', label: 'Kalender', icon: IconClipboard },
-  { type: 'link', id: 'whatsapp', label: 'WhatsApp', icon: IconClipboard },
-  { type: 'link', id: 'telegram', label: 'Telegram', icon: IconClipboard },
-  { type: 'link', id: 'kalkulator', label: 'Kalkulator', icon: IconClipboard },
-  { type: 'link', id: 'ai-gemini', label: 'AI Gemini', icon: IconClipboard },
   { type: 'link', id: 'ai-radiologi', label: 'AI Radiologi', icon: IconStethoscope },
   { type: 'link', id: 'ai-radiologi-grup', label: 'Data Master AI Radiologi', icon: IconTag },
 ];
@@ -78,25 +82,20 @@ function getInitials(name: string): string {
 }
 
 export function TopNavbar({ activeId, onNavigate, role, authUser, onLogout }: TopNavbarProps) {
-  const [openCategoryId, setOpenCategoryId] = useState<string | null>(null);
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
-  const { playingId, playLoadingId, playlist, toggleQuickPlay } = useMusicPlayer();
-  const isPlaying = playingId !== null;
-  const isLoading = playLoadingId !== null;
-  const playingSong = playlist.find((p) => p.id === playingId);
-  const hasPlaylist = playlist.length > 0;
   const initials = getInitials(authUser.nama) || 'LP';
 
   useEffect(() => {
-    if (!openCategoryId) return;
+    if (!openMenuId) return;
     function handlePointerDown(event: MouseEvent) {
       if (navRef.current && !navRef.current.contains(event.target as Node)) {
-        setOpenCategoryId(null);
+        setOpenMenuId(null);
       }
     }
     document.addEventListener('mousedown', handlePointerDown);
     return () => document.removeEventListener('mousedown', handlePointerDown);
-  }, [openCategoryId]);
+  }, [openMenuId]);
 
   return (
     <header className="app-navbar">
@@ -104,7 +103,10 @@ export function TopNavbar({ activeId, onNavigate, role, authUser, onLogout }: To
         <div className="app-navbar__logo">
           <img src={logoLabprima} alt="Klinik Prima Husada" className="app-navbar__logo-img" />
         </div>
-        <span className="app-navbar__title">Klinik Prima Husada</span>
+        <div className="app-navbar__brand-text">
+          <span className="app-navbar__title">Klinik Prima Husada</span>
+          <span className="app-navbar__subtitle">Sistem Informasi Klinik Prima Husada</span>
+        </div>
       </div>
 
       <nav className="app-navbar__nav" ref={navRef} aria-label="Navigasi utama">
@@ -120,7 +122,7 @@ export function TopNavbar({ activeId, onNavigate, role, authUser, onLogout }: To
                 className={`app-navbar__link ${isActive ? 'app-navbar__link--active' : ''}`}
                 onClick={() => {
                   onNavigate(spec.id);
-                  setOpenCategoryId(null);
+                  setOpenMenuId(null);
                 }}
               >
                 <Icon className="app-navbar__link-icon" />
@@ -129,26 +131,35 @@ export function TopNavbar({ activeId, onNavigate, role, authUser, onLogout }: To
             );
           }
 
-          const cat = MAIN_NAV_CATEGORIES.find((c) => c.id === spec.categoryId);
-          if (!cat) return null;
-          const visibleItems = cat.items.filter((item) => isViewAllowedForRole(item.id as AppViewId, role));
+          const menu: { readonly key: string; readonly label: string; readonly items: readonly MenuItem[] } | null =
+            spec.type === 'category'
+              ? (() => {
+                  const cat = MAIN_NAV_CATEGORIES.find((c) => c.id === spec.categoryId);
+                  return cat
+                    ? { key: cat.id, label: cat.label, items: cat.items.map((item) => ({ id: item.id as AppViewId, label: item.shortLabel ?? item.label })) }
+                    : null;
+                })()
+              : { key: spec.groupId, label: spec.label, items: spec.items };
+
+          if (!menu) return null;
+          const visibleItems = menu.items.filter((item) => isViewAllowedForRole(item.id, role));
           if (visibleItems.length === 0) return null;
 
           const Icon = spec.icon;
           const hasActiveChild = visibleItems.some((item) => item.id === activeId);
-          const isOpen = openCategoryId === cat.id;
+          const isOpen = openMenuId === menu.key;
 
           return (
-            <div key={cat.id} className="app-navbar__category">
+            <div key={menu.key} className="app-navbar__category">
               <button
                 type="button"
                 className={`app-navbar__link ${hasActiveChild ? 'app-navbar__link--active' : ''} ${isOpen ? 'app-navbar__link--open' : ''}`}
-                onClick={() => setOpenCategoryId(isOpen ? null : cat.id)}
+                onClick={() => setOpenMenuId(isOpen ? null : menu.key)}
                 aria-expanded={isOpen}
                 aria-haspopup="menu"
               >
                 <Icon className="app-navbar__link-icon" />
-                <span>{cat.label}</span>
+                <span>{menu.label}</span>
                 <span className="app-navbar__caret" aria-hidden>
                   ▾
                 </span>
@@ -163,11 +174,11 @@ export function TopNavbar({ activeId, onNavigate, role, authUser, onLogout }: To
                         role="menuitem"
                         className={`app-navbar__dropdown-link ${activeId === item.id ? 'app-navbar__dropdown-link--active' : ''}`}
                         onClick={() => {
-                          onNavigate(item.id as AppViewId);
-                          setOpenCategoryId(null);
+                          onNavigate(item.id);
+                          setOpenMenuId(null);
                         }}
                       >
-                        {item.shortLabel ?? item.label}
+                        {item.label}
                       </button>
                     </li>
                   ))}
@@ -179,35 +190,6 @@ export function TopNavbar({ activeId, onNavigate, role, authUser, onLogout }: To
       </nav>
 
       <div className="app-navbar__actions">
-        <button type="button" className="app-navbar__icon-btn" aria-label="Notifikasi">
-          <IconBell />
-        </button>
-
-        <button
-          type="button"
-          className="app-navbar__icon-btn"
-          aria-pressed={isPlaying}
-          aria-label={isPlaying ? `Hentikan musik: ${playingSong?.judul ?? ''}` : 'Putar musik'}
-          title={
-            isLoading
-              ? 'Memuat lagu…'
-              : isPlaying
-                ? `Hentikan musik: ${playingSong?.judul ?? ''}`
-                : hasPlaylist
-                  ? 'Putar musik dari Daftar Lagu'
-                  : 'Belum ada lagu di Daftar Lagu (Musik-PH)'
-          }
-          onClick={toggleQuickPlay}
-          disabled={isLoading || (!isPlaying && !hasPlaylist)}
-          style={isPlaying ? { color: 'var(--color-primary)' } : undefined}
-        >
-          {isLoading ? '⏳' : isPlaying ? '⏸️' : '▶️'}
-        </button>
-
-        <button type="button" className="app-navbar__icon-btn" aria-label="Pengaturan">
-          <IconSettings />
-        </button>
-
         <div className="app-navbar__user">
           <div className="app-navbar__user-text">
             <p className="app-navbar__user-name">{authUser.nama}</p>

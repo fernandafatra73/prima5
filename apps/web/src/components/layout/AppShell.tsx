@@ -1,8 +1,11 @@
 import type { ReactNode } from 'react';
 import type { AppViewId } from '../../config/navigation.ts';
 import type { AuthUser } from '../../lib/auth.ts';
+import { AutoTextBar } from './AutoTextBar.tsx';
 import { TopNavbar } from './TopNavbar.tsx';
 import './layout.css';
+
+const CLINIC_MARQUEE_TEXT = 'Klinik Prima Husada — Jl. Siliwangi Ruko Palapa No 2 Parung Kuda. Telp 0857-1932-5557';
 
 interface AppShellProps {
   readonly activeView: AppViewId;
@@ -23,6 +26,7 @@ export function AppShell({ activeView, authUser, onNavigate, onLogout, children 
         onLogout={onLogout}
       />
       <main className="app-content">{children}</main>
+      <AutoTextBar text={CLINIC_MARQUEE_TEXT} />
     </div>
   );
 }
