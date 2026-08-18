@@ -29,6 +29,12 @@ function horizontalBarOptions(categories: string[], colors: string[]): ApexOptio
         distributed: true,
       },
     },
+    dataLabels: {
+      enabled: true,
+      formatter: (val: number) => `${Math.round(val)}`,
+      offsetX: 20,
+      style: { fontSize: '12px', fontWeight: 600, colors: ['#1e293b'] },
+    },
     xaxis: {
       categories,
       labels: { style: { colors: '#64748b', fontSize: '12px' } },
