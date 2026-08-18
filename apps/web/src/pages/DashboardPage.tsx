@@ -2,9 +2,11 @@ import { useCallback, useEffect, useState } from 'react';
 import Chart from 'react-apexcharts';
 import type { ApexOptions } from 'apexcharts';
 import { baseChartOptions, paletteColors } from '../components/charts/chartTheme.ts';
+import { Modal } from '../components/ui/Modal.tsx';
+import { ModalFormFooter } from '../components/ui/ModalFormFooter.tsx';
 import { useListRefresh } from '../context/ListRefreshContext.tsx';
 import { useMusicPlayer } from '../context/MusicPlayerContext.tsx';
-import { apiGet } from '../lib/api.ts';
+import { apiGet, apiPatch } from '../lib/api.ts';
 
 interface DokterPengirimSlice {
   readonly nama: string;
@@ -58,15 +60,38 @@ function horizontalBarOptions(categories: string[], colors: string[], total: num
 }
 
 function DashboardMusicPlayer() {
-  const { playlist, playlistLoading, playingId, playLoadingId, playItem, stopPlaylist } = useMusicPlayer();
+  const { playlist, playlistLoading, playingId, playLoadingId, playItem, stopPlaylist, reloadPlaylist } =
+    useMusicPlayer();
 
   const playingSong = playlist.find((s) => s.id === playingId) ?? null;
+
+  const [lirikDraft, setLirikDraft] = useState('');
+  const [lirikOpen, setLirikOpen] = useState(false);
+  const [savingLirik, setSavingLirik] = useState(false);
 
   function playNext() {
     if (playlist.length === 0) return;
     const currentIndex = playingId ? playlist.findIndex((s) => s.id === playingId) : -1;
     const next = playlist[(currentIndex + 1) % playlist.length];
     if (next) playItem(next);
+  }
+
+  function openLirikEdit() {
+    if (!playingSong) return;
+    setLirikDraft(playingSong.lirik ?? '');
+    setLirikOpen(true);
+  }
+
+  async function saveLirik() {
+    if (!playingSong) return;
+    setSavingLirik(true);
+    try {
+      await apiPatch(`/api/playlist-lagu/${playingSong.id}`, { lirik: lirikDraft });
+      setLirikOpen(false);
+      await reloadPlaylist();
+    } finally {
+      setSavingLirik(false);
+    }
   }
 
   return (
@@ -111,8 +136,42 @@ function DashboardMusicPlayer() {
               ⏭️ Berikutnya
             </button>
           </div>
+          <button
+            type="button"
+            className="btn btn--sm btn--secondary"
+            style={{ width: '100%', marginTop: '0.5rem' }}
+            disabled={!playingSong}
+            onClick={openLirikEdit}
+            title={playingSong ? 'Isi lirik lagu ini untuk running text' : 'Putar lagu dahulu untuk isi lirik'}
+          >
+            📝 Isi Lirik untuk Running Text
+          </button>
         </>
       )}
+
+      <Modal open={lirikOpen} title={`Lirik — ${playingSong?.judul ?? ''}`} onClose={() => setLirikOpen(false)}>
+        <form
+          onSubmit={(e) => {
+            e.preventDefault();
+            void saveLirik();
+          }}
+          className="form-grid"
+        >
+          <div className="form-field form-grid--full">
+            <label htmlFor="dash-lirik-text">
+              Teks lirik (ditampilkan sebagai running text di ban bawah saat lagu ini diputar)
+            </label>
+            <textarea
+              id="dash-lirik-text"
+              rows={8}
+              value={lirikDraft}
+              onChange={(e) => setLirikDraft(e.target.value)}
+              placeholder="Tempel/ketik lirik lagu di sini…"
+            />
+          </div>
+          <ModalFormFooter onCancel={() => setLirikOpen(false)} submitLabel="Simpan" loading={savingLirik} />
+        </form>
+      </Modal>
     </div>
   );
 }
