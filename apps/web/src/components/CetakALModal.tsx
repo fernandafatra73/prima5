@@ -313,7 +313,7 @@ export function CetakALModal({
         : mode === 'amplopv2' || mode === 'amplopv3'
           ? '@page { margin: 3cm 0 0 0; }'
           : mode === 'amplop'
-            ? '@page { margin: 0; }'
+            ? '@page { margin: 2cm 0 0 0.5cm; }'
             : '@page { margin: 15mm; }';
     const bodyPadding =
       mode === 'label' || mode === 'amplop' || mode === 'amplopv2' || mode === 'amplopv3' ? '0' : '20px';
