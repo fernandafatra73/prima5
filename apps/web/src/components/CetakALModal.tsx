@@ -1,10 +1,32 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, type CSSProperties } from 'react';
 import { Modal } from './ui/Modal.tsx';
 import { computeUmurYears, formatDateShort } from '../lib/format.ts';
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
 import { apiGet } from '../lib/api.ts';
 import logoLabprima from '@src/image/logo-labprima.png';
 import './ui/ui.css';
+
+const editInputStyle: CSSProperties = {
+  width: '100%',
+  padding: '0.25rem 0.4rem',
+  fontSize: '0.8rem',
+  border: '1px solid #cbd5e1',
+  borderRadius: '4px',
+  fontFamily: 'inherit',
+};
+
+interface AmplopFormFields {
+  readonly nama: string;
+  readonly umur: string;
+  readonly alamat: string;
+  readonly tanggal: string;
+  readonly jenisNames: string;
+  readonly pengirimNama: string;
+}
+
+interface CetakALFormState extends AmplopFormFields {
+  readonly regCode: string;
+}
 
 interface KopSuratData {
   readonly namaKlinik: string;
@@ -42,73 +64,87 @@ export interface CetakALPasien {
 type CetakALMode = 'amplop' | 'amplopv2' | 'amplopv3' | 'label' | 'both';
 
 function AmplopV2TablePreview({
-  nama,
-  umur,
-  alamat,
-  tanggal,
-  jenisNames,
-  pengirimNama,
+  form,
+  editing,
+  onChange,
 }: {
-  readonly nama: string;
-  readonly umur: number;
-  readonly alamat: string | null | undefined;
-  readonly tanggal: string;
-  readonly jenisNames: string;
-  readonly pengirimNama: string;
+  readonly form: AmplopFormFields;
+  readonly editing: boolean;
+  readonly onChange: (field: keyof AmplopFormFields, value: string) => void;
 }) {
+  const valueCellStyle = { border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 } as const;
+  const labelCellStyle = { border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' } as const;
+  const colonCellStyle = { border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' } as const;
+
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1rem' }}>
       <tbody>
         <tr>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '18%' }}>
-            Nama Pasien
+          <td style={{ ...labelCellStyle, width: '18%' }}>Nama Pasien</td>
+          <td style={{ ...colonCellStyle, width: '3%' }}>:</td>
+          <td style={valueCellStyle}>
+            {editing ? (
+              <input value={form.nama} onChange={(e) => onChange('nama', e.target.value)} style={editInputStyle} />
+            ) : (
+              form.nama
+            )}
           </td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '3%', textAlign: 'center' }}>
-            :
-          </td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-            {nama}
-          </td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '14%' }}>
-            Umur
-          </td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '3%', textAlign: 'center' }}>
-            :
-          </td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-            {umur} thn
-          </td>
-        </tr>
-        <tr>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Alamat</td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
-            :
-          </td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-            {alamat ?? '-'}
-          </td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Tanggal</td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
-            :
-          </td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-            {tanggal}
+          <td style={{ ...labelCellStyle, width: '14%' }}>Umur</td>
+          <td style={{ ...colonCellStyle, width: '3%' }}>:</td>
+          <td style={valueCellStyle}>
+            {editing ? (
+              <input value={form.umur} onChange={(e) => onChange('umur', e.target.value)} style={editInputStyle} />
+            ) : (
+              `${form.umur} thn`
+            )}
           </td>
         </tr>
         <tr>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Pemeriksaan</td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
-            :
+          <td style={labelCellStyle}>Alamat</td>
+          <td style={colonCellStyle}>:</td>
+          <td style={valueCellStyle}>
+            {editing ? (
+              <input value={form.alamat} onChange={(e) => onChange('alamat', e.target.value)} style={editInputStyle} />
+            ) : (
+              form.alamat || '-'
+            )}
           </td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-            {jenisNames}
+          <td style={labelCellStyle}>Tanggal</td>
+          <td style={colonCellStyle}>:</td>
+          <td style={valueCellStyle}>
+            {editing ? (
+              <input value={form.tanggal} onChange={(e) => onChange('tanggal', e.target.value)} style={editInputStyle} />
+            ) : (
+              form.tanggal
+            )}
           </td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Pengirim</td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
-            :
+        </tr>
+        <tr>
+          <td style={labelCellStyle}>Pemeriksaan</td>
+          <td style={colonCellStyle}>:</td>
+          <td style={valueCellStyle}>
+            {editing ? (
+              <input
+                value={form.jenisNames}
+                onChange={(e) => onChange('jenisNames', e.target.value)}
+                style={editInputStyle}
+              />
+            ) : (
+              form.jenisNames
+            )}
           </td>
-          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-            {pengirimNama}
+          <td style={labelCellStyle}>Pengirim</td>
+          <td style={colonCellStyle}>:</td>
+          <td style={valueCellStyle}>
+            {editing ? (
+              <input
+                value={form.pengirimNama}
+                onChange={(e) => onChange('pengirimNama', e.target.value)}
+                style={editInputStyle}
+              />
+            ) : (
+              form.pengirimNama
+            )}
           </td>
         </tr>
       </tbody>
@@ -133,6 +169,16 @@ export function CetakALModal({
   const [copied, setCopied] = useState(false);
   const [labelPosition, setLabelPosition] = useState(1);
   const [kopSurat, setKopSurat] = useState<KopSuratData>(KOP_SURAT_DEFAULTS);
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState<CetakALFormState>({
+    regCode: '',
+    nama: '',
+    umur: '',
+    alamat: '',
+    tanggal: '',
+    jenisNames: '',
+    pengirimNama: '',
+  });
   const LABEL_POSITIONS = Array.from({ length: 12 }, (_, i) => i + 1);
 
   useEffect(() => {
@@ -141,25 +187,37 @@ export function CetakALModal({
       .catch(() => setKopSurat(KOP_SURAT_DEFAULTS));
   }, []);
 
+  useEffect(() => {
+    if (!pasien) return;
+    const umurValue = pasien.umur ?? computeUmurYears(pasien.tanggalLahir, pasien.createdAt) ?? 0;
+    setForm({
+      regCode: pasien.regCode,
+      nama: pasien.nama,
+      umur: String(umurValue),
+      alamat: pasien.alamat ?? '',
+      tanggal: formatDateShort(pasien.createdAt),
+      jenisNames: pasien.pemeriksaan.map((p) => p.nama).join(', ') || 'Pemeriksaan Radiologi',
+      pengirimNama: pasien.pengirim.nama,
+    });
+    setEditing(false);
+  }, [pasien]);
+
   if (!pasien) {
     return null;
   }
 
-  const umur = pasien.umur ?? computeUmurYears(pasien.tanggalLahir, pasien.createdAt) ?? 0;
-  const tanggal = formatDateShort(pasien.createdAt);
-  const jenisNames =
-    pasien.pemeriksaan.map((p) => p.nama).join(', ') || 'Pemeriksaan Radiologi';
+  function updateForm(field: keyof CetakALFormState, value: string) {
+    setForm((f) => ({ ...f, [field]: value }));
+  }
 
   function handleCopyLabel() {
-    if (!pasien) return;
-    const text = `[PRIMA HUSADA RADIOLOGI]\nRM/FOTO: ${pasien.regCode}\nNama: ${pasien.nama} (${umur} thn)\nPemeriksaan: ${jenisNames}\nTgl: ${tanggal} | Dr: ${pasien.pengirim.nama}`;
+    const text = `[PRIMA HUSADA RADIOLOGI]\nRM/FOTO: ${form.regCode}\nNama: ${form.nama} (${form.umur} thn)\nPemeriksaan: ${form.jenisNames}\nTgl: ${form.tanggal} | Dr: ${form.pengirimNama}`;
     void navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   }
 
   async function handlePrintNow() {
-    if (!pasien) return;
     const win = window.open('', '_blank', 'width=850,height=700');
     if (!win) {
       alert('Jendela cetak diblokir oleh browser. Harap izinkan pop-up untuk situs ini.');
@@ -178,26 +236,26 @@ export function CetakALModal({
           <tr>
             <td class="amplopv2-label">Nama Pasien</td>
             <td class="amplopv2-colon">:</td>
-            <td class="amplopv2-value">${pasien.nama}</td>
+            <td class="amplopv2-value">${form.nama}</td>
             <td class="amplopv2-label">Umur</td>
             <td class="amplopv2-colon">:</td>
-            <td class="amplopv2-value">${umur} thn</td>
+            <td class="amplopv2-value">${form.umur} thn</td>
           </tr>
           <tr>
             <td class="amplopv2-label">Alamat</td>
             <td class="amplopv2-colon">:</td>
-            <td class="amplopv2-value">${pasien.alamat ?? '-'}</td>
+            <td class="amplopv2-value">${form.alamat || '-'}</td>
             <td class="amplopv2-label">Tanggal</td>
             <td class="amplopv2-colon">:</td>
-            <td class="amplopv2-value">${tanggal}</td>
+            <td class="amplopv2-value">${form.tanggal}</td>
           </tr>
           <tr>
             <td class="amplopv2-label">Pemeriksaan</td>
             <td class="amplopv2-colon">:</td>
-            <td class="amplopv2-value">${jenisNames}</td>
+            <td class="amplopv2-value">${form.jenisNames}</td>
             <td class="amplopv2-label">Pengirim</td>
             <td class="amplopv2-colon">:</td>
-            <td class="amplopv2-value">${pasien.pengirim.nama}</td>
+            <td class="amplopv2-value">${form.pengirimNama}</td>
           </tr>
         </table>
     `;
@@ -244,23 +302,23 @@ export function CetakALModal({
           <table class="amplop-table">
             <tr>
               <th>No. Foto / RM</th>
-              <td><strong>${pasien.regCode}</strong></td>
+              <td><strong>${form.regCode}</strong></td>
             </tr>
             <tr>
               <th>Nama Pasien</th>
-              <td><strong>${pasien.nama}</strong> (${umur} tahun)</td>
+              <td><strong>${form.nama}</strong> (${form.umur} tahun)</td>
             </tr>
             <tr>
               <th>Tanggal Foto</th>
-              <td>${tanggal}</td>
+              <td>${form.tanggal}</td>
             </tr>
             <tr>
               <th>Jenis Pemeriksaan</th>
-              <td><strong>${jenisNames}</strong></td>
+              <td><strong>${form.jenisNames}</strong></td>
             </tr>
             <tr>
               <th>Kepada Yth. TS</th>
-              <td>${pasien.pengirim.nama}</td>
+              <td>${form.pengirimNama}</td>
             </tr>
           </table>
         </div>
@@ -277,11 +335,11 @@ export function CetakALModal({
             <div class="label-subtitle">Jl Siliwangi Ruko Palapa No 2 Parung Kuda</div>
           </div>
           <table class="label-table">
-            <tr><th>No. Foto / RM</th><td>${pasien.regCode}</td></tr>
-            <tr><th>Nama Pasien</th><td>${pasien.nama} (${umur} thn)</td></tr>
-            <tr><th>Tanggal Foto</th><td>${tanggal}</td></tr>
-            <tr><th>Jenis Pemeriksaan</th><td>${jenisNames}</td></tr>
-            <tr><th>Dokter Pengirim</th><td>${pasien.pengirim.nama}</td></tr>
+            <tr><th>No. Foto / RM</th><td>${form.regCode}</td></tr>
+            <tr><th>Nama Pasien</th><td>${form.nama} (${form.umur} thn)</td></tr>
+            <tr><th>Tanggal Foto</th><td>${form.tanggal}</td></tr>
+            <tr><th>Jenis Pemeriksaan</th><td>${form.jenisNames}</td></tr>
+            <tr><th>Dokter Pengirim</th><td>${form.pengirimNama}</td></tr>
           </table>
         </div>
     `;
@@ -718,7 +776,11 @@ export function CetakALModal({
                       No. Foto / RM
                     </th>
                     <td style={{ padding: '8px 4px', fontWeight: 700, fontSize: '1.05rem' }}>
-                      {pasien.regCode}
+                      {editing ? (
+                        <input value={form.regCode} onChange={(e) => updateForm('regCode', e.target.value)} style={editInputStyle} />
+                      ) : (
+                        form.regCode
+                      )}
                     </td>
                   </tr>
                   <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
@@ -726,28 +788,71 @@ export function CetakALModal({
                       Nama Pasien
                     </th>
                     <td style={{ padding: '8px 4px' }}>
-                      <strong>{pasien.nama}</strong> ({umur} tahun)
+                      {editing ? (
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <input
+                            value={form.nama}
+                            onChange={(e) => updateForm('nama', e.target.value)}
+                            style={{ ...editInputStyle, flex: 1 }}
+                            placeholder="Nama pasien"
+                          />
+                          <input
+                            value={form.umur}
+                            onChange={(e) => updateForm('umur', e.target.value)}
+                            style={{ ...editInputStyle, width: '70px' }}
+                            placeholder="Umur"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <strong>{form.nama}</strong> ({form.umur} tahun)
+                        </>
+                      )}
                     </td>
                   </tr>
                   <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>
                       Tanggal Foto
                     </th>
-                    <td style={{ padding: '8px 4px' }}>{tanggal}</td>
+                    <td style={{ padding: '8px 4px' }}>
+                      {editing ? (
+                        <input value={form.tanggal} onChange={(e) => updateForm('tanggal', e.target.value)} style={editInputStyle} />
+                      ) : (
+                        form.tanggal
+                      )}
+                    </td>
                   </tr>
                   <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                     <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>
                       Jenis Pemeriksaan
                     </th>
                     <td style={{ padding: '8px 4px', fontWeight: 600, color: '#0f172a' }}>
-                      {jenisNames}
+                      {editing ? (
+                        <input
+                          value={form.jenisNames}
+                          onChange={(e) => updateForm('jenisNames', e.target.value)}
+                          style={editInputStyle}
+                        />
+                      ) : (
+                        form.jenisNames
+                      )}
                     </td>
                   </tr>
                   <tr>
                     <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>
                       Kepada Yth. TS
                     </th>
-                    <td style={{ padding: '8px 4px' }}>{pasien.pengirim.nama}</td>
+                    <td style={{ padding: '8px 4px' }}>
+                      {editing ? (
+                        <input
+                          value={form.pengirimNama}
+                          onChange={(e) => updateForm('pengirimNama', e.target.value)}
+                          style={editInputStyle}
+                        />
+                      ) : (
+                        form.pengirimNama
+                      )}
+                    </td>
                   </tr>
                 </tbody>
               </table>
@@ -798,14 +903,7 @@ export function CetakALModal({
                   <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>Telp/HP 0857-1932-5557</div>
                 </div>
               </div>
-              <AmplopV2TablePreview
-                nama={pasien.nama}
-                umur={umur}
-                alamat={pasien.alamat}
-                tanggal={tanggal}
-                jenisNames={jenisNames}
-                pengirimNama={pasien.pengirim.nama}
-              />
+              <AmplopV2TablePreview form={form} editing={editing} onChange={updateForm} />
               <div style={{ textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, fontStyle: 'italic', color: '#1d4ed8' }}>
                 HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!
               </div>
@@ -843,14 +941,7 @@ export function CetakALModal({
                   <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>Telp/HP {kopSurat.telepon}</div>
                 </div>
               </div>
-              <AmplopV2TablePreview
-                nama={pasien.nama}
-                umur={umur}
-                alamat={pasien.alamat}
-                tanggal={tanggal}
-                jenisNames={jenisNames}
-                pengirimNama={pasien.pengirim.nama}
-              />
+              <AmplopV2TablePreview form={form} editing={editing} onChange={updateForm} />
               <div style={{ textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, fontStyle: 'italic', color: '#1d4ed8' }}>
                 HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!
               </div>
@@ -900,7 +991,7 @@ export function CetakALModal({
                           Prima Husada
                         </div>
                         <div style={{ fontSize: '0.7rem', fontWeight: 800, color: '#0f172a' }}>
-                          {pasien.regCode}
+                          {form.regCode}
                         </div>
                         <div
                           style={{
@@ -913,7 +1004,7 @@ export function CetakALModal({
                             maxWidth: '100%',
                           }}
                         >
-                          {pasien.nama}
+                          {form.nama}
                         </div>
                       </div>
                     ) : (
@@ -946,7 +1037,14 @@ export function CetakALModal({
             borderTop: '1px solid #e2e8f0',
           }}
         >
-          <div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              type="button"
+              className="btn btn--secondary btn--sm"
+              onClick={() => setEditing((e) => !e)}
+            >
+              {editing ? '✓ Selesai Edit' : '✏️ Edit'}
+            </button>
             <button
               type="button"
               className="btn btn--secondary btn--sm"
