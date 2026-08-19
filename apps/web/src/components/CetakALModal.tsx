@@ -315,7 +315,8 @@ export function CetakALModal({
           : mode === 'amplop'
             ? '@page { margin: 0; }'
             : '@page { margin: 15mm; }';
-    const bodyPadding = mode === 'label' || mode === 'amplopv2' || mode === 'amplopv3' ? '0' : '20px';
+    const bodyPadding =
+      mode === 'label' || mode === 'amplop' || mode === 'amplopv2' || mode === 'amplopv3' ? '0' : '20px';
 
     win.document.write(`
       <!DOCTYPE html>
@@ -332,36 +333,43 @@ export function CetakALModal({
               padding: ${bodyPadding};
             }
             .amplop-sheet {
-              width: 12cm;
-              height: 8cm;
+              width: 8cm;
+              height: 6cm;
               box-sizing: border-box;
               overflow: hidden;
-              border: 2px solid #000;
-              padding: 10px;
-              border-radius: 6px;
-              margin: 0 auto;
+              border: 1.75px solid #1e293b;
+              padding: 8px;
+              border-radius: 8px;
+              margin: 0;
               display: flex;
               flex-direction: column;
             }
             .amplop-header {
               text-align: center;
-              border-bottom: 1.5px solid #000;
-              padding-bottom: 6px;
-              margin-bottom: 8px;
+              border-bottom: 1.5px solid #1d4ed8;
+              padding-bottom: 4px;
+              margin-bottom: 5px;
             }
             .amplop-title {
-              font-size: 14px;
-              font-weight: 700;
+              font-size: 12.5px;
+              font-weight: 800;
               letter-spacing: 0.3px;
+              color: #0f172a;
             }
             .amplop-subtitle {
-              font-size: 11px;
-              font-weight: 600;
-              margin-top: 3px;
+              font-size: 9px;
+              font-weight: 700;
+              margin-top: 2px;
+              color: #1d4ed8;
+              text-transform: uppercase;
+              letter-spacing: 0.4px;
             }
             .amplop-body {
               flex: 1;
               min-height: 0;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
             }
             .amplop-table {
               width: 100%;
@@ -370,10 +378,10 @@ export function CetakALModal({
             }
             .amplop-table th {
               text-align: left;
-              width: 100px;
-              padding: 3px 6px 3px 0;
-              font-size: 10.5px;
-              color: #334155;
+              width: 80px;
+              padding: 3px 4px 3px 0;
+              font-size: 8.5px;
+              color: #475569;
               border-bottom: 1px solid #e2e8f0;
               vertical-align: top;
               white-space: nowrap;
@@ -382,7 +390,8 @@ export function CetakALModal({
             }
             .amplop-table td {
               padding: 3px 0;
-              font-size: 11.5px;
+              font-size: 9.5px;
+              color: #0f172a;
               border-bottom: 1px solid #e2e8f0;
               vertical-align: top;
               white-space: nowrap;
@@ -390,10 +399,10 @@ export function CetakALModal({
               text-overflow: ellipsis;
             }
             .amplop-footer {
-              margin-top: 6px;
-              font-size: 8.5px;
+              margin-top: 4px;
+              font-size: 7px;
               font-style: italic;
-              color: #475569;
+              color: #64748b;
               text-align: center;
             }
 
