@@ -186,10 +186,12 @@ export function CetakALModal({
     const pageCss =
       mode === 'label'
         ? '@page { size: 20.5cm 14.8cm landscape; margin: 0; }'
-        : mode === 'amplop' || mode === 'amplopv2'
-          ? '@page { margin: 0; }'
-          : '@page { margin: 15mm; }';
-    const bodyPadding = mode === 'label' ? '0' : '20px';
+        : mode === 'amplopv2'
+          ? '@page { margin: 3cm 0 0 0; }'
+          : mode === 'amplop'
+            ? '@page { margin: 0; }'
+            : '@page { margin: 15mm; }';
+    const bodyPadding = mode === 'label' || mode === 'amplopv2' ? '0' : '20px';
 
     win.document.write(`
       <!DOCTYPE html>
@@ -313,10 +315,11 @@ export function CetakALModal({
               font-weight: 700;
             }
             .amplopv2-table {
-              width: 100%;
+              width: 12cm;
+              height: 3cm;
               border-collapse: collapse;
               table-layout: fixed;
-              margin-bottom: 10px;
+              margin: 0 auto 10px auto;
             }
             .amplopv2-table td {
               border: 1px solid #000;
