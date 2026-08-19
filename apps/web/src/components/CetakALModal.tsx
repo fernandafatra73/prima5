@@ -288,7 +288,7 @@ export function CetakALModal({
               display: flex;
               align-items: center;
               justify-content: center;
-              gap: 10px;
+              gap: 16px;
               margin-bottom: 10px;
             }
             .amplopv2-logo {
@@ -302,16 +302,16 @@ export function CetakALModal({
               color: #1d4ed8;
             }
             .amplopv2-kop {
-              font-size: 9px;
+              font-size: 10.5px;
               font-weight: 700;
             }
             .amplopv2-clinicname {
-              font-size: 16px;
+              font-size: 19px;
               font-weight: 800;
               line-height: 1.3;
             }
             .amplopv2-address {
-              font-size: 8.5px;
+              font-size: 10px;
               font-weight: 700;
             }
             .amplopv2-table {
@@ -324,7 +324,7 @@ export function CetakALModal({
             .amplopv2-table td {
               border: 1px solid #000;
               padding: 3px 5px;
-              font-size: 8.5px;
+              font-size: 10px;
               vertical-align: middle;
             }
             .amplopv2-label {
@@ -346,7 +346,7 @@ export function CetakALModal({
             }
             .amplopv2-footer {
               text-align: center;
-              font-size: 9px;
+              font-size: 10.5px;
               font-weight: 700;
               font-style: italic;
               color: #1d4ed8;
