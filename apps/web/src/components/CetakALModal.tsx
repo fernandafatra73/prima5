@@ -1,9 +1,24 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Modal } from './ui/Modal.tsx';
 import { computeUmurYears, formatDateShort } from '../lib/format.ts';
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
+import { apiGet } from '../lib/api.ts';
 import logoLabprima from '@src/image/logo-labprima.png';
 import './ui/ui.css';
+
+interface KopSuratData {
+  readonly namaKlinik: string;
+  readonly alamat: string;
+  readonly telepon: string;
+  readonly logoDataUrl: string | null;
+}
+
+const KOP_SURAT_DEFAULTS: KopSuratData = {
+  namaKlinik: 'KLINIK PRIMA HUSADA',
+  alamat: 'Jl. Siliwangi Ruko Palapa No 2 Parung Kuda',
+  telepon: '0857-1932-5557',
+  logoDataUrl: null,
+};
 
 export interface CetakALPasien {
   readonly id: string;
@@ -24,7 +39,82 @@ export interface CetakALPasien {
   }[];
 }
 
-type CetakALMode = 'amplop' | 'amplopv2' | 'label' | 'both';
+type CetakALMode = 'amplop' | 'amplopv2' | 'amplopv3' | 'label' | 'both';
+
+function AmplopV2TablePreview({
+  nama,
+  umur,
+  alamat,
+  tanggal,
+  jenisNames,
+  pengirimNama,
+}: {
+  readonly nama: string;
+  readonly umur: number;
+  readonly alamat: string | null | undefined;
+  readonly tanggal: string;
+  readonly jenisNames: string;
+  readonly pengirimNama: string;
+}) {
+  return (
+    <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+      <tbody>
+        <tr>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '18%' }}>
+            Nama Pasien
+          </td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '3%', textAlign: 'center' }}>
+            :
+          </td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+            {nama}
+          </td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '14%' }}>
+            Umur
+          </td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '3%', textAlign: 'center' }}>
+            :
+          </td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+            {umur} thn
+          </td>
+        </tr>
+        <tr>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Alamat</td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
+            :
+          </td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+            {alamat ?? '-'}
+          </td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Tanggal</td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
+            :
+          </td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+            {tanggal}
+          </td>
+        </tr>
+        <tr>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Pemeriksaan</td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
+            :
+          </td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+            {jenisNames}
+          </td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Pengirim</td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
+            :
+          </td>
+          <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
+            {pengirimNama}
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  );
+}
 
 interface CetakALModalProps {
   readonly open: boolean;
@@ -42,7 +132,14 @@ export function CetakALModal({
   const [mode, setMode] = useState<CetakALMode>(initialMode);
   const [copied, setCopied] = useState(false);
   const [labelPosition, setLabelPosition] = useState(1);
+  const [kopSurat, setKopSurat] = useState<KopSuratData>(KOP_SURAT_DEFAULTS);
   const LABEL_POSITIONS = Array.from({ length: 12 }, (_, i) => i + 1);
+
+  useEffect(() => {
+    apiGet<{ item: KopSuratData }>('/api/kop-surat')
+      .then((res) => setKopSurat(res.item))
+      .catch(() => setKopSurat(KOP_SURAT_DEFAULTS));
+  }, []);
 
   if (!pasien) {
     return null;
@@ -69,19 +166,14 @@ export function CetakALModal({
       return;
     }
 
-    const logoSrc = mode === 'amplopv2' ? await loadLogoDataUrl().catch(() => '') : '';
+    const logoSrc =
+      mode === 'amplopv2'
+        ? await loadLogoDataUrl().catch(() => '')
+        : mode === 'amplopv3'
+          ? kopSurat.logoDataUrl || (await loadLogoDataUrl().catch(() => ''))
+          : '';
 
-    const amplopV2Html = `
-      <div class="amplopv2-sheet">
-        <div class="amplopv2-header">
-          ${logoSrc ? `<img class="amplopv2-logo" src="${logoSrc}" alt="Logo" />` : ''}
-          <div class="amplopv2-headertext">
-            <div class="amplopv2-kop">KLINIK ROENTGEN DAN USG</div>
-            <div class="amplopv2-clinicname">PRIMA HUSADA</div>
-            <div class="amplopv2-address">Jl. Raya Siliwangi Parung Kuda</div>
-            <div class="amplopv2-address">Telp/HP 0857-1932-5557</div>
-          </div>
-        </div>
+    const amplopV2TableHtml = `
         <table class="amplopv2-table">
           <tr>
             <td class="amplopv2-label">Nama Pasien</td>
@@ -108,6 +200,36 @@ export function CetakALModal({
             <td class="amplopv2-value">${pasien.pengirim.nama}</td>
           </tr>
         </table>
+    `;
+
+    const amplopV2Html = `
+      <div class="amplopv2-sheet">
+        <div class="amplopv2-header">
+          ${logoSrc ? `<img class="amplopv2-logo" src="${logoSrc}" alt="Logo" />` : ''}
+          <div class="amplopv2-headertext">
+            <div class="amplopv2-kop">KLINIK ROENTGEN DAN USG</div>
+            <div class="amplopv2-clinicname">PRIMA HUSADA</div>
+            <div class="amplopv2-address">Jl. Raya Siliwangi Parung Kuda</div>
+            <div class="amplopv2-address">Telp/HP 0857-1932-5557</div>
+          </div>
+        </div>
+        ${amplopV2TableHtml}
+        <div class="amplopv2-footer">HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!</div>
+      </div>
+    `;
+
+    const amplopV3Html = `
+      <div class="amplopv2-sheet">
+        <div class="amplopv2-header">
+          ${logoSrc ? `<img class="amplopv2-logo" src="${logoSrc}" alt="Logo" />` : ''}
+          <div class="amplopv2-headertext">
+            <div class="amplopv2-kop">KLINIK ROENTGEN DAN USG</div>
+            <div class="amplopv2-clinicname">${kopSurat.namaKlinik}</div>
+            <div class="amplopv2-address">${kopSurat.alamat}</div>
+            <div class="amplopv2-address">Telp/HP ${kopSurat.telepon}</div>
+          </div>
+        </div>
+        ${amplopV2TableHtml}
         <div class="amplopv2-footer">HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!</div>
       </div>
     `;
@@ -179,19 +301,21 @@ export function CetakALModal({
         ? amplopHtml
         : mode === 'amplopv2'
           ? amplopV2Html
-          : mode === 'label'
-            ? labelHtml
-            : `${amplopHtml}<div style="page-break-after: always;"></div>${labelHtml}`;
+          : mode === 'amplopv3'
+            ? amplopV3Html
+            : mode === 'label'
+              ? labelHtml
+              : `${amplopHtml}<div style="page-break-after: always;"></div>${labelHtml}`;
 
     const pageCss =
       mode === 'label'
         ? '@page { size: 20.5cm 14.8cm landscape; margin: 0; }'
-        : mode === 'amplopv2'
+        : mode === 'amplopv2' || mode === 'amplopv3'
           ? '@page { margin: 3cm 0 0 0; }'
           : mode === 'amplop'
             ? '@page { margin: 0; }'
             : '@page { margin: 15mm; }';
-    const bodyPadding = mode === 'label' || mode === 'amplopv2' ? '0' : '20px';
+    const bodyPadding = mode === 'label' || mode === 'amplopv2' || mode === 'amplopv3' ? '0' : '20px';
 
     win.document.write(`
       <!DOCTYPE html>
@@ -487,6 +611,13 @@ export function CetakALModal({
           </button>
           <button
             type="button"
+            className={`btn btn--sm ${mode === 'amplopv3' ? 'btn--primary' : 'btn--secondary'}`}
+            onClick={() => setMode('amplopv3')}
+          >
+            🧾 Amplop V3
+          </button>
+          <button
+            type="button"
             className={`btn btn--sm ${mode === 'label' ? 'btn--primary' : 'btn--secondary'}`}
             onClick={() => setMode('label')}
           >
@@ -658,62 +789,59 @@ export function CetakALModal({
                   <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>Telp/HP 0857-1932-5557</div>
                 </div>
               </div>
-              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1rem' }}>
-                <tbody>
-                  <tr>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '18%' }}>
-                      Nama Pasien
-                    </td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '3%', textAlign: 'center' }}>
-                      :
-                    </td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-                      {pasien.nama}
-                    </td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '14%' }}>
-                      Umur
-                    </td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', width: '3%', textAlign: 'center' }}>
-                      :
-                    </td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-                      {umur} thn
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Alamat</td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
-                      :
-                    </td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-                      {pasien.alamat ?? '-'}
-                    </td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Tanggal</td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
-                      :
-                    </td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-                      {tanggal}
-                    </td>
-                  </tr>
-                  <tr>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Pemeriksaan</td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
-                      :
-                    </td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-                      {jenisNames}
-                    </td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' }}>Pengirim</td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' }}>
-                      :
-                    </td>
-                    <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 }}>
-                      {pasien.pengirim.nama}
-                    </td>
-                  </tr>
-                </tbody>
-              </table>
+              <AmplopV2TablePreview
+                nama={pasien.nama}
+                umur={umur}
+                alamat={pasien.alamat}
+                tanggal={tanggal}
+                jenisNames={jenisNames}
+                pengirimNama={pasien.pengirim.nama}
+              />
+              <div style={{ textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, fontStyle: 'italic', color: '#1d4ed8' }}>
+                HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!
+              </div>
+            </div>
+          )}
+
+          {mode === 'amplopv3' && (
+            <div
+              style={{
+                background: '#ffffff',
+                border: '2px solid #1e293b',
+                borderRadius: '8px',
+                padding: '1.5rem',
+                boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.08)',
+              }}
+            >
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '0.75rem',
+                  marginBottom: '1rem',
+                }}
+              >
+                <img
+                  src={kopSurat.logoDataUrl || logoLabprima}
+                  alt="Logo"
+                  style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }}
+                />
+                <div style={{ textAlign: 'center', color: '#1d4ed8' }}>
+                  <div style={{ fontSize: '0.7rem', fontWeight: 700 }}>KLINIK ROENTGEN DAN USG</div>
+                  <div style={{ fontSize: '1.2rem', fontWeight: 800, lineHeight: 1.3 }}>{kopSurat.namaKlinik}</div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>{kopSurat.alamat}</div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>Telp/HP {kopSurat.telepon}</div>
+                </div>
+              </div>
+              <AmplopV2TablePreview
+                nama={pasien.nama}
+                umur={umur}
+                alamat={pasien.alamat}
+                tanggal={tanggal}
+                jenisNames={jenisNames}
+                pengirimNama={pasien.pengirim.nama}
+              />
               <div style={{ textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, fontStyle: 'italic', color: '#1d4ed8' }}>
                 HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!
               </div>
