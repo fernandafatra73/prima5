@@ -1,6 +1,16 @@
+import { useEffect, useState, type CSSProperties } from 'react';
 import { Modal } from './ui/Modal.tsx';
 import { computeUmurYears, formatDateShort } from '../lib/format.ts';
 import './ui/ui.css';
+
+const editInputStyle: CSSProperties = {
+  width: '100%',
+  padding: '0.3rem 0.5rem',
+  fontSize: '0.9rem',
+  border: '1px solid #cbd5e1',
+  borderRadius: '4px',
+  fontFamily: 'inherit',
+};
 
 export interface CetakAmplopLabPasien {
   readonly id: string;
@@ -24,16 +34,35 @@ interface CetakAmplopLabModalProps {
 }
 
 export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabModalProps) {
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState({
+    regCode: '',
+    nama: '',
+    umur: '',
+    tanggal: '',
+    jenisNames: '',
+    pengirimNama: '',
+  });
+
+  useEffect(() => {
+    if (!pasien) return;
+    const umurValue = pasien.umur ?? computeUmurYears(pasien.tanggalLahir, pasien.createdAt) ?? 0;
+    setForm({
+      regCode: pasien.regCode,
+      nama: pasien.nama,
+      umur: String(umurValue),
+      tanggal: formatDateShort(pasien.createdAt),
+      jenisNames: pasien.pemeriksaan.map((p) => p.nama).join(', ') || 'Pemeriksaan Laboratorium',
+      pengirimNama: pasien.pengirim.nama,
+    });
+    setEditing(false);
+  }, [pasien]);
+
   if (!pasien) {
     return null;
   }
 
-  const umur = pasien.umur ?? computeUmurYears(pasien.tanggalLahir, pasien.createdAt) ?? 0;
-  const tanggal = formatDateShort(pasien.createdAt);
-  const jenisNames = pasien.pemeriksaan.map((p) => p.nama).join(', ') || 'Pemeriksaan Laboratorium';
-
   function handlePrintNow() {
-    if (!pasien) return;
     const win = window.open('', '_blank', 'width=850,height=700');
     if (!win) {
       alert('Jendela cetak diblokir oleh browser. Harap izinkan pop-up untuk situs ini.');
@@ -50,23 +79,23 @@ export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabMod
           <table class="amplop-table">
             <tr>
               <th>No. Registrasi</th>
-              <td><strong>${pasien.regCode}</strong></td>
+              <td><strong>${form.regCode}</strong></td>
             </tr>
             <tr>
               <th>Nama Pasien</th>
-              <td><strong>${pasien.nama}</strong> (${umur} tahun)</td>
+              <td><strong>${form.nama}</strong> (${form.umur} tahun)</td>
             </tr>
             <tr>
               <th>Tanggal</th>
-              <td>${tanggal}</td>
+              <td>${form.tanggal}</td>
             </tr>
             <tr>
               <th>Jenis Pemeriksaan</th>
-              <td><strong>${jenisNames}</strong></td>
+              <td><strong>${form.jenisNames}</strong></td>
             </tr>
             <tr>
               <th>Kepada Yth. TS</th>
-              <td>${pasien.pengirim.nama}</td>
+              <td>${form.pengirimNama}</td>
             </tr>
           </table>
         </div>
@@ -211,25 +240,84 @@ export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabMod
                   <th style={{ textAlign: 'left', padding: '8px 4px', width: '180px', color: '#64748b' }}>
                     No. Registrasi
                   </th>
-                  <td style={{ padding: '8px 4px', fontWeight: 700, fontSize: '1.05rem' }}>{pasien.regCode}</td>
+                  <td style={{ padding: '8px 4px', fontWeight: 700, fontSize: '1.05rem' }}>
+                    {editing ? (
+                      <input
+                        value={form.regCode}
+                        onChange={(e) => setForm((f) => ({ ...f, regCode: e.target.value }))}
+                        style={editInputStyle}
+                      />
+                    ) : (
+                      form.regCode
+                    )}
+                  </td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>Nama Pasien</th>
                   <td style={{ padding: '8px 4px' }}>
-                    <strong>{pasien.nama}</strong> ({umur} tahun)
+                    {editing ? (
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input
+                          value={form.nama}
+                          onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))}
+                          style={{ ...editInputStyle, flex: 1 }}
+                          placeholder="Nama pasien"
+                        />
+                        <input
+                          value={form.umur}
+                          onChange={(e) => setForm((f) => ({ ...f, umur: e.target.value }))}
+                          style={{ ...editInputStyle, width: '70px' }}
+                          placeholder="Umur"
+                        />
+                      </div>
+                    ) : (
+                      <>
+                        <strong>{form.nama}</strong> ({form.umur} tahun)
+                      </>
+                    )}
                   </td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>Tanggal</th>
-                  <td style={{ padding: '8px 4px' }}>{tanggal}</td>
+                  <td style={{ padding: '8px 4px' }}>
+                    {editing ? (
+                      <input
+                        value={form.tanggal}
+                        onChange={(e) => setForm((f) => ({ ...f, tanggal: e.target.value }))}
+                        style={editInputStyle}
+                      />
+                    ) : (
+                      form.tanggal
+                    )}
+                  </td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
                   <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>Jenis Pemeriksaan</th>
-                  <td style={{ padding: '8px 4px', fontWeight: 600, color: '#0f172a' }}>{jenisNames}</td>
+                  <td style={{ padding: '8px 4px', fontWeight: 600, color: '#0f172a' }}>
+                    {editing ? (
+                      <input
+                        value={form.jenisNames}
+                        onChange={(e) => setForm((f) => ({ ...f, jenisNames: e.target.value }))}
+                        style={editInputStyle}
+                      />
+                    ) : (
+                      form.jenisNames
+                    )}
+                  </td>
                 </tr>
                 <tr>
                   <th style={{ textAlign: 'left', padding: '8px 4px', color: '#64748b' }}>Kepada Yth. TS</th>
-                  <td style={{ padding: '8px 4px' }}>{pasien.pengirim.nama}</td>
+                  <td style={{ padding: '8px 4px' }}>
+                    {editing ? (
+                      <input
+                        value={form.pengirimNama}
+                        onChange={(e) => setForm((f) => ({ ...f, pengirimNama: e.target.value }))}
+                        style={editInputStyle}
+                      />
+                    ) : (
+                      form.pengirimNama
+                    )}
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -253,19 +341,27 @@ export function CetakAmplopLabModal({ open, onClose, pasien }: CetakAmplopLabMod
           style={{
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'flex-end',
+            justifyContent: 'space-between',
             marginTop: '1.25rem',
             paddingTop: '1rem',
             borderTop: '1px solid #e2e8f0',
-            gap: '0.75rem',
           }}
         >
-          <button type="button" className="btn btn--secondary" onClick={onClose}>
-            Tutup
+          <button
+            type="button"
+            className="btn btn--secondary btn--sm"
+            onClick={() => setEditing((e) => !e)}
+          >
+            {editing ? '✓ Selesai Edit' : '✏️ Edit'}
           </button>
-          <button type="button" className="btn btn--primary" onClick={handlePrintNow} style={{ fontWeight: 600 }}>
-            🖨️ Cetak Amplop Sekarang
-          </button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button type="button" className="btn btn--secondary" onClick={onClose}>
+              Tutup
+            </button>
+            <button type="button" className="btn btn--primary" onClick={handlePrintNow} style={{ fontWeight: 600 }}>
+              🖨️ Cetak Amplop Sekarang
+            </button>
+          </div>
         </div>
       </div>
     </Modal>
