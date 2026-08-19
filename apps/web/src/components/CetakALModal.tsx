@@ -272,8 +272,8 @@ export function CetakALModal({
             }
 
             .amplopv2-sheet {
-              width: 12cm;
-              height: 8cm;
+              width: 14cm;
+              height: 6cm;
               box-sizing: border-box;
               overflow: hidden;
               padding: 10px;
