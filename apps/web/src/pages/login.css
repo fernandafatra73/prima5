@@ -58,6 +58,30 @@
   gap: 1rem;
 }
 
+.login-form__password-wrap {
+  position: relative;
+  display: flex;
+}
+
+.login-form__password-wrap input {
+  width: 100%;
+  padding-right: 2.5rem;
+}
+
+.login-form__password-toggle {
+  position: absolute;
+  top: 50%;
+  right: 0.5rem;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  padding: 0.25rem;
+  line-height: 1;
+  font-size: 1rem;
+  cursor: pointer;
+  color: var(--color-text-muted);
+}
+
 .login-form__error {
   margin: 0;
   padding: 0.75rem 0.9rem;
