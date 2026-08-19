@@ -1,7 +1,7 @@
 import { CLINICAL_MAX_WORDS, limitToMaxWords } from '../lib/clinicalText.ts';
 
 const CELL_MAX_CHARS = 48;
-const PDF_LINE_CHUNK = 52;
+const PDF_LINE_CHUNK = 80;
 
 export function truncatePdfCell(text: string, maxChars = CELL_MAX_CHARS): string {
   const normalized = text.trim() || '—';
