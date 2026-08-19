@@ -15,7 +15,6 @@ interface LoginResponse {
 export function LoginPage({ onLogin }: LoginPageProps) {
   const [email, setEmail] = useState('admin@labprima.local');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const passwordRef = useRef<HTMLInputElement>(null);
@@ -70,26 +69,15 @@ export function LoginPage({ onLogin }: LoginPageProps) {
 
           <div className="form-field">
             <label htmlFor="login-password">Password</label>
-            <div className="login-form__password-wrap">
-              <input
-                id="login-password"
-                ref={passwordRef}
-                type={showPassword ? 'text' : 'password'}
-                autoComplete="current-password"
-                required
-                value={password}
-                onChange={(event) => setPassword(event.target.value)}
-              />
-              <button
-                type="button"
-                className="login-form__password-toggle"
-                onClick={() => setShowPassword((s) => !s)}
-                aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
-                tabIndex={-1}
-              >
-                {showPassword ? '🙈' : '👁️'}
-              </button>
-            </div>
+            <input
+              id="login-password"
+              ref={passwordRef}
+              type="password"
+              autoComplete="current-password"
+              required
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+            />
           </div>
 
           {error ? <p className="login-form__error">{error}</p> : null}
