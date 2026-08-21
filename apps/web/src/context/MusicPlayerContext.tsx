@@ -67,24 +67,34 @@ export function MusicPlayerProvider({ children }: { readonly children: ReactNode
     setPlayingId(null);
   }, []);
 
-  const playItem = useCallback((item: PlaylistItem) => {
-    playlistAudioRef.current?.pause();
-    playlistAudioRef.current = null;
-    setPlayingId(null);
-    setPlayLoadingId(item.id);
-    const audio = new Audio(`/api/playlist-lagu/${item.id}/audio`);
-    playlistAudioRef.current = audio;
-    audio.onended = () => setPlayingId((cur) => (cur === item.id ? null : cur));
-    void audio
-      .play()
-      .then(() => {
-        setPlayLoadingId(null);
-        setPlayingId(item.id);
-      })
-      .catch(() => {
-        setPlayLoadingId(null);
-      });
-  }, []);
+  const playItem = useCallback(
+    (item: PlaylistItem) => {
+      playlistAudioRef.current?.pause();
+      playlistAudioRef.current = null;
+      setPlayingId(null);
+      setPlayLoadingId(item.id);
+      const audio = new Audio(`/api/playlist-lagu/${item.id}/audio`);
+      playlistAudioRef.current = audio;
+      audio.onended = () => {
+        setPlayingId((cur) => (cur === item.id ? null : cur));
+        // Lanjut otomatis ke lagu berikutnya di daftar; kembali ke lagu
+        // pertama saat sampai di akhir daftar.
+        const idx = playlist.findIndex((p) => p.id === item.id);
+        const next = idx === -1 ? null : (playlist[idx + 1] ?? playlist[0] ?? null);
+        if (next) playItem(next);
+      };
+      void audio
+        .play()
+        .then(() => {
+          setPlayLoadingId(null);
+          setPlayingId(item.id);
+        })
+        .catch(() => {
+          setPlayLoadingId(null);
+        });
+    },
+    [playlist],
+  );
 
   const toggleQuickPlay = useCallback(() => {
     if (playingId) {

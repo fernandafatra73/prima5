@@ -193,12 +193,21 @@ const styles = StyleSheet.create({
   value: {
     color: BLUE,
   },
+  // Garis bawah judul digambar manual via border (bukan textDecoration):
+  // ketebalan garis textDecoration dihitung dari metrik font dan bisa jadi
+  // terlalu tipis untuk sebagian printer fisik, sehingga tidak ikut tercetak
+  // walau tampak normal di layar/preview PDF.
+  titleWrap: {
+    alignSelf: 'center',
+    borderBottomWidth: 0.75,
+    borderBottomColor: BLACK,
+    marginBottom: 6,
+    paddingBottom: 1,
+  },
   title: {
     textAlign: 'center',
     fontSize: 11,
     fontWeight: 'bold',
-    textDecoration: 'underline',
-    marginBottom: 6,
     color: BLACK,
   },
 
@@ -286,11 +295,17 @@ const styles = StyleSheet.create({
   signatureGap: {
     height: 40,
   },
+  // Sama seperti titleWrap: garis bawah manual via border supaya pasti ikut
+  // tercetak di printer fisik.
+  signatureNameWrap: {
+    borderBottomWidth: 0.75,
+    borderBottomColor: BLUE,
+    paddingBottom: 1,
+  },
   signatureName: {
     fontSize: 9,
     fontWeight: 'bold',
     color: BLUE,
-    textDecoration: 'underline',
   },
   signatureRole: {
     fontSize: 8,
@@ -446,11 +461,13 @@ export function LabReportDocument({ data, pageSize = 'A4', showSignature = true 
               </View>
 
               {/* Title */}
-              <Text style={styles.title}>
-                {pages.length > 1
-                  ? `HASIL PEMERIKSAAN LABORATORIUM (LEMBAR ${pageIdx + 1}/${pages.length})`
-                  : 'HASIL PEMERIKSAAN LABORATORIUM'}
-              </Text>
+              <View style={styles.titleWrap}>
+                <Text style={styles.title}>
+                  {pages.length > 1
+                    ? `HASIL PEMERIKSAAN LABORATORIUM (LEMBAR ${pageIdx + 1}/${pages.length})`
+                    : 'HASIL PEMERIKSAAN LABORATORIUM'}
+                </Text>
+              </View>
 
               {/* Unified Single Full-Width Examination Table */}
               <View style={styles.tableContainer}>
@@ -495,9 +512,11 @@ export function LabReportDocument({ data, pageSize = 'A4', showSignature = true 
                   <View style={styles.signature}>
                     <Text style={styles.signatureLine}>Divalidasi</Text>
                     <View style={styles.signatureGap} />
-                    <Text style={styles.signatureName}>
-                      {data.petugasLabNama ? `( ${data.petugasLabNama} )` : '( Analis )'}
-                    </Text>
+                    <View style={styles.signatureNameWrap}>
+                      <Text style={styles.signatureName}>
+                        {data.petugasLabNama ? `( ${data.petugasLabNama} )` : '( Analis )'}
+                      </Text>
+                    </View>
                     <Text style={styles.signatureRole}>ANALIS</Text>
                   </View>
                 </View>
