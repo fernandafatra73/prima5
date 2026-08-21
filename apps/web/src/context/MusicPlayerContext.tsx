@@ -21,6 +21,8 @@ interface MusicPlayerContextValue {
   readonly reloadPlaylist: () => Promise<void>;
   readonly playingId: string | null;
   readonly playLoadingId: string | null;
+  readonly playingCurrentTime: number;
+  readonly playingDuration: number;
   readonly playItem: (item: PlaylistItem) => void;
   readonly stopPlaylist: () => void;
   readonly toggleQuickPlay: () => void;
@@ -37,6 +39,8 @@ export function MusicPlayerProvider({ children }: { readonly children: ReactNode
   const [playlistLoading, setPlaylistLoading] = useState(true);
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [playLoadingId, setPlayLoadingId] = useState<string | null>(null);
+  const [playingCurrentTime, setPlayingCurrentTime] = useState(0);
+  const [playingDuration, setPlayingDuration] = useState(0);
   const playlistAudioRef = useRef<HTMLAudioElement | null>(null);
 
   const reloadPlaylist = useCallback(async () => {
@@ -65,6 +69,8 @@ export function MusicPlayerProvider({ children }: { readonly children: ReactNode
     playlistAudioRef.current?.pause();
     playlistAudioRef.current = null;
     setPlayingId(null);
+    setPlayingCurrentTime(0);
+    setPlayingDuration(0);
   }, []);
 
   const playItem = useCallback(
@@ -73,15 +79,24 @@ export function MusicPlayerProvider({ children }: { readonly children: ReactNode
       playlistAudioRef.current = null;
       setPlayingId(null);
       setPlayLoadingId(item.id);
+      setPlayingCurrentTime(0);
+      setPlayingDuration(0);
       const audio = new Audio(`/api/playlist-lagu/${item.id}/audio`);
       playlistAudioRef.current = audio;
+      audio.ontimeupdate = () => setPlayingCurrentTime(audio.currentTime);
+      audio.onloadedmetadata = () => setPlayingDuration(audio.duration || 0);
       audio.onended = () => {
         setPlayingId((cur) => (cur === item.id ? null : cur));
         // Lanjut otomatis ke lagu berikutnya di daftar; kembali ke lagu
         // pertama saat sampai di akhir daftar.
         const idx = playlist.findIndex((p) => p.id === item.id);
         const next = idx === -1 ? null : (playlist[idx + 1] ?? playlist[0] ?? null);
-        if (next) playItem(next);
+        if (next) {
+          playItem(next);
+        } else {
+          setPlayingCurrentTime(0);
+          setPlayingDuration(0);
+        }
       };
       void audio
         .play()
@@ -154,6 +169,8 @@ export function MusicPlayerProvider({ children }: { readonly children: ReactNode
       reloadPlaylist,
       playingId,
       playLoadingId,
+      playingCurrentTime,
+      playingDuration,
       playItem,
       stopPlaylist,
       toggleQuickPlay,
@@ -169,6 +186,8 @@ export function MusicPlayerProvider({ children }: { readonly children: ReactNode
       reloadPlaylist,
       playingId,
       playLoadingId,
+      playingCurrentTime,
+      playingDuration,
       playItem,
       stopPlaylist,
       toggleQuickPlay,

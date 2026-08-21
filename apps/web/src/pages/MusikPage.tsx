@@ -6,6 +6,13 @@ import { Modal } from '../components/ui/Modal.tsx';
 import { ModalFormFooter } from '../components/ui/ModalFormFooter.tsx';
 import '../components/ui/ui.css';
 
+function formatWaktuLagu(seconds: number): string {
+  if (!Number.isFinite(seconds) || seconds < 0) return '0:00';
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${String(s).padStart(2, '0')}`;
+}
+
 export function MusikPage() {
   const {
     isOn,
@@ -18,6 +25,8 @@ export function MusikPage() {
     reloadPlaylist,
     playingId: playingLaguId,
     playLoadingId,
+    playingCurrentTime,
+    playingDuration,
     playItem,
     stopPlaylist,
   } = useMusicPlayer();
@@ -391,7 +400,36 @@ export function MusikPage() {
                   return (
                     <tr key={item.id} style={isPlaying ? { background: '#f0f9ff' } : undefined}>
                       <td>{idx + 1}</td>
-                      <td>🎵 {item.judul}</td>
+                      <td>
+                        🎵 {item.judul}
+                        {isPlaying && (
+                          <div style={{ marginTop: '0.4rem' }}>
+                            <div
+                              style={{
+                                height: '5px',
+                                borderRadius: '3px',
+                                background: '#e2e8f0',
+                                overflow: 'hidden',
+                              }}
+                            >
+                              <div
+                                style={{
+                                  height: '100%',
+                                  width:
+                                    playingDuration > 0
+                                      ? `${Math.min(100, (playingCurrentTime / playingDuration) * 100)}%`
+                                      : '0%',
+                                  background: '#0369a1',
+                                  transition: 'width 0.25s linear',
+                                }}
+                              />
+                            </div>
+                            <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.2rem' }}>
+                              {formatWaktuLagu(playingCurrentTime)} / {formatWaktuLagu(playingDuration)}
+                            </div>
+                          </div>
+                        )}
+                      </td>
                       <td>
                         <div style={{ display: 'flex', gap: '0.4rem' }}>
                           <button
