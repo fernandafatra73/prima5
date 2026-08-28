@@ -17,7 +17,6 @@ const SOSMED_LINKS: readonly SosmedLink[] = [
   { id: 'whatsapp-sosmed', label: 'WhatsApp', url: 'https://www.whatsapp.com/', icon: '💬' },
   { id: 'telegram-sosmed', label: 'Telegram', url: 'https://telegram.org/', icon: '✈️' },
   { id: 'chatgpt', label: 'ChatGPT', url: 'https://chatgpt.com/', icon: '🤖' },
-  { id: 'bloomberg', label: 'Bloomberg', url: 'https://www.bloomberg.com/', icon: '📰' },
 ];
 
 const cardStyle: React.CSSProperties = {
@@ -59,6 +58,10 @@ export function SosmedPage({ onNavigate }: SosmedPageProps) {
         <button type="button" onClick={() => onNavigate('trading')} style={cardStyle}>
           <span style={{ fontSize: '2rem' }}>🪙</span>
           <span>Trading XAU/USD</span>
+        </button>
+        <button type="button" onClick={() => onNavigate('bloomberg')} style={cardStyle}>
+          <span style={{ fontSize: '2rem' }}>📰</span>
+          <span>Bloomberg</span>
         </button>
         {SOSMED_LINKS.map((link) => (
           <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" style={cardStyle}>

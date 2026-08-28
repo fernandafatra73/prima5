@@ -146,6 +146,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'laboratorium', label: 'Laboratorium', shortLabel: 'Laboratorium' },
   { id: 'sosmed', label: 'Sosmed', shortLabel: 'Sosmed' },
   { id: 'trading', label: 'Trading XAU/USD', shortLabel: 'Trading' },
+  { id: 'bloomberg', label: 'Bloomberg (Bahasa Indonesia)', shortLabel: 'Bloomberg' },
   { id: 'pendaftaran', label: 'Pendaftaran', shortLabel: 'Pendaftaran' },
   { id: 'pendaftaran-umum', label: 'Pendaftaran Umum', shortLabel: 'Pendaftaran Umum' },
   { id: 'transfer', label: 'Transfer', shortLabel: 'Transfer' },
