@@ -34,7 +34,6 @@ import { MusikPage } from './pages/MusikPage.tsx';
 import { FatraPage } from './pages/FatraPage.tsx';
 import { MegaDataHubPage } from './pages/MegaDataHubPage.tsx';
 import { PendaftaranUmumPage } from './pages/PendaftaranUmumPage.tsx';
-import { PendaftaranHubPage } from './pages/PendaftaranHubPage.tsx';
 import { TransferPage } from './pages/TransferPage.tsx';
 import { DaftarTelponPage } from './pages/DaftarTelponPage.tsx';
 import { KalenderPage } from './pages/KalenderPage.tsx';
@@ -80,9 +79,7 @@ import { FarmasiBhpPage } from './pages/FarmasiBhpPage.tsx';
 import { FarmasiKwitansiPage } from './pages/FarmasiKwitansiPage.tsx';
 import { AbsensiPage } from './pages/AbsensiPage.tsx';
 import { KeuanganPembukuanPage } from './pages/KeuanganPembukuanPage.tsx';
-import { PetugasKasirPage } from './pages/PetugasKasirPage.tsx';
-import { PetugasAdminKlinikPage } from './pages/PetugasAdminKlinikPage.tsx';
-import { AdminPendaftaranPage } from './pages/AdminPendaftaranPage.tsx';
+import { AdminKlinikPage } from './pages/AdminKlinikPage.tsx';
 import { LogoPerusahaanPage } from './pages/LogoPerusahaanPage.tsx';
 import { PengaturanHubPage } from './pages/PengaturanHubPage.tsx';
 import { AutotextPage } from './pages/AutotextPage.tsx';
@@ -140,7 +137,7 @@ function renderViewContent(
     case 'pasien':
       return <PasienPage />;
     case 'pendaftaran':
-      return <PendaftaranHubPage />;
+      return <PendaftaranUmumPage />;
     case 'pendaftaran-umum':
       return <PendaftaranUmumPage />;
     case 'transfer':
@@ -269,18 +266,14 @@ function renderViewContent(
       return <HasilPerbulanPage />;
     case 'penggajian':
       return <PenggajianPage />;
-    case 'petugas-kasir':
-      return <PetugasKasirPage />;
-    case 'petugas-admin-klinik':
-      return <PetugasAdminKlinikPage />;
+    case 'admin-klinik':
+      return <AdminKlinikPage />;
     case 'pengaturan':
       return <PengaturanHubPage />;
     case 'logo-perusahaan':
       return <LogoPerusahaanPage />;
     case 'autote1':
       return <AutotextPage />;
-    case 'admin-pendaftaran':
-      return <AdminPendaftaranPage />;
     case 'ai-foto':
       return <AiFotoPage />;
     case 'rawat-jalan':

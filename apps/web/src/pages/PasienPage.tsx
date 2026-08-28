@@ -306,7 +306,7 @@ export function PasienPage() {
         apiGet<PaginatedResponse<Jenis>>('/api/jenis-pemeriksaan?page=1&limit=200'),
         apiGet<PaginatedResponse<Radiolog>>('/api/radiolog?page=1&limit=200'),
         apiGet<PaginatedResponse<PendaftaranUmumItem>>('/api/pendaftaran-umum?page=1&limit=300').catch(() => ({ items: [] })),
-        apiGet<PaginatedResponse<Staff>>('/api/admin-pendaftaran?page=1&limit=200').catch(() => ({ items: [] })),
+        apiGet<PaginatedResponse<Staff>>('/api/admin-klinik?page=1&limit=200').catch(() => ({ items: [] })),
       ]);
       setDokter(dokterRes.items);
       setJenis(jenisRes.items.filter((j) => j.harga !== null));

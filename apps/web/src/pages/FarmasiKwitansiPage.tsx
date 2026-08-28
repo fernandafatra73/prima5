@@ -106,7 +106,7 @@ export function FarmasiKwitansiPage() {
   }, []);
 
   useEffect(() => {
-    apiGet<{ items: PetugasKasirItem[] }>('/api/petugas-kasir?limit=200')
+    apiGet<{ items: PetugasKasirItem[] }>('/api/admin-klinik?limit=200')
       .then((res) => setKasirList(res.items))
       .catch(() => setKasirList([]));
   }, []);

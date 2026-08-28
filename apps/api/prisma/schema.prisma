@@ -109,23 +109,11 @@ model Radiografer {
   updatedAt DateTime @updatedAt
 }
 
-model PetugasKasir {
-  id        String   @id @default(cuid())
-  nama      String
-  noHp      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model PetugasAdminKlinik {
-  id        String   @id @default(cuid())
-  nama      String
-  noHp      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model AdminPendaftaran {
+/// Daftar staff Admin Klinik gabungan — sebelumnya terpisah jadi Petugas
+/// Kasir, Petugas Admin Klinik, dan Admin Pendaftaran. Satu daftar ini
+/// dipakai sebagai sumber pilihan di semua tempat yang dulu memakai
+/// ketiganya (kwitansi, sharing radiolog, registrasi pasien).
+model AdminKlinik {
   id            String   @id @default(cuid())
   nama          String
   noHp          String?

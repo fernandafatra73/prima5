@@ -6,7 +6,7 @@ import { hashPassword } from '../lib/password.js';
 import { nextPendaftaranUmumCode, nextRegCode } from '../lib/regCode.js';
 import { buildPaginationMeta, parsePagination } from '../lib/pagination.js';
 import {
-  adminPendaftaranListWhere,
+  adminKlinikListWhere,
   aiRadiologiGrupListWhere,
   dokterListWhere,
   fotoDashboardListWhere,
@@ -19,8 +19,6 @@ import {
   pasienDuplikatListWhere,
   pasienListWhere,
   pendaftaranUmumListWhere,
-  petugasAdminKlinikListWhere,
-  petugasKasirListWhere,
   daftarTelponListWhere,
   petugasLabListWhere,
   radiograferListWhere,
@@ -499,12 +497,12 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.get<{ Querystring: ListQuery }>('/api/petugas-kasir', async (req) => {
+  app.get<{ Querystring: ListQuery }>('/api/admin-klinik', async (req) => {
     const { page, limit, skip } = parsePagination(req.query);
-    const where = petugasKasirListWhere(req.query.q);
+    const where = adminKlinikListWhere(req.query.q);
     const [total, items] = await Promise.all([
-      prisma.petugasKasir.count({ where }),
-      prisma.petugasKasir.findMany({
+      prisma.adminKlinik.count({ where }),
+      prisma.adminKlinik.findMany({
         where,
         orderBy: { nama: 'asc' },
         skip,
@@ -514,103 +512,9 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { items, pagination: buildPaginationMeta(total, page, limit) };
   });
 
-  app.post<{ Body: { nama: string; noHp?: string } }>('/api/petugas-kasir', async (req, reply) => {
+  app.post<{ Body: { nama: string; noHp?: string } }>('/api/admin-klinik', async (req, reply) => {
     if (!req.body.nama?.trim()) return badRequest(reply, 'nama wajib diisi');
-    const item = await prisma.petugasKasir.create({
-      data: {
-        nama: req.body.nama.trim(),
-        noHp: req.body.noHp?.trim() || null,
-      },
-    });
-    return reply.status(201).send({ item });
-  });
-
-  app.patch<{ Params: { id: string }; Body: { nama?: string; noHp?: string } }>(
-    '/api/petugas-kasir/:id',
-    async (req, reply) => {
-      const existing = await prisma.petugasKasir.findUnique({ where: { id: req.params.id } });
-      if (!existing) return reply.status(404).send({ error: 'Petugas kasir tidak ditemukan' });
-      const item = await prisma.petugasKasir.update({
-        where: { id: req.params.id },
-        data: {
-          nama: req.body.nama?.trim() ?? existing.nama,
-          noHp: req.body.noHp !== undefined ? req.body.noHp?.trim() || null : existing.noHp,
-        },
-      });
-      return { item };
-    },
-  );
-
-  app.delete<{ Params: { id: string } }>('/api/petugas-kasir/:id', async (req) => {
-    await prisma.petugasKasir.delete({ where: { id: req.params.id } });
-    return { ok: true };
-  });
-
-  app.get<{ Querystring: ListQuery }>('/api/petugas-admin-klinik', async (req) => {
-    const { page, limit, skip } = parsePagination(req.query);
-    const where = petugasAdminKlinikListWhere(req.query.q);
-    const [total, items] = await Promise.all([
-      prisma.petugasAdminKlinik.count({ where }),
-      prisma.petugasAdminKlinik.findMany({
-        where,
-        orderBy: { nama: 'asc' },
-        skip,
-        take: limit,
-      }),
-    ]);
-    return { items, pagination: buildPaginationMeta(total, page, limit) };
-  });
-
-  app.post<{ Body: { nama: string; noHp?: string } }>('/api/petugas-admin-klinik', async (req, reply) => {
-    if (!req.body.nama?.trim()) return badRequest(reply, 'nama wajib diisi');
-    const item = await prisma.petugasAdminKlinik.create({
-      data: {
-        nama: req.body.nama.trim(),
-        noHp: req.body.noHp?.trim() || null,
-      },
-    });
-    return reply.status(201).send({ item });
-  });
-
-  app.patch<{ Params: { id: string }; Body: { nama?: string; noHp?: string } }>(
-    '/api/petugas-admin-klinik/:id',
-    async (req, reply) => {
-      const existing = await prisma.petugasAdminKlinik.findUnique({ where: { id: req.params.id } });
-      if (!existing) return reply.status(404).send({ error: 'Petugas admin klinik tidak ditemukan' });
-      const item = await prisma.petugasAdminKlinik.update({
-        where: { id: req.params.id },
-        data: {
-          nama: req.body.nama?.trim() ?? existing.nama,
-          noHp: req.body.noHp !== undefined ? req.body.noHp?.trim() || null : existing.noHp,
-        },
-      });
-      return { item };
-    },
-  );
-
-  app.delete<{ Params: { id: string } }>('/api/petugas-admin-klinik/:id', async (req) => {
-    await prisma.petugasAdminKlinik.delete({ where: { id: req.params.id } });
-    return { ok: true };
-  });
-
-  app.get<{ Querystring: ListQuery }>('/api/admin-pendaftaran', async (req) => {
-    const { page, limit, skip } = parsePagination(req.query);
-    const where = adminPendaftaranListWhere(req.query.q);
-    const [total, items] = await Promise.all([
-      prisma.adminPendaftaran.count({ where }),
-      prisma.adminPendaftaran.findMany({
-        where,
-        orderBy: { nama: 'asc' },
-        skip,
-        take: limit,
-      }),
-    ]);
-    return { items, pagination: buildPaginationMeta(total, page, limit) };
-  });
-
-  app.post<{ Body: { nama: string; noHp?: string } }>('/api/admin-pendaftaran', async (req, reply) => {
-    if (!req.body.nama?.trim()) return badRequest(reply, 'nama wajib diisi');
-    const item = await prisma.adminPendaftaran.create({
+    const item = await prisma.adminKlinik.create({
       data: {
         nama: req.body.nama.trim(),
         noHp: req.body.noHp?.trim() || null,
@@ -622,10 +526,10 @@ export async function registerCrudRoutes(app: FastifyInstance) {
   app.patch<{
     Params: { id: string };
     Body: { nama?: string; noHp?: string; statusHadir?: string | null; statusTanggal?: string | null };
-  }>('/api/admin-pendaftaran/:id', async (req, reply) => {
-    const existing = await prisma.adminPendaftaran.findUnique({ where: { id: req.params.id } });
-    if (!existing) return reply.status(404).send({ error: 'Admin pendaftaran tidak ditemukan' });
-    const item = await prisma.adminPendaftaran.update({
+  }>('/api/admin-klinik/:id', async (req, reply) => {
+    const existing = await prisma.adminKlinik.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Admin klinik tidak ditemukan' });
+    const item = await prisma.adminKlinik.update({
       where: { id: req.params.id },
       data: {
         nama: req.body.nama?.trim() ?? existing.nama,
@@ -637,8 +541,8 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { item };
   });
 
-  app.delete<{ Params: { id: string } }>('/api/admin-pendaftaran/:id', async (req) => {
-    await prisma.adminPendaftaran.delete({ where: { id: req.params.id } });
+  app.delete<{ Params: { id: string } }>('/api/admin-klinik/:id', async (req) => {
+    await prisma.adminKlinik.delete({ where: { id: req.params.id } });
     return { ok: true };
   });
 

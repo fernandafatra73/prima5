@@ -10,7 +10,7 @@ import { usePaginatedList } from '../hooks/usePaginatedList.ts';
 import { apiDelete, apiPatch, apiPost } from '../lib/api.ts';
 import '../components/ui/ui.css';
 
-interface AdminPendaftaranItem {
+interface AdminKlinikItem {
   readonly id: string;
   readonly nama: string;
   readonly noHp: string | null;
@@ -23,16 +23,18 @@ function todayStr(): string {
   return new Date().toISOString().split('T')[0]!;
 }
 
-export function AdminPendaftaranPage() {
+/** Daftar staff Admin Klinik gabungan — sebelumnya terpisah jadi Petugas
+ * Kasir, Petugas Admin Klinik, dan Admin Pendaftaran. */
+export function AdminKlinikPage() {
   const { search, setSearch } = useListSearch();
   const queryParams = useListQueryParams({}, search);
   const { items, pagination, setPage, loading, error, setError, reload: reloadList } =
-    usePaginatedList<AdminPendaftaranItem>('/api/admin-pendaftaran', queryParams);
+    usePaginatedList<AdminKlinikItem>('/api/admin-klinik', queryParams);
   const reload = useMutationReload(reloadList);
 
   const [createOpen, setCreateOpen] = useState(false);
-  const [editing, setEditing] = useState<AdminPendaftaranItem | null>(null);
-  const [deleting, setDeleting] = useState<AdminPendaftaranItem | null>(null);
+  const [editing, setEditing] = useState<AdminKlinikItem | null>(null);
+  const [deleting, setDeleting] = useState<AdminKlinikItem | null>(null);
 
   const [nama, setNama] = useState('');
   const [noHp, setNoHp] = useState('');
@@ -45,7 +47,7 @@ export function AdminPendaftaranPage() {
     setCreateOpen(true);
   }
 
-  function openEdit(item: AdminPendaftaranItem) {
+  function openEdit(item: AdminKlinikItem) {
     setEditing(item);
     setNama(item.nama);
     setNoHp(item.noHp ?? '');
@@ -57,14 +59,14 @@ export function AdminPendaftaranPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await apiPost('/api/admin-pendaftaran', {
+      await apiPost('/api/admin-klinik', {
         nama: nama.trim(),
         noHp: noHp.trim() || undefined,
       });
       setCreateOpen(false);
       await reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal membuat admin pendaftaran');
+      setError(err instanceof Error ? err.message : 'Gagal membuat admin klinik');
     } finally {
       setSubmitting(false);
     }
@@ -76,14 +78,14 @@ export function AdminPendaftaranPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await apiPatch(`/api/admin-pendaftaran/${editing.id}`, {
+      await apiPatch(`/api/admin-klinik/${editing.id}`, {
         nama: nama.trim(),
         noHp: noHp.trim() || undefined,
       });
       setEditing(null);
       await reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal mengubah admin pendaftaran');
+      setError(err instanceof Error ? err.message : 'Gagal mengubah admin klinik');
     } finally {
       setSubmitting(false);
     }
@@ -94,21 +96,21 @@ export function AdminPendaftaranPage() {
     setSubmitting(true);
     setError(null);
     try {
-      await apiDelete(`/api/admin-pendaftaran/${deleting.id}`);
+      await apiDelete(`/api/admin-klinik/${deleting.id}`);
       setDeleting(null);
       await reload();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal menghapus admin pendaftaran');
+      setError(err instanceof Error ? err.message : 'Gagal menghapus admin klinik');
     } finally {
       setSubmitting(false);
     }
   }
 
-  async function handleTandaiStatus(item: AdminPendaftaranItem, status: 'HADIR' | 'ABSEN') {
+  async function handleTandaiStatus(item: AdminKlinikItem, status: 'HADIR' | 'ABSEN') {
     setStatusUpdatingId(item.id);
     setError(null);
     try {
-      await apiPatch(`/api/admin-pendaftaran/${item.id}`, {
+      await apiPatch(`/api/admin-klinik/${item.id}`, {
         statusHadir: status,
         statusTanggal: todayStr(),
       });
@@ -122,11 +124,11 @@ export function AdminPendaftaranPage() {
 
   return (
     <ListPageShell
-      title="Admin Pendaftaran"
-      subtitle="Daftar petugas admin pendaftaran & presensi hari ini"
+      title="Admin Klinik"
+      subtitle="Daftar staff admin klinik (gabungan Kasir, Petugas Admin Klinik, Admin Pendaftaran) & presensi hari ini"
       metrics={[
         {
-          label: 'Total Admin Pendaftaran',
+          label: 'Total Admin Klinik',
           value: String(pagination.total),
           tone: 'blue',
           iconKind: 'users',
@@ -142,7 +144,7 @@ export function AdminPendaftaranPage() {
       onPageChange={setPage}
       action={
         <button type="button" className="btn btn--primary" onClick={openCreate}>
-          + Tambah Admin Pendaftaran
+          + Tambah Admin Klinik
         </button>
       }
     >
@@ -160,7 +162,7 @@ export function AdminPendaftaranPage() {
           {items.length === 0 ? (
             <tr>
               <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>
-                Belum ada data admin pendaftaran.
+                Belum ada data admin klinik.
               </td>
             </tr>
           ) : (
@@ -208,8 +210,8 @@ export function AdminPendaftaranPage() {
                     <TableRowActions
                       onEdit={() => openEdit(item)}
                       onDelete={() => setDeleting(item)}
-                      editLabel="Ubah admin pendaftaran"
-                      deleteLabel="Hapus admin pendaftaran"
+                      editLabel="Ubah admin klinik"
+                      deleteLabel="Hapus admin klinik"
                     />
                   </td>
                 </tr>
@@ -220,12 +222,12 @@ export function AdminPendaftaranPage() {
       </table>
 
       {createOpen && (
-        <Modal open={true} title="Tambah Admin Pendaftaran" onClose={() => setCreateOpen(false)}>
+        <Modal open={true} title="Tambah Admin Klinik" onClose={() => setCreateOpen(false)}>
           <form onSubmit={(e) => void handleCreate(e)} className="form-grid">
             <div className="form-field form-field--full">
-              <label htmlFor="ap-nama">Nama *</label>
+              <label htmlFor="ak-nama">Nama *</label>
               <input
-                id="ap-nama"
+                id="ak-nama"
                 type="text"
                 required
                 value={nama}
@@ -235,9 +237,9 @@ export function AdminPendaftaranPage() {
             </div>
 
             <div className="form-field">
-              <label htmlFor="ap-nohp">No. HP (Opsional)</label>
+              <label htmlFor="ak-nohp">No. HP (Opsional)</label>
               <input
-                id="ap-nohp"
+                id="ak-nohp"
                 type="text"
                 value={noHp}
                 onChange={(e) => setNoHp(e.target.value)}
@@ -255,12 +257,12 @@ export function AdminPendaftaranPage() {
       )}
 
       {editing && (
-        <Modal open={true} title="Ubah Admin Pendaftaran" onClose={() => setEditing(null)}>
+        <Modal open={true} title="Ubah Admin Klinik" onClose={() => setEditing(null)}>
           <form onSubmit={(e) => void handleUpdate(e)} className="form-grid">
             <div className="form-field form-field--full">
-              <label htmlFor="edit-ap-nama">Nama *</label>
+              <label htmlFor="edit-ak-nama">Nama *</label>
               <input
-                id="edit-ap-nama"
+                id="edit-ak-nama"
                 type="text"
                 required
                 value={nama}
@@ -269,9 +271,9 @@ export function AdminPendaftaranPage() {
             </div>
 
             <div className="form-field">
-              <label htmlFor="edit-ap-nohp">No. HP</label>
+              <label htmlFor="edit-ak-nohp">No. HP</label>
               <input
-                id="edit-ap-nohp"
+                id="edit-ak-nohp"
                 type="text"
                 value={noHp}
                 onChange={(e) => setNoHp(e.target.value)}
@@ -290,8 +292,8 @@ export function AdminPendaftaranPage() {
       {deleting && (
         <ConfirmModal
           open={true}
-          title="Hapus Admin Pendaftaran"
-          message={`Apakah Anda yakin ingin menghapus admin pendaftaran "${deleting.nama}"?`}
+          title="Hapus Admin Klinik"
+          message={`Apakah Anda yakin ingin menghapus admin klinik "${deleting.nama}"?`}
           confirmLabel="Hapus"
           onConfirm={() => void handleDeleteConfirm()}
           onClose={() => setDeleting(null)}

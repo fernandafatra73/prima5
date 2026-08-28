@@ -64,7 +64,7 @@ export function SharingRadiologPage() {
   const [adminKlinikId, setAdminKlinikId] = useState('');
   const loadAdminKlinikOptions = useCallback(async () => {
     try {
-      const res = await apiGet<{ items: AdminKlinikOption[] }>('/api/petugas-admin-klinik?limit=200');
+      const res = await apiGet<{ items: AdminKlinikOption[] }>('/api/admin-klinik?limit=200');
       setAdminKlinikOptions(res.items);
     } catch {
       setAdminKlinikOptions([]);

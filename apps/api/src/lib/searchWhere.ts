@@ -69,29 +69,7 @@ export function radiograferListWhere(q?: string): Prisma.RadiograferWhereInput {
   };
 }
 
-export function petugasKasirListWhere(q?: string): Prisma.PetugasKasirWhereInput {
-  const term = searchTerm(q);
-  if (!term) return {};
-  return {
-    OR: [
-      { nama: { contains: term } },
-      { noHp: { contains: term } },
-    ],
-  };
-}
-
-export function petugasAdminKlinikListWhere(q?: string): Prisma.PetugasAdminKlinikWhereInput {
-  const term = searchTerm(q);
-  if (!term) return {};
-  return {
-    OR: [
-      { nama: { contains: term } },
-      { noHp: { contains: term } },
-    ],
-  };
-}
-
-export function adminPendaftaranListWhere(q?: string): Prisma.AdminPendaftaranWhereInput {
+export function adminKlinikListWhere(q?: string): Prisma.AdminKlinikWhereInput {
   const term = searchTerm(q);
   if (!term) return {};
   return {

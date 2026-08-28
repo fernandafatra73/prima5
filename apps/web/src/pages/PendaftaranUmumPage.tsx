@@ -109,7 +109,7 @@ export function PendaftaranUmumPage() {
   const reload = useMutationReload(reloadList);
 
   const { items: dokterList } = usePaginatedList<{ id: string; nama: string }>('/api/dokter', { limit: '100' });
-  const { items: adminList } = usePaginatedList<{ id: string; nama: string }>('/api/admin-pendaftaran', { limit: '100' });
+  const { items: adminList } = usePaginatedList<{ id: string; nama: string }>('/api/admin-klinik', { limit: '100' });
 
   const { version: listRefreshVersion } = useListRefresh();
   const [todayCount, setTodayCount] = useState(0);
