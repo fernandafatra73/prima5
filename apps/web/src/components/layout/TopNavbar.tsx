@@ -35,13 +35,6 @@ interface MenuItem {
   readonly label: string;
 }
 
-const PENGATURAN_ITEMS: readonly MenuItem[] = [
-  { id: 'logo-perusahaan', label: 'Pengaturan Kop Surat & Logo' },
-  { id: 'autote1', label: 'Autote1' },
-  { id: 'foto-dashboard', label: 'Foto untuk Dashboard' },
-  { id: 'backup-database', label: 'Backup & Restore Database' },
-];
-
 interface ExternalLinkItem {
   readonly id: string;
   readonly label: string;
@@ -75,7 +68,7 @@ const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'link', id: 'laboratorium', label: 'Laboratorium', icon: IconTag },
   { type: 'category', categoryId: 'keuangan', icon: IconCurrency },
   { type: 'category', categoryId: 'master-sistem', icon: IconShield },
-  { type: 'group', groupId: 'pengaturan', label: 'Pengaturan', icon: IconSettings, items: PENGATURAN_ITEMS },
+  { type: 'link', id: 'pengaturan', label: 'Pengaturan', icon: IconSettings },
   { type: 'category', categoryId: 'farmasi', icon: IconDocument },
   { type: 'link', id: 'mega-data', label: 'Mega Data', icon: IconTag },
   { type: 'link', id: 'ai-radiologi', label: 'AI Radiologi', icon: IconStethoscope },

@@ -82,6 +82,7 @@ import { PetugasKasirPage } from './pages/PetugasKasirPage.tsx';
 import { PetugasAdminKlinikPage } from './pages/PetugasAdminKlinikPage.tsx';
 import { AdminPendaftaranPage } from './pages/AdminPendaftaranPage.tsx';
 import { LogoPerusahaanPage } from './pages/LogoPerusahaanPage.tsx';
+import { PengaturanHubPage } from './pages/PengaturanHubPage.tsx';
 import { AutotextPage } from './pages/AutotextPage.tsx';
 import { ComingSoonPage } from './pages/ComingSoonPage.tsx';
 import { DataTerbesarPage } from './pages/DataTerbesarPage.tsx';
@@ -266,6 +267,8 @@ function renderViewContent(
       return <PetugasKasirPage />;
     case 'petugas-admin-klinik':
       return <PetugasAdminKlinikPage />;
+    case 'pengaturan':
+      return <PengaturanHubPage />;
     case 'logo-perusahaan':
       return <LogoPerusahaanPage />;
     case 'autote1':
