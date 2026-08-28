@@ -44,6 +44,11 @@ export function AppShell({ activeView, authUser, onNavigate, onLogout, children 
 
   return (
     <div className="app-shell">
+      <div className="app-shell__accent-bar" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
       <TopNavbar
         activeId={activeView}
         onNavigate={onNavigate}
