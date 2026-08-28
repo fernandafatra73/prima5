@@ -47,7 +47,6 @@ import { AiRadiologiGrupPage } from './pages/AiRadiologiGrupPage.tsx';
 import { AiFotoPage } from './pages/AiFotoPage.tsx';
 import { SosmedPage } from './pages/SosmedPage.tsx';
 import { TradingPage } from './pages/TradingPage.tsx';
-import { BloombergPage } from './pages/BloombergPage.tsx';
 import { LoginPage } from './pages/LoginPage.tsx';
 import { PasienPage } from './pages/PasienPage.tsx';
 import { RadiologiPage } from './pages/RadiologiPage.tsx';
@@ -284,8 +283,6 @@ function renderViewContent(
       return <SosmedPage onNavigate={navigate} />;
     case 'trading':
       return <TradingPage />;
-    case 'bloomberg':
-      return <BloombergPage />;
     case 'rawat-jalan':
       return <ComingSoonPage title="Rawat Jalan" />;
     case 'rawat-inap':
