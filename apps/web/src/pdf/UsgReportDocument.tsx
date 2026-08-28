@@ -50,7 +50,6 @@ const styles = StyleSheet.create({
   infoCell: { width: '48%' },
   infoText: { fontSize: 8.5 },
   bold: { fontWeight: 'bold' },
-  tanggalLine: { textAlign: 'center', fontSize: 8.5, marginTop: 2 },
 
   photoContainer: {
     marginVertical: 8, alignItems: 'center', borderWidth: 0.8, borderColor: BLACK, padding: 8,
@@ -93,7 +92,6 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
 
           <View style={styles.titleSection}>
             <Text style={styles.reportTitle}>Hasil Pemeriksaan USG</Text>
-            <Text style={styles.tanggalLine}>Tanggal Pemeriksaan: {data.tanggalLabel}</Text>
           </View>
 
           <View style={styles.infoGrid}>
