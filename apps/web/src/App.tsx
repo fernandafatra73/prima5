@@ -44,6 +44,7 @@ import { AiRadiologiGrupPage } from './pages/AiRadiologiGrupPage.tsx';
 import { AiFotoPage } from './pages/AiFotoPage.tsx';
 import { LoginPage } from './pages/LoginPage.tsx';
 import { PasienPage } from './pages/PasienPage.tsx';
+import { RadiologiPage } from './pages/RadiologiPage.tsx';
 import { PetugasLabPage } from './pages/PetugasLabPage.tsx';
 import { RadiologMasterPage } from './pages/RadiologMasterPage.tsx';
 import { RadiograferPage } from './pages/RadiograferPage.tsx';
@@ -127,6 +128,8 @@ function renderViewContent(
       return <MusikPage />;
     case 'fatra':
       return <FatraPage />;
+    case 'radiologi':
+      return <RadiologiPage />;
     case 'pasien':
       return <PasienPage />;
     case 'pendaftaran-umum':

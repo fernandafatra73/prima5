@@ -35,6 +35,7 @@ export const MAIN_NAV_CATEGORIES: readonly NavCategory[] = [
     label: 'Radiologi',
     iconName: 'stethoscope',
     items: [
+      { id: 'radiologi', label: 'Radiologi', shortLabel: 'Radiologi' },
       { id: 'pasien', label: 'Data & Registrasi Radiologi', shortLabel: 'Registrasi Radiologi' },
       { id: 'radiolog', label: 'Pekerjaan Radiolog', shortLabel: 'Pekerjaan Radiolog' },
       { id: 'radiolog-duplikat', label: 'Duplikat Radiologi', shortLabel: 'Duplikat Radiologi' },
@@ -140,6 +141,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'templet', label: 'Templet', shortLabel: 'Templet' },
   { id: 'musik-ph', label: 'Musik-PH', shortLabel: 'Musik-PH' },
   { id: 'fatra', label: 'Fatra', shortLabel: 'Fatra' },
+  { id: 'radiologi', label: 'Radiologi', shortLabel: 'Radiologi' },
   { id: 'pasien', label: 'Data & Registrasi Radiologi', shortLabel: 'Registrasi Radiologi' },
   { id: 'pendaftaran-umum', label: 'Pendaftaran Umum', shortLabel: 'Pendaftaran Umum' },
   { id: 'admin-pendaftaran', label: 'Admin Pendaftaran', shortLabel: 'Admin Pendaftaran' },
