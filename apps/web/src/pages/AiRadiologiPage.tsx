@@ -9,6 +9,7 @@ import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
 import { apiDelete, apiPatch, apiPost } from '../lib/api.ts';
 import { applyPhotoAdjustments } from '../lib/imageAdjust.ts';
+import { AiFotoPage } from './AiFotoPage.tsx';
 import '../components/ui/ui.css';
 
 interface AiRadiologiItem {
@@ -33,6 +34,7 @@ const emptyForm = {
 };
 
 export function AiRadiologiPage() {
+  const [view, setView] = useState<'ai-radiologi' | 'ai-foto'>('ai-radiologi');
   const { search, setSearch } = useListSearch();
   const queryParams = useListQueryParams({}, search);
   const {
@@ -230,8 +232,39 @@ export function AiRadiologiPage() {
     }
   }
 
+  const tabBar = (
+    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+      <button
+        type="button"
+        className={`btn btn--sm ${view === 'ai-radiologi' ? 'btn--primary' : 'btn--ghost'}`}
+        onClick={() => setView('ai-radiologi')}
+        style={view !== 'ai-radiologi' ? { border: '1px solid var(--color-border)' } : undefined}
+      >
+        AI Radiologi
+      </button>
+      <button
+        type="button"
+        className={`btn btn--sm ${view === 'ai-foto' ? 'btn--primary' : 'btn--ghost'}`}
+        onClick={() => setView('ai-foto')}
+        style={view !== 'ai-foto' ? { border: '1px solid var(--color-border)' } : undefined}
+      >
+        AI Foto
+      </button>
+    </div>
+  );
+
+  if (view === 'ai-foto') {
+    return (
+      <>
+        {tabBar}
+        <AiFotoPage />
+      </>
+    );
+  }
+
   return (
     <>
+      {tabBar}
       <ListPageShell
         title="AI Radiologi"
         subtitle="Baca foto rontgen dengan bantuan AI vision — bacaan & kesan selalu berupa DRAFT yang wajib ditinjau ulang oleh radiolog, bukan diagnosa final"

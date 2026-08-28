@@ -79,7 +79,6 @@ const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'group', groupId: 'pengaturan', label: 'Pengaturan', icon: IconSettings, items: PENGATURAN_ITEMS },
   { type: 'category', categoryId: 'farmasi', icon: IconDocument },
   { type: 'link', id: 'mega-data', label: 'Mega Data', icon: IconTag },
-  { type: 'category', categoryId: 'anatomi', icon: IconStethoscope },
   { type: 'link', id: 'ai-radiologi', label: 'AI Radiologi', icon: IconStethoscope },
   { type: 'link', id: 'hak-akses', label: 'Hak Akses', icon: IconShield },
   { type: 'external-group', groupId: 'sosmed', label: 'Sosmed', icon: IconShare, items: SOSMED_ITEMS },
