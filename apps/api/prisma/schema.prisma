@@ -302,6 +302,25 @@ model LaporanPajakBulanan {
   @@unique([year, bulan, modul])
 }
 
+/// Nama pegawai yang ditampilkan pada baris Beban Gaji di Hasil Perbulan &
+/// Laporan Pajak Bulanan. Terpisah dari LaporanPajakBulanan karena nama
+/// pegawai berlaku untuk semua bulan/tahun (tidak diulang tiap bulan),
+/// sementara nominal gajinya tetap disimpan per bulan seperti sebelumnya.
+model LaporanGajiLabel {
+  id                   String    @id @default(cuid())
+  modul                AsalModul @default(RADIOLOGI)
+  labelFernanda        String    @default("Fernanda")
+  labelChalimatusadiah String    @default("Chalimatusadiah")
+  labelRiki            String    @default("Riki")
+  labelAgung           String    @default("Agung")
+  labelKaryawan1       String    @default("Karyawan 1")
+  labelKaryawan2       String    @default("Karyawan 2")
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  @@unique([modul])
+}
+
 model LaporanNeraca {
   id                 String    @id @default(cuid())
   year               Int

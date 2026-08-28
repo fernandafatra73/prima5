@@ -632,5 +632,49 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
     });
     return reply.status(200).send({ item });
   });
+
+  app.get<{ Querystring: { modul?: string } }>('/api/laporan/gaji-label', async (req) => {
+    const modul = req.query.modul === 'LABORATORIUM' ? 'LABORATORIUM' : 'RADIOLOGI';
+    const item = await prisma.laporanGajiLabel.upsert({
+      where: { modul },
+      create: { modul },
+      update: {},
+    });
+    return { item };
+  });
+
+  app.patch<{
+    Body: {
+      modul?: string;
+      labelFernanda?: string;
+      labelChalimatusadiah?: string;
+      labelRiki?: string;
+      labelAgung?: string;
+      labelKaryawan1?: string;
+      labelKaryawan2?: string;
+    };
+  }>('/api/laporan/gaji-label', async (req) => {
+    const b = req.body;
+    const modul = b.modul === 'LABORATORIUM' ? 'LABORATORIUM' : 'RADIOLOGI';
+    const data: Partial<Record<
+      'labelFernanda' | 'labelChalimatusadiah' | 'labelRiki' | 'labelAgung' | 'labelKaryawan1' | 'labelKaryawan2',
+      string
+    >> = {};
+    for (const field of [
+      'labelFernanda', 'labelChalimatusadiah', 'labelRiki', 'labelAgung', 'labelKaryawan1', 'labelKaryawan2',
+    ] as const) {
+      const value = b[field];
+      if (typeof value === 'string' && value.trim()) {
+        data[field] = value.trim();
+      }
+    }
+
+    const item = await prisma.laporanGajiLabel.upsert({
+      where: { modul },
+      create: { modul, ...data },
+      update: data,
+    });
+    return { item };
+  });
 }
 
