@@ -3,6 +3,7 @@ import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { apiGet, apiPatch } from '../lib/api.ts';
 import { formatRupiah } from '../lib/format.ts';
 import { LaporanNeracaPage } from './LaporanNeracaPage.tsx';
+import { LaporanPajakPage } from './LaporanPajakPage.tsx';
 import '../components/ui/ui.css';
 
 interface BulanPajakBulananItem {
@@ -135,7 +136,7 @@ interface HasilPerbulanPageProps {
 
 export function HasilPerbulanPage({ modul = 'RADIOLOGI' }: HasilPerbulanPageProps) {
   const moduleLabel = modul === 'RADIOLOGI' ? 'Radiologi' : 'Laboratorium';
-  const [view, setView] = useState<'bulanan' | 'tahunan'>('bulanan');
+  const [view, setView] = useState<'bulanan' | 'tahunan' | 'skema12'>('bulanan');
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState<number>(currentYear);
   const [bulanKe, setBulanKe] = useState<number>(new Date().getMonth() + 1);
@@ -325,6 +326,14 @@ export function HasilPerbulanPage({ modul = 'RADIOLOGI' }: HasilPerbulanPageProp
       >
         Rugi Laba Tahunan
       </button>
+      <button
+        type="button"
+        className={`btn btn--sm ${view === 'skema12' ? 'btn--primary' : 'btn--ghost'}`}
+        onClick={() => setView('skema12')}
+        style={view !== 'skema12' ? { border: '1px solid var(--color-border)' } : undefined}
+      >
+        Skema 12 Bln
+      </button>
     </div>
   );
 
@@ -333,6 +342,15 @@ export function HasilPerbulanPage({ modul = 'RADIOLOGI' }: HasilPerbulanPageProp
       <>
         {tabBar}
         <LaporanNeracaPage modul={modul} />
+      </>
+    );
+  }
+
+  if (view === 'skema12') {
+    return (
+      <>
+        {tabBar}
+        <LaporanPajakPage modul={modul} />
       </>
     );
   }
