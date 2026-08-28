@@ -71,6 +71,7 @@ const styles = StyleSheet.create({
     fontSize: 8, fontWeight: 'bold', borderTopWidth: 0.8, borderColor: BLACK,
     paddingTop: 2, width: '100%', textAlign: 'center',
   },
+  signatureRole: { fontSize: 8, textAlign: 'center', marginTop: 1 },
 });
 
 export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
@@ -137,17 +138,13 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
             <Text style={styles.sectionBody}>{data.kesan || '—'}</Text>
           </View>
 
-          <Text style={styles.disclaimer}>
-            * Klinis dan kesan di atas diisi manual oleh radiolog/dokter berdasarkan pembacaan
-            USG, bukan hasil deteksi otomatis / AI. Tgl Cetak: {data.tanggalCetak}.
-          </Text>
+          <Text style={styles.disclaimer}>Tgl Cetak: {data.tanggalCetak}</Text>
 
           <View style={styles.signatureSection}>
             <View style={styles.signatureBox}>
-              <Text style={styles.signatureTitle}>Radiolog / Dokter Pemeriksa</Text>
-              <Text style={styles.signatureName}>
-                {data.radiologNama || '( ................................. )'}
-              </Text>
+              <Text style={styles.signatureTitle}>Teman Sejawat</Text>
+              <Text style={styles.signatureName}>{data.radiologNama}</Text>
+              <Text style={styles.signatureRole}>Radiolog</Text>
             </View>
           </View>
         </View>
