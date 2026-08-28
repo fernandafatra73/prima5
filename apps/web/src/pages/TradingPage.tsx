@@ -24,6 +24,35 @@ const TIMEFRAMES = [
   { id: 'W', label: '1 Minggu' },
 ] as const;
 
+const TEHNIK_TIMELINE = [
+  {
+    waktu: '06:00–14:00',
+    poin: ['Lihat arah besar dari H1/H4', 'Tandai support & resistance'],
+  },
+  {
+    waktu: '14:00–19:00',
+    poin: ['Lihat apakah London mengubah struktur', 'Jangan buru-buru mengikuti candle pertama'],
+  },
+  {
+    waktu: '19:00–23:00',
+    poin: ['Periode utama', 'Perhatikan reaksi harga terhadap level yang sudah ditandai'],
+  },
+  {
+    waktu: '±15–30 menit sebelum berita besar',
+    poin: ['Tandai kalender', 'Waspadai spread/volatilitas'],
+  },
+  {
+    waktu: 'Setelah berita',
+    poin: ['Jangan langsung menyimpulkan dari satu candle', 'Tunggu struktur baru terbentuk'],
+  },
+] as const;
+
+const TEHNIK_RILIS_MINGGUAN = [
+  { hari: 'Selasa 21:00', label: 'JOLTS + ISM', penting: false },
+  { hari: 'Kamis 21:00', label: 'ISM Services', penting: false },
+  { hari: 'Jumat 19:30', label: 'NFP 🚨', penting: true },
+] as const;
+
 const BLUE = '#1d4ed8';
 const YELLOW = '#eab308';
 
@@ -343,6 +372,24 @@ export function TradingPage() {
               }}
             >
               📅 Jadwal Trading
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                document.getElementById('tr-tehnik-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              style={{
+                padding: '0.35rem 0.9rem',
+                borderRadius: '999px',
+                border: `1px solid ${YELLOW}`,
+                background: 'transparent',
+                color: 'var(--color-text)',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+              }}
+            >
+              🎯 Tehnik Trading
             </button>
             <button
               type="button"
@@ -685,6 +732,60 @@ export function TradingPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="tr-tehnik-section" style={cardStyle}>
+        <div style={cardTitlebarStyle}>🎯 Tehnik Trading</div>
+        <div style={cardBodyStyle}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', marginBottom: '1.25rem' }}>
+            {TEHNIK_TIMELINE.map((step) => (
+              <div
+                key={step.waktu}
+                style={{
+                  display: 'flex',
+                  gap: '0.9rem',
+                  padding: '0.75rem 0.9rem',
+                  border: '1px solid var(--color-border)',
+                  borderLeft: `4px solid ${YELLOW}`,
+                  borderRadius: '6px',
+                  background: '#f8fafc',
+                }}
+              >
+                <div style={{ flex: '0 0 200px', fontWeight: 800, color: BLUE, fontSize: '0.85rem' }}>
+                  ⏰ {step.waktu}
+                </div>
+                <ul style={{ margin: 0, paddingLeft: '1.1rem', fontSize: '0.85rem' }}>
+                  {step.poin.map((p) => (
+                    <li key={p}>{p}</li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <p style={{ margin: '0 0 0.5rem', fontWeight: 700, color: BLUE }}>🗓️ Rilis Data Mingguan Penting</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+            {TEHNIK_RILIS_MINGGUAN.map((rilis) => (
+              <div
+                key={rilis.hari}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '0.6rem 0.9rem',
+                  borderRadius: '6px',
+                  border: `1px solid ${rilis.penting ? '#dc2626' : 'var(--color-border)'}`,
+                  background: rilis.penting ? '#fee2e2' : '#ffffff',
+                }}
+              >
+                <span style={{ fontWeight: 700, color: BLUE }}>{rilis.hari}</span>
+                <span style={{ fontWeight: rilis.penting ? 800 : 600, color: rilis.penting ? '#dc2626' : 'var(--color-text)' }}>
+                  {rilis.label}
+                </span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
