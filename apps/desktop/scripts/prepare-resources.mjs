@@ -28,8 +28,12 @@ run('npm run build -w @labprima/web', repoRoot);
 console.log('3/5 Copying build output into resources/server...');
 rmSync(join(serverDir, 'build'), { recursive: true, force: true });
 rmSync(join(serverDir, 'web-dist'), { recursive: true, force: true });
+rmSync(join(serverDir, 'migrations'), { recursive: true, force: true });
 cpSync(join(apiDir, 'build'), join(serverDir, 'build'), { recursive: true });
 cpSync(join(webDir, 'dist'), join(serverDir, 'web-dist'), { recursive: true });
+// Dibundel supaya main.cjs bisa menerapkan migrasi baru ke database milik user yang sudah ada
+// (lihat src/migrate.ts) — bukan hanya ke template.db yang dipakai untuk instalasi baru.
+cpSync(join(apiDir, 'prisma', 'migrations'), join(serverDir, 'migrations'), { recursive: true });
 
 console.log('4/5 Regenerating template.db (schema kosong + akun login default)...');
 const templateDb = join(serverDir, 'template.db');

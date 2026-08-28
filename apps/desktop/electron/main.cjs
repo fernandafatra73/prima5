@@ -64,6 +64,13 @@ async function startServer() {
   process.env.PORT = String(PORT);
   process.env.HOST = HOST;
   process.env.CORS_ORIGIN = BASE_URL;
+  process.env.MIGRATIONS_DIR = join(serverDir, 'migrations');
+
+  // Database user dibuat sekali dari template.db lalu tidak pernah disentuh lagi — kalau versi
+  // baru menambah migrasi Prisma, database lama itu harus diupgrade dulu di sini, atau query akan
+  // gagal karena kolom/tabel belum ada (lihat src/migrate.ts).
+  const migrateEntry = join(serverDir, 'build', 'migrate.js');
+  await import(pathToFileURL(migrateEntry).href);
 
   const entry = join(serverDir, 'build', 'index.js');
   await import(pathToFileURL(entry).href);
