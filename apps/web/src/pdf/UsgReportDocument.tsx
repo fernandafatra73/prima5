@@ -20,6 +20,7 @@ export interface UsgReportData {
   readonly tanggalLabel: string;
   readonly dokterPengirim: string;
   readonly fotoDataUrl: string;
+  readonly fotoDataUrl2: string;
   readonly analisa: string;
   readonly kesan: string;
   readonly radiologNama: string;
@@ -51,10 +52,11 @@ const styles = StyleSheet.create({
   infoText: { fontSize: 8.5 },
   bold: { fontWeight: 'bold' },
 
+  photoRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginVertical: 8 },
   photoContainer: {
-    marginVertical: 8, alignItems: 'center', borderWidth: 0.8, borderColor: BLACK, padding: 8,
+    alignItems: 'center', borderWidth: 0.8, borderColor: BLACK, padding: 8,
   },
-  photo: { maxWidth: 320, maxHeight: 320, objectFit: 'contain' },
+  photo: { maxWidth: 260, maxHeight: 260, objectFit: 'contain' },
 
   section: { marginTop: 8 },
   sectionLabel: { fontSize: 9.5, fontWeight: 'bold', color: BLUE, marginBottom: 3 },
@@ -129,9 +131,18 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
             <Text style={styles.sectionBody}>{data.analisa || '—'}</Text>
           </View>
 
-          {data.fotoDataUrl ? (
-            <View style={styles.photoContainer}>
-              <Image style={styles.photo} src={data.fotoDataUrl} />
+          {(data.fotoDataUrl || data.fotoDataUrl2) ? (
+            <View style={styles.photoRow}>
+              {data.fotoDataUrl ? (
+                <View style={styles.photoContainer}>
+                  <Image style={styles.photo} src={data.fotoDataUrl} />
+                </View>
+              ) : null}
+              {data.fotoDataUrl2 ? (
+                <View style={styles.photoContainer}>
+                  <Image style={styles.photo} src={data.fotoDataUrl2} />
+                </View>
+              ) : null}
             </View>
           ) : null}
 

@@ -470,6 +470,7 @@ model Usg {
   tanggal          DateTime @default(now())
   dokterPengirim   String?
   fotoDataUrl      String
+  fotoDataUrl2     String?
   analisa          String?
   kesan            String?
   radiologNama     String?

@@ -2863,6 +2863,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
           tanggal: true,
           dokterPengirim: true,
           fotoDataUrl: true,
+          fotoDataUrl2: true,
           analisa: true,
           kesan: true,
           radiologNama: true,
@@ -2880,6 +2881,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         tanggal: u.tanggal.toISOString(),
         dokterPengirim: u.dokterPengirim,
         fotoDataUrl: u.fotoDataUrl,
+        fotoDataUrl2: u.fotoDataUrl2,
         analisa: u.analisa,
         kesan: u.kesan,
         radiologNama: u.radiologNama,
@@ -2898,6 +2900,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       tanggal?: string;
       dokterPengirim?: string;
       fotoDataUrl: string;
+      fotoDataUrl2?: string;
       analisa?: string;
       kesan?: string;
       radiologNama?: string;
@@ -2917,6 +2920,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         tanggal: b.tanggal ? new Date(b.tanggal) : new Date(),
         dokterPengirim: b.dokterPengirim?.trim() || null,
         fotoDataUrl: b.fotoDataUrl,
+        fotoDataUrl2: b.fotoDataUrl2 || null,
         analisa: b.analisa?.trim() || null,
         kesan: b.kesan?.trim() || null,
         radiologNama: b.radiologNama?.trim() || null,
@@ -2933,6 +2937,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         tanggal: item.tanggal.toISOString(),
         dokterPengirim: item.dokterPengirim,
         fotoDataUrl: item.fotoDataUrl,
+        fotoDataUrl2: item.fotoDataUrl2,
         analisa: item.analisa,
         kesan: item.kesan,
         radiologNama: item.radiologNama,
@@ -2951,6 +2956,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       tanggal?: string;
       dokterPengirim?: string;
       fotoDataUrl?: string;
+      fotoDataUrl2?: string;
       analisa?: string;
       kesan?: string;
       radiologNama?: string;
@@ -2975,6 +2981,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
             ? req.body.dokterPengirim?.trim() || null
             : existing.dokterPengirim,
         fotoDataUrl: req.body.fotoDataUrl ?? existing.fotoDataUrl,
+        fotoDataUrl2: req.body.fotoDataUrl2 !== undefined ? req.body.fotoDataUrl2 || null : existing.fotoDataUrl2,
         analisa: req.body.analisa !== undefined ? req.body.analisa?.trim() || null : existing.analisa,
         kesan: req.body.kesan !== undefined ? req.body.kesan?.trim() || null : existing.kesan,
         radiologNama:
@@ -2992,6 +2999,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         tanggal: item.tanggal.toISOString(),
         dokterPengirim: item.dokterPengirim,
         fotoDataUrl: item.fotoDataUrl,
+        fotoDataUrl2: item.fotoDataUrl2,
         analisa: item.analisa,
         kesan: item.kesan,
         radiologNama: item.radiologNama,

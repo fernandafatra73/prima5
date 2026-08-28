@@ -23,6 +23,7 @@ interface UsgItem {
   readonly tanggal: string;
   readonly dokterPengirim: string | null;
   readonly fotoDataUrl: string;
+  readonly fotoDataUrl2: string | null;
   readonly analisa: string | null;
   readonly kesan: string | null;
   readonly radiologNama: string | null;
@@ -76,6 +77,7 @@ const emptyForm = {
   tanggal: new Date().toISOString().split('T')[0]!,
   dokterPengirim: '',
   fotoDataUrl: '',
+  fotoDataUrl2: '',
   analisa: '',
   kesan: '',
   radiologNama: '',
@@ -182,6 +184,7 @@ export function UsgPage() {
       tanggal: item.tanggal.split('T')[0]!,
       dokterPengirim: item.dokterPengirim ?? '',
       fotoDataUrl: item.fotoDataUrl,
+      fotoDataUrl2: item.fotoDataUrl2 ?? '',
       analisa: item.analisa ?? '',
       kesan: item.kesan ?? '',
       radiologNama: item.radiologNama ?? '',
@@ -192,13 +195,13 @@ export function UsgPage() {
     document.getElementById('usg-form-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function handleFotoFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFotoFileChange(field: 'fotoDataUrl' | 'fotoDataUrl2', e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
     reader.onload = () => {
       if (typeof reader.result === 'string') {
-        setForm((f) => ({ ...f, fotoDataUrl: reader.result as string }));
+        setForm((f) => ({ ...f, [field]: reader.result as string }));
       }
     };
     reader.readAsDataURL(file);
@@ -222,6 +225,7 @@ export function UsgPage() {
         tanggal: form.tanggal,
         dokterPengirim: form.dokterPengirim || undefined,
         fotoDataUrl: form.fotoDataUrl,
+        fotoDataUrl2: form.fotoDataUrl2 || undefined,
         analisa: form.analisa || undefined,
         kesan: form.kesan || undefined,
         radiologNama: form.radiologNama || undefined,
@@ -276,6 +280,7 @@ export function UsgPage() {
         tanggalLabel: formatTanggalDisplay(item.tanggal),
         dokterPengirim: item.dokterPengirim || '',
         fotoDataUrl: item.fotoDataUrl,
+        fotoDataUrl2: item.fotoDataUrl2 || '',
         analisa: item.analisa || '',
         kesan: item.kesan || '',
         radiologNama: item.radiologNama || '',
@@ -523,28 +528,52 @@ export function UsgPage() {
                 />
               </div>
 
-              <div style={{ marginBottom: '1rem' }}>
-                <label htmlFor="usg-foto" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
-                  Foto USG *
-                </label>
-                {!form.fotoDataUrl ? (
-                  <label htmlFor="usg-foto" className="aifoto-upload aifoto-photo-box" style={{ cursor: 'pointer', maxWidth: 420, margin: '0.4rem auto 0' }}>
-                    <span className="aifoto-upload__icon">📤</span>
-                    <strong>Klik untuk unggah foto USG</strong>
-                    <p className="aifoto-upload__hint">JPEG, PNG, GIF, atau WEBP</p>
+              <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <div style={{ flex: '1 1 200px', maxWidth: 200 }}>
+                  <label htmlFor="usg-foto" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                    Foto USG 1 *
                   </label>
-                ) : (
-                  <div className="aifoto-photo-box aifoto-photo-box--filled" style={{ maxWidth: 420, height: 320, margin: '0.4rem auto 0' }}>
-                    <img src={form.fotoDataUrl} alt="Preview foto USG" />
-                  </div>
-                )}
-                <input
-                  id="usg-foto"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleFotoFileChange}
-                  style={form.fotoDataUrl ? { display: 'block', margin: '0.4rem auto 0' } : { display: 'none' }}
-                />
+                  {!form.fotoDataUrl ? (
+                    <label htmlFor="usg-foto" className="aifoto-upload aifoto-photo-box" style={{ cursor: 'pointer', height: 200, margin: '0.4rem auto 0' }}>
+                      <span className="aifoto-upload__icon">📤</span>
+                      <p className="aifoto-upload__hint">Klik untuk unggah</p>
+                    </label>
+                  ) : (
+                    <div className="aifoto-photo-box aifoto-photo-box--filled" style={{ height: 200, margin: '0.4rem auto 0' }}>
+                      <img src={form.fotoDataUrl} alt="Preview foto USG 1" />
+                    </div>
+                  )}
+                  <input
+                    id="usg-foto"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFotoFileChange('fotoDataUrl', e)}
+                    style={form.fotoDataUrl ? { display: 'block', margin: '0.4rem auto 0' } : { display: 'none' }}
+                  />
+                </div>
+
+                <div style={{ flex: '1 1 200px', maxWidth: 200 }}>
+                  <label htmlFor="usg-foto-2" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                    Foto USG 2 (Opsional)
+                  </label>
+                  {!form.fotoDataUrl2 ? (
+                    <label htmlFor="usg-foto-2" className="aifoto-upload aifoto-photo-box" style={{ cursor: 'pointer', height: 200, margin: '0.4rem auto 0' }}>
+                      <span className="aifoto-upload__icon">📤</span>
+                      <p className="aifoto-upload__hint">Klik untuk unggah</p>
+                    </label>
+                  ) : (
+                    <div className="aifoto-photo-box aifoto-photo-box--filled" style={{ height: 200, margin: '0.4rem auto 0' }}>
+                      <img src={form.fotoDataUrl2} alt="Preview foto USG 2" />
+                    </div>
+                  )}
+                  <input
+                    id="usg-foto-2"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFotoFileChange('fotoDataUrl2', e)}
+                    style={form.fotoDataUrl2 ? { display: 'block', margin: '0.4rem auto 0' } : { display: 'none' }}
+                  />
+                </div>
               </div>
 
               <div className="form-field form-field--full">
