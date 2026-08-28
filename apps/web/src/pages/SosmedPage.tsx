@@ -1,3 +1,5 @@
+import type { AppViewId } from '../config/navigation.ts';
+
 interface SosmedLink {
   readonly id: string;
   readonly label: string;
@@ -17,9 +19,29 @@ const SOSMED_LINKS: readonly SosmedLink[] = [
   { id: 'chatgpt', label: 'ChatGPT', url: 'https://chatgpt.com/', icon: '🤖' },
 ];
 
+const cardStyle: React.CSSProperties = {
+  display: 'flex',
+  flexDirection: 'column',
+  alignItems: 'center',
+  gap: '0.5rem',
+  padding: '1.25rem 1rem',
+  border: '1px solid var(--color-border)',
+  borderRadius: 'var(--radius-card)',
+  background: 'var(--color-bg-surface)',
+  boxShadow: 'var(--shadow-card)',
+  textDecoration: 'none',
+  color: 'var(--color-text)',
+  fontWeight: 600,
+  cursor: 'pointer',
+};
+
+interface SosmedPageProps {
+  readonly onNavigate: (view: AppViewId) => void;
+}
+
 /** Menggabungkan seluruh tautan Sosmed ke dalam satu halaman, menggantikan
  * dropdown navbar Sosmed yang sebelumnya membuka daftar tautan terpisah. */
-export function SosmedPage() {
+export function SosmedPage({ onNavigate }: SosmedPageProps) {
   return (
     <div>
       <h2 style={{ margin: '0 0 0.35rem' }}>Sosmed</h2>
@@ -33,28 +55,12 @@ export function SosmedPage() {
           gap: '1rem',
         }}
       >
+        <button type="button" onClick={() => onNavigate('trading')} style={cardStyle}>
+          <span style={{ fontSize: '2rem' }}>🪙</span>
+          <span>Trading XAU/USD</span>
+        </button>
         {SOSMED_LINKS.map((link) => (
-          <a
-            key={link.id}
-            href={link.url}
-            target="_blank"
-            rel="noopener noreferrer"
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '1.25rem 1rem',
-              border: '1px solid var(--color-border)',
-              borderRadius: 'var(--radius-card)',
-              background: 'var(--color-bg-surface)',
-              boxShadow: 'var(--shadow-card)',
-              textDecoration: 'none',
-              color: 'var(--color-text)',
-              fontWeight: 600,
-              transition: 'transform 0.15s ease, box-shadow 0.15s ease',
-            }}
-          >
+          <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" style={cardStyle}>
             <span style={{ fontSize: '2rem' }}>{link.icon}</span>
             <span>{link.label}</span>
           </a>

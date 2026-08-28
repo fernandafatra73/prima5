@@ -123,6 +123,29 @@ model AdminKlinik {
   updatedAt     DateTime @updatedAt
 }
 
+/// Kalender tahunan event ekonomi penting (FOMC, NFP, dll) yang biasa
+/// menggerakkan harga XAU/USD — diisi manual oleh pengguna per tahun.
+model TradingJadwal {
+  id          String   @id @default(cuid())
+  tanggal     DateTime
+  namaEvent   String
+  keterangan  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+/// Catatan analisa & level support/resistance sebelum membeli XAU/USD —
+/// jurnal trading pribadi, diisi manual.
+model TradingAnalisa {
+  id          String   @id @default(cuid())
+  tanggal     DateTime @default(now())
+  analisa     String
+  support     String?
+  resistance  String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
 /// Teks berjalan (marquee) pada band bawah aplikasi. Satu baris singleton,
 /// diisi lewat menu Pengaturan > Autote1.
 model AutoText {

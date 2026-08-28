@@ -2916,6 +2916,112 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // ─── Trading XAU/USD ────────────────────────────────────────────────────
+
+  app.get<{ Querystring: ListQuery }>('/api/trading-jadwal', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const q = req.query.q?.trim();
+    const where = q ? { namaEvent: { contains: q } } : {};
+    const [total, items] = await Promise.all([
+      prisma.tradingJadwal.count({ where }),
+      prisma.tradingJadwal.findMany({ where, orderBy: { tanggal: 'asc' }, skip, take: limit }),
+    ]);
+    return {
+      items: items.map((j) => ({ ...j, tanggal: j.tanggal.toISOString() })),
+      pagination: buildPaginationMeta(total, page, limit),
+    };
+  });
+
+  app.post<{ Body: { tanggal: string; namaEvent: string; keterangan?: string } }>(
+    '/api/trading-jadwal',
+    async (req, reply) => {
+      const b = req.body;
+      if (!b.tanggal || !b.namaEvent?.trim()) {
+        return badRequest(reply, 'tanggal dan namaEvent wajib diisi');
+      }
+      const item = await prisma.tradingJadwal.create({
+        data: {
+          tanggal: new Date(b.tanggal),
+          namaEvent: b.namaEvent.trim(),
+          keterangan: b.keterangan?.trim() || null,
+        },
+      });
+      return reply.status(201).send({ item: { ...item, tanggal: item.tanggal.toISOString() } });
+    },
+  );
+
+  app.patch<{
+    Params: { id: string };
+    Body: { tanggal?: string; namaEvent?: string; keterangan?: string };
+  }>('/api/trading-jadwal/:id', async (req, reply) => {
+    const existing = await prisma.tradingJadwal.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Jadwal tidak ditemukan' });
+    const item = await prisma.tradingJadwal.update({
+      where: { id: req.params.id },
+      data: {
+        tanggal: req.body.tanggal ? new Date(req.body.tanggal) : existing.tanggal,
+        namaEvent: req.body.namaEvent?.trim() ?? existing.namaEvent,
+        keterangan: req.body.keterangan !== undefined ? req.body.keterangan?.trim() || null : existing.keterangan,
+      },
+    });
+    return { item: { ...item, tanggal: item.tanggal.toISOString() } };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/trading-jadwal/:id', async (req) => {
+    await prisma.tradingJadwal.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
+  app.get<{ Querystring: ListQuery }>('/api/trading-analisa', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const [total, items] = await Promise.all([
+      prisma.tradingAnalisa.count(),
+      prisma.tradingAnalisa.findMany({ orderBy: { tanggal: 'desc' }, skip, take: limit }),
+    ]);
+    return {
+      items: items.map((a) => ({ ...a, tanggal: a.tanggal.toISOString() })),
+      pagination: buildPaginationMeta(total, page, limit),
+    };
+  });
+
+  app.post<{ Body: { analisa: string; support?: string; resistance?: string } }>(
+    '/api/trading-analisa',
+    async (req, reply) => {
+      const b = req.body;
+      if (!b.analisa?.trim()) return badRequest(reply, 'analisa wajib diisi');
+      const item = await prisma.tradingAnalisa.create({
+        data: {
+          analisa: b.analisa.trim(),
+          support: b.support?.trim() || null,
+          resistance: b.resistance?.trim() || null,
+        },
+      });
+      return reply.status(201).send({ item: { ...item, tanggal: item.tanggal.toISOString() } });
+    },
+  );
+
+  app.patch<{
+    Params: { id: string };
+    Body: { analisa?: string; support?: string; resistance?: string };
+  }>('/api/trading-analisa/:id', async (req, reply) => {
+    const existing = await prisma.tradingAnalisa.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Analisa tidak ditemukan' });
+    const item = await prisma.tradingAnalisa.update({
+      where: { id: req.params.id },
+      data: {
+        analisa: req.body.analisa?.trim() ?? existing.analisa,
+        support: req.body.support !== undefined ? req.body.support?.trim() || null : existing.support,
+        resistance: req.body.resistance !== undefined ? req.body.resistance?.trim() || null : existing.resistance,
+      },
+    });
+    return { item: { ...item, tanggal: item.tanggal.toISOString() } };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/trading-analisa/:id', async (req) => {
+    await prisma.tradingAnalisa.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
   app.get('/api/kop-surat', async () => {
     const item = await prisma.kopSurat.findUnique({ where: { id: 'default' } });
     if (!item) {
