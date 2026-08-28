@@ -68,10 +68,12 @@ const styles = StyleSheet.create({
   signatureBox: { alignItems: 'center', width: 170 },
   signatureTitle: { fontSize: 8, marginBottom: 28 },
   signatureName: {
-    fontSize: 8, fontWeight: 'bold', borderTopWidth: 0.8, borderColor: BLACK,
-    paddingTop: 2, width: '100%', textAlign: 'center',
+    fontSize: 8, fontWeight: 'bold', width: '100%', textAlign: 'center',
   },
-  signatureRole: { fontSize: 8, textAlign: 'center', marginTop: 1 },
+  signatureRole: {
+    fontSize: 8, textAlign: 'center', marginTop: 1, borderTopWidth: 0.8, borderColor: BLACK,
+    paddingTop: 2, width: '100%',
+  },
 });
 
 export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {

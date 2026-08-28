@@ -566,18 +566,20 @@ export function UsgPage() {
                   <p style={{ margin: '0 0 2.5rem', fontSize: '0.8rem', textAlign: 'center' }}>
                     Teman Sejawat
                   </p>
-                  <div
+                  <div style={{ textAlign: 'center', fontWeight: 700, fontSize: '0.85rem' }}>
+                    {form.radiologNama || '( ................................. )'}
+                  </div>
+                  <p
                     style={{
+                      margin: '0.1rem 0 0',
+                      fontSize: '0.8rem',
                       textAlign: 'center',
-                      fontWeight: 700,
-                      fontSize: '0.85rem',
                       borderTop: '1px solid #1a1a1a',
                       paddingTop: '0.25rem',
                     }}
                   >
-                    {form.radiologNama || '( ................................. )'}
-                  </div>
-                  <p style={{ margin: '0.1rem 0 0', fontSize: '0.8rem', textAlign: 'center' }}>Radiolog</p>
+                    Radiolog
+                  </p>
                 </div>
               </div>
             </div>
