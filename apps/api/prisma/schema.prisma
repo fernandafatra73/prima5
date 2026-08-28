@@ -359,6 +359,7 @@ model LaporanNeraca {
   biayaTransport     Decimal  @default(0)
   biayaSewa          Decimal  @default(0)
   biayaLainLain      Decimal  @default(0)
+  biayaPajakSewa     Decimal  @default(0)
 
   // Tanda tangan
   tempatTandaTangan  String   @default("Sukabumi")

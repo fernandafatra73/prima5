@@ -333,6 +333,7 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
     totalPasiva: number;
     pendapatan: number; biayaGaji: number; biayaAtkBahan: number; biayaListrik: number;
     biayaTelpon: number; biayaTransport: number; biayaSewa: number; biayaLainLain: number;
+    biayaPajakSewa: number;
     totalBiaya: number;
     tempatTandaTangan: string; tanggalTandaTangan: string; namaPenandatangan: string;
     logoPerusahaanId: string | null;
@@ -348,7 +349,7 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
     utangJangkaPanjang: Decimal; modalUsaha: Decimal;
     pendapatan: Decimal; biayaGaji: Decimal; biayaAtkBahan: Decimal;
     biayaListrik: Decimal; biayaTelpon: Decimal; biayaTransport: Decimal;
-    biayaSewa: Decimal; biayaLainLain: Decimal;
+    biayaSewa: Decimal; biayaLainLain: Decimal; biayaPajakSewa: Decimal;
     tempatTandaTangan: string; tanggalTandaTangan: Date; namaPenandatangan: string;
     logoPerusahaanId: string | null;
   }): NeracaSerialized {
@@ -373,13 +374,15 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
     const biayaTransport = toNumber(n.biayaTransport);
     const biayaSewa = toNumber(n.biayaSewa);
     const biayaLainLain = toNumber(n.biayaLainLain);
+    const biayaPajakSewa = toNumber(n.biayaPajakSewa);
 
     const totalAktivaLancar = kas + bank + piutang + persediaan;
     const totalAktivaTetap = tanah + gedung + peralatan + kendaraan;
     const totalAktiva = totalAktivaLancar + totalAktivaTetap;
     const totalUtangJangkaPendek = utangUsaha + utangPajak + utangLainnya;
     const totalBiaya =
-      biayaGaji + biayaAtkBahan + biayaListrik + biayaTelpon + biayaTransport + biayaSewa + biayaLainLain;
+      biayaGaji + biayaAtkBahan + biayaListrik + biayaTelpon + biayaTransport + biayaSewa +
+      biayaLainLain + biayaPajakSewa;
     const labaRugi = pendapatan - totalBiaya;
     const totalModal = modalUsaha + labaRugi;
     const totalPasiva = totalUtangJangkaPendek + utangJangkaPanjang + totalModal;
@@ -396,7 +399,7 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
       modalUsaha, labaRugi, totalModal,
       totalPasiva,
       pendapatan, biayaGaji, biayaAtkBahan, biayaListrik, biayaTelpon,
-      biayaTransport, biayaSewa, biayaLainLain, totalBiaya,
+      biayaTransport, biayaSewa, biayaLainLain, biayaPajakSewa, totalBiaya,
       tempatTandaTangan: n.tempatTandaTangan,
       tanggalTandaTangan: n.tanggalTandaTangan.toISOString().slice(0, 10),
       namaPenandatangan: n.namaPenandatangan,
@@ -413,7 +416,7 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
     utangUsaha: 0, utangPajak: 0, utangLainnya: 0,
     utangJangkaPanjang: 0, modalUsaha: 0,
     pendapatan: 0, biayaGaji: 0, biayaAtkBahan: 0, biayaListrik: 0,
-    biayaTelpon: 0, biayaTransport: 0, biayaSewa: 0, biayaLainLain: 0,
+    biayaTelpon: 0, biayaTransport: 0, biayaSewa: 0, biayaLainLain: 0, biayaPajakSewa: 0,
     tempatTandaTangan: 'Sukabumi',
     tanggalTandaTangan: new Date().toISOString().slice(0, 10),
     namaPenandatangan: '',
@@ -448,7 +451,7 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
       utangJangkaPanjang?: number; modalUsaha?: number;
       pendapatan?: number; biayaGaji?: number; biayaAtkBahan?: number;
       biayaListrik?: number; biayaTelpon?: number; biayaTransport?: number;
-      biayaSewa?: number; biayaLainLain?: number;
+      biayaSewa?: number; biayaLainLain?: number; biayaPajakSewa?: number;
       tempatTandaTangan?: string; tanggalTandaTangan?: string; namaPenandatangan?: string;
       logoPerusahaanId?: string | null;
     };
@@ -467,6 +470,7 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
       pendapatan: b.pendapatan ?? 0, biayaGaji: b.biayaGaji ?? 0, biayaAtkBahan: b.biayaAtkBahan ?? 0,
       biayaListrik: b.biayaListrik ?? 0, biayaTelpon: b.biayaTelpon ?? 0,
       biayaTransport: b.biayaTransport ?? 0, biayaSewa: b.biayaSewa ?? 0, biayaLainLain: b.biayaLainLain ?? 0,
+      biayaPajakSewa: b.biayaPajakSewa ?? 0,
       tempatTandaTangan: b.tempatTandaTangan?.trim() || 'Sukabumi',
       tanggalTandaTangan: b.tanggalTandaTangan ? new Date(b.tanggalTandaTangan) : new Date(),
       namaPenandatangan: b.namaPenandatangan?.trim() || '',

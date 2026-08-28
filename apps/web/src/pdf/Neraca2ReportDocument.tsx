@@ -11,6 +11,7 @@ export interface Neraca2ReportData {
   readonly biayaTelponFormatted: string;
   readonly biayaTransportFormatted: string;
   readonly biayaSewaFormatted: string;
+  readonly biayaPajakSewaFormatted: string;
   readonly biayaLainLainFormatted: string;
   readonly totalBiayaFormatted: string;
   readonly labaRugiFormatted: string;
@@ -127,6 +128,11 @@ export function Neraca2ReportDocument({ data }: { readonly data: Neraca2ReportDa
             <Text style={styles.cellLabelIndent}>Biaya sewa</Text>
             <Text style={styles.cellRp}>Rp</Text>
             <Text style={styles.cellSmallValue}>{data.biayaSewaFormatted}</Text>
+          </View>
+          <View style={styles.rowNoLine}>
+            <Text style={styles.cellLabelIndent}>Pajak Sewa</Text>
+            <Text style={styles.cellRp}>Rp</Text>
+            <Text style={styles.cellSmallValue}>{data.biayaPajakSewaFormatted}</Text>
           </View>
           <View style={styles.row}>
             <Text style={styles.cellLabelIndent}>Biaya dan lain lain</Text>

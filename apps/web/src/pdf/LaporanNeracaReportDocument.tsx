@@ -40,6 +40,7 @@ export interface LaporanNeracaReportData {
   readonly biayaTransportFormatted: string;
   readonly biayaSewaFormatted: string;
   readonly biayaLainLainFormatted: string;
+  readonly biayaPajakSewaFormatted: string;
   readonly totalBiayaFormatted: string;
   readonly tempatTandaTangan: string;
   readonly tanggalTandaTanganLabel: string;
@@ -185,6 +186,7 @@ export function LaporanNeracaReportDocument({ data }: { readonly data: LaporanNe
               <View style={styles.row}><Text style={styles.rowLabel}>Biaya Telpon</Text><Text style={styles.rowValue}>{data.biayaTelponFormatted}</Text></View>
               <View style={styles.row}><Text style={styles.rowLabel}>Biaya Transport</Text><Text style={styles.rowValue}>{data.biayaTransportFormatted}</Text></View>
               <View style={styles.row}><Text style={styles.rowLabel}>Biaya Sewa</Text><Text style={styles.rowValue}>{data.biayaSewaFormatted}</Text></View>
+              <View style={styles.row}><Text style={styles.rowLabel}>Pajak Sewa</Text><Text style={styles.rowValue}>{data.biayaPajakSewaFormatted}</Text></View>
               <View style={styles.row}><Text style={styles.rowLabel}>Biaya dan Lain-lain</Text><Text style={styles.rowValue}>{data.biayaLainLainFormatted}</Text></View>
               <View style={styles.subtotalRow}><Text>Total Biaya</Text><Text>{data.totalBiayaFormatted}</Text></View>
 

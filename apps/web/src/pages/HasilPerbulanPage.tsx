@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { apiGet, apiPatch } from '../lib/api.ts';
 import { formatRupiah } from '../lib/format.ts';
+import { LaporanNeracaPage } from './LaporanNeracaPage.tsx';
 import '../components/ui/ui.css';
 
 interface BulanPajakBulananItem {
@@ -134,6 +135,7 @@ interface HasilPerbulanPageProps {
 
 export function HasilPerbulanPage({ modul = 'RADIOLOGI' }: HasilPerbulanPageProps) {
   const moduleLabel = modul === 'RADIOLOGI' ? 'Radiologi' : 'Laboratorium';
+  const [view, setView] = useState<'bulanan' | 'tahunan'>('bulanan');
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState<number>(currentYear);
   const [bulanKe, setBulanKe] = useState<number>(new Date().getMonth() + 1);
@@ -305,7 +307,39 @@ export function HasilPerbulanPage({ modul = 'RADIOLOGI' }: HasilPerbulanPageProp
     );
   }
 
+  const tabBar = (
+    <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem' }}>
+      <button
+        type="button"
+        className={`btn btn--sm ${view === 'bulanan' ? 'btn--primary' : 'btn--ghost'}`}
+        onClick={() => setView('bulanan')}
+        style={view !== 'bulanan' ? { border: '1px solid var(--color-border)' } : undefined}
+      >
+        Bulanan
+      </button>
+      <button
+        type="button"
+        className={`btn btn--sm ${view === 'tahunan' ? 'btn--primary' : 'btn--ghost'}`}
+        onClick={() => setView('tahunan')}
+        style={view !== 'tahunan' ? { border: '1px solid var(--color-border)' } : undefined}
+      >
+        Rugi Laba Tahunan
+      </button>
+    </div>
+  );
+
+  if (view === 'tahunan') {
+    return (
+      <>
+        {tabBar}
+        <LaporanNeracaPage modul={modul} />
+      </>
+    );
+  }
+
   return (
+    <>
+    {tabBar}
     <ListPageShell
       title={`Hasil Perbulan ${moduleLabel}`}
       subtitle="Laporan keuangan ringkas per bulan — Pendapatan, Beban Usaha, Modal, dan mini Neraca. Data sama dengan Laporan Pajak Bulanan."
@@ -513,5 +547,6 @@ export function HasilPerbulanPage({ modul = 'RADIOLOGI' }: HasilPerbulanPageProp
         </div>
       )}
     </ListPageShell>
+    </>
   );
 }

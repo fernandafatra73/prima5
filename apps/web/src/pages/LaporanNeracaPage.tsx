@@ -38,6 +38,7 @@ interface NeracaData {
   readonly biayaTransport: number;
   readonly biayaSewa: number;
   readonly biayaLainLain: number;
+  readonly biayaPajakSewa: number;
   readonly tempatTandaTangan: string;
   readonly tanggalTandaTangan: string;
   readonly namaPenandatangan: string;
@@ -57,7 +58,7 @@ const emptyForm = {
   utangUsaha: '0', utangPajak: '0', utangLainnya: '0',
   utangJangkaPanjang: '0', modalUsaha: '0',
   pendapatan: '0', biayaGaji: '0', biayaAtkBahan: '0', biayaListrik: '0',
-  biayaTelpon: '0', biayaTransport: '0', biayaSewa: '0', biayaLainLain: '0',
+  biayaTelpon: '0', biayaTransport: '0', biayaSewa: '0', biayaLainLain: '0', biayaPajakSewa: '0',
   tempatTandaTangan: 'Sukabumi',
   tanggalTandaTangan: new Date().toISOString().split('T')[0]!,
   namaPenandatangan: '',
@@ -111,6 +112,7 @@ export function LaporanNeracaPage({ modul = 'RADIOLOGI' }: LaporanNeracaPageProp
         pendapatan: String(d.pendapatan), biayaGaji: String(d.biayaGaji), biayaAtkBahan: String(d.biayaAtkBahan),
         biayaListrik: String(d.biayaListrik), biayaTelpon: String(d.biayaTelpon),
         biayaTransport: String(d.biayaTransport), biayaSewa: String(d.biayaSewa), biayaLainLain: String(d.biayaLainLain),
+        biayaPajakSewa: String(d.biayaPajakSewa),
         tempatTandaTangan: d.tempatTandaTangan,
         tanggalTandaTangan: d.tanggalTandaTangan,
         namaPenandatangan: d.namaPenandatangan,
@@ -140,7 +142,7 @@ export function LaporanNeracaPage({ modul = 'RADIOLOGI' }: LaporanNeracaPageProp
     const totalUtangJangkaPendek = n(form.utangUsaha) + n(form.utangPajak) + n(form.utangLainnya);
     const totalBiaya =
       n(form.biayaGaji) + n(form.biayaAtkBahan) + n(form.biayaListrik) + n(form.biayaTelpon) +
-      n(form.biayaTransport) + n(form.biayaSewa) + n(form.biayaLainLain);
+      n(form.biayaTransport) + n(form.biayaSewa) + n(form.biayaLainLain) + n(form.biayaPajakSewa);
     const labaRugi = n(form.pendapatan) - totalBiaya;
     const totalModal = n(form.modalUsaha) + labaRugi;
     const totalPasiva = totalUtangJangkaPendek + n(form.utangJangkaPanjang) + totalModal;
@@ -164,6 +166,7 @@ export function LaporanNeracaPage({ modul = 'RADIOLOGI' }: LaporanNeracaPageProp
         pendapatan: n(form.pendapatan), biayaGaji: n(form.biayaGaji), biayaAtkBahan: n(form.biayaAtkBahan),
         biayaListrik: n(form.biayaListrik), biayaTelpon: n(form.biayaTelpon),
         biayaTransport: n(form.biayaTransport), biayaSewa: n(form.biayaSewa), biayaLainLain: n(form.biayaLainLain),
+        biayaPajakSewa: n(form.biayaPajakSewa),
         tempatTandaTangan: form.tempatTandaTangan,
         tanggalTandaTangan: form.tanggalTandaTangan,
         namaPenandatangan: form.namaPenandatangan,
@@ -216,6 +219,7 @@ export function LaporanNeracaPage({ modul = 'RADIOLOGI' }: LaporanNeracaPageProp
       biayaTransportFormatted: formatRupiah(n(form.biayaTransport)),
       biayaSewaFormatted: formatRupiah(n(form.biayaSewa)),
       biayaLainLainFormatted: formatRupiah(n(form.biayaLainLain)),
+      biayaPajakSewaFormatted: formatRupiah(n(form.biayaPajakSewa)),
       totalBiayaFormatted: formatRupiah(totals.totalBiaya),
       tempatTandaTangan: form.tempatTandaTangan,
       tanggalTandaTanganLabel: new Date(form.tanggalTandaTangan).toLocaleDateString('id-ID', {
@@ -496,6 +500,7 @@ export function LaporanNeracaPage({ modul = 'RADIOLOGI' }: LaporanNeracaPageProp
                 {field('biayaTelpon', 'Biaya Telpon (Rp)')}
                 {field('biayaTransport', 'Biaya Transport (Rp)')}
                 {field('biayaSewa', 'Biaya Sewa (Rp)')}
+                {field('biayaPajakSewa', 'Pajak Sewa (Rp)')}
                 {field('biayaLainLain', 'Biaya dan Lain-lain (Rp)')}
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, padding: '0.4rem 0', borderTop: '1px dashed var(--color-border)' }}>
