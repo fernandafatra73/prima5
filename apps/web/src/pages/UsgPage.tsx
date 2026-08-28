@@ -81,7 +81,6 @@ export function UsgPage() {
   } = usePaginatedList<UsgItem>('/api/usg', queryParams);
   const reload = useMutationReload(reloadList);
 
-  const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<UsgItem | null>(null);
   const [deleting, setDeleting] = useState<UsgItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -132,10 +131,10 @@ export function UsgPage() {
     void loadKopSurat();
   }, [loadRadiologOptions, loadPendaftaranOptions, loadKopSurat]);
 
-  function openCreate() {
+  function resetForm() {
     setForm(emptyForm);
     setError(null);
-    setCreateOpen(true);
+    setEditing(null);
   }
 
   function openEdit(item: UsgItem) {
@@ -151,11 +150,6 @@ export function UsgPage() {
     });
     setError(null);
     setEditing(item);
-  }
-
-  function closeModal() {
-    setCreateOpen(false);
-    setEditing(null);
   }
 
   function handleFotoFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -189,13 +183,14 @@ export function UsgPage() {
         kesan: form.kesan || undefined,
         radiologNama: form.radiologNama || undefined,
       };
+      const wasEditing = editing !== null;
       if (editing) {
         await apiPatch(`/api/usg/${editing.id}`, body);
       } else {
         await apiPost('/api/usg', body);
       }
-      closeModal();
-      await reload({ resetPage: !editing });
+      resetForm();
+      await reload({ resetPage: !wasEditing });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menyimpan data USG');
     } finally {
@@ -252,91 +247,11 @@ export function UsgPage() {
 
   return (
     <>
-      <ListPageShell
-        title="USG"
-        subtitle="Arsip pemeriksaan USG pasien beserta analisa & kesan yang diisi manual oleh radiolog/dokter"
-        metrics={[
-          { label: 'Total Data', value: String(pagination.total), tone: 'blue', iconKind: 'clipboard' },
-        ]}
-        searchPlaceholder="Cari nama pasien..."
-        searchValue={search}
-        onSearchChange={setSearch}
-        onRefresh={() => void reload()}
-        error={error}
-        loading={loading}
-        pagination={pagination}
-        onPageChange={setPage}
-        action={
-          <button type="button" className="btn btn--primary" onClick={openCreate}>
-            + Tambah USG
-          </button>
-        }
-      >
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Foto</th>
-                <th>Tanggal</th>
-                <th>Nama Pasien</th>
-                <th>Pemeriksaan</th>
-                <th>Kesan</th>
-                <th>Radiolog</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 ? (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '1.5rem' }}>
-                    Belum ada data USG.
-                  </td>
-                </tr>
-              ) : (
-                items.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <img
-                        src={item.fotoDataUrl}
-                        alt={`Foto USG ${item.namaPasien}`}
-                        style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--color-border)' }}
-                      />
-                    </td>
-                    <td>{formatTanggalDisplay(item.tanggal)}</td>
-                    <td style={{ fontWeight: 600 }}>
-                      {item.namaPasien}
-                      {item.regCode && (
-                        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>{item.regCode}</div>
-                      )}
-                    </td>
-                    <td>{item.jenisPemeriksaan || '—'}</td>
-                    <td style={{ maxWidth: '220px', whiteSpace: 'normal' }}>{item.kesan || '—'}</td>
-                    <td>{item.radiologNama || '—'}</td>
-                    <td>
-                      <TableRowActions
-                        onEdit={() => openEdit(item)}
-                        onDelete={() => setDeleting(item)}
-                        onPrint={() => void handlePrint(item)}
-                        editLabel="Ubah data USG"
-                        deleteLabel="Hapus data USG"
-                        printLabel={printingId === item.id ? 'Membuat PDF...' : 'Cetak hasil USG'}
-                      />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+      <div className="aifoto-frame" style={{ marginBottom: '1.25rem' }}>
+        <div className="aifoto-frame__titlebar">
+          {editing ? `✏️ Ubah Data USG — ${editing.namaPasien}` : '📝 Tambah Data USG'}
         </div>
-      </ListPageShell>
-
-      {(createOpen || editing) && (
-        <Modal
-          open={true}
-          title={editing ? 'Ubah Data USG' : 'Tambah Data USG'}
-          onClose={closeModal}
-          size="xl"
-        >
+        <div className="aifoto-frame__body">
           <form onSubmit={(e) => void handleSubmit(e)} className="form-grid">
             <div className="form-field form-grid--full" style={{ gap: 0 }}>
               <div
@@ -512,13 +427,86 @@ export function UsgPage() {
             </div>
 
             <ModalFormFooter
-              onCancel={closeModal}
+              onCancel={resetForm}
               submitLabel={editing ? 'Simpan Perubahan' : 'Simpan'}
               loading={submitting}
             />
           </form>
-        </Modal>
-      )}
+        </div>
+      </div>
+
+      <ListPageShell
+        title="USG"
+        subtitle="Arsip pemeriksaan USG pasien beserta analisa & kesan yang diisi manual oleh radiolog/dokter"
+        metrics={[
+          { label: 'Total Data', value: String(pagination.total), tone: 'blue', iconKind: 'clipboard' },
+        ]}
+        searchPlaceholder="Cari nama pasien..."
+        searchValue={search}
+        onSearchChange={setSearch}
+        onRefresh={() => void reload()}
+        error={error}
+        loading={loading}
+        pagination={pagination}
+        onPageChange={setPage}
+      >
+        <div style={{ overflowX: 'auto' }}>
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Foto</th>
+                <th>Tanggal</th>
+                <th>Nama Pasien</th>
+                <th>Pemeriksaan</th>
+                <th>Kesan</th>
+                <th>Radiolog</th>
+                <th>Aksi</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.length === 0 ? (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '1.5rem' }}>
+                    Belum ada data USG.
+                  </td>
+                </tr>
+              ) : (
+                items.map((item) => (
+                  <tr key={item.id}>
+                    <td>
+                      <img
+                        src={item.fotoDataUrl}
+                        alt={`Foto USG ${item.namaPasien}`}
+                        style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--color-border)' }}
+                      />
+                    </td>
+                    <td>{formatTanggalDisplay(item.tanggal)}</td>
+                    <td style={{ fontWeight: 600 }}>
+                      {item.namaPasien}
+                      {item.regCode && (
+                        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>{item.regCode}</div>
+                      )}
+                    </td>
+                    <td>{item.jenisPemeriksaan || '—'}</td>
+                    <td style={{ maxWidth: '220px', whiteSpace: 'normal' }}>{item.kesan || '—'}</td>
+                    <td>{item.radiologNama || '—'}</td>
+                    <td>
+                      <TableRowActions
+                        onEdit={() => openEdit(item)}
+                        onDelete={() => setDeleting(item)}
+                        onPrint={() => void handlePrint(item)}
+                        editLabel="Ubah data USG"
+                        deleteLabel="Hapus data USG"
+                        printLabel={printingId === item.id ? 'Membuat PDF...' : 'Cetak hasil USG'}
+                      />
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </ListPageShell>
 
       <ConfirmModal
         open={deleting !== null}
