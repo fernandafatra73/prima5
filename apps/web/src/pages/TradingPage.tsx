@@ -312,6 +312,24 @@ export function TradingPage() {
             ))}
             <button
               type="button"
+              onClick={() =>
+                document.getElementById('tr-jadwal-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              style={{
+                padding: '0.35rem 0.9rem',
+                borderRadius: '999px',
+                border: `1px solid ${YELLOW}`,
+                background: 'transparent',
+                color: 'var(--color-text)',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+              }}
+            >
+              📅 Jadwal Trading
+            </button>
+            <button
+              type="button"
               onClick={() => setShowKalkulator((v) => !v)}
               style={{
                 marginLeft: 'auto',
@@ -553,7 +571,7 @@ export function TradingPage() {
         </div>
       </div>
 
-      <div style={cardStyle}>
+      <div id="tr-jadwal-section" style={cardStyle}>
         <div style={cardTitlebarStyle}>📅 Jadwal Tahunan (Event Ekonomi)</div>
         <div style={cardBodyStyle}>
           <form onSubmit={(e) => void handleJadwalSubmit(e)} className="form-grid">
