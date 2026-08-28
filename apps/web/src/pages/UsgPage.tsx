@@ -253,7 +253,19 @@ export function UsgPage() {
         </div>
         <div className="aifoto-frame__body">
           <form onSubmit={(e) => void handleSubmit(e)} className="form-grid">
-            <div className="form-field form-grid--full" style={{ gap: 0 }}>
+            <div
+              className="form-field form-grid--full"
+              style={{
+                gap: 0,
+                maxWidth: 720,
+                margin: '0 auto',
+                background: '#ffffff',
+                border: '1px solid #cbd5e1',
+                borderRadius: 'var(--radius-card)',
+                boxShadow: 'var(--shadow-card)',
+                padding: '1.5rem',
+              }}
+            >
               <div
                 style={{
                   display: 'flex',
@@ -286,142 +298,168 @@ export function UsgPage() {
                   </div>
                 </div>
               </div>
-              <div className="aifoto-layout">
-                <div className="aifoto-frame">
-                  <div className="aifoto-frame__titlebar">🩻 Foto USG</div>
-                  <div className="aifoto-frame__body">
-                    <label htmlFor="usg-foto" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
-                      Foto *
-                    </label>
-                    {!form.fotoDataUrl ? (
-                      <label htmlFor="usg-foto" className="aifoto-upload aifoto-photo-box" style={{ cursor: 'pointer' }}>
-                        <span className="aifoto-upload__icon">📤</span>
-                        <strong>Klik untuk unggah foto USG</strong>
-                        <p className="aifoto-upload__hint">JPEG, PNG, GIF, atau WEBP</p>
-                      </label>
-                    ) : (
-                      <div className="aifoto-photo-box aifoto-photo-box--filled">
-                        <img src={form.fotoDataUrl} alt="Preview foto USG" />
-                      </div>
-                    )}
-                    <input
-                      id="usg-foto"
-                      type="file"
-                      accept="image/*"
-                      onChange={handleFotoFileChange}
-                      style={form.fotoDataUrl ? {} : { display: 'none' }}
-                    />
-                  </div>
+              {/* Identitas Pasien — persis urutan dokumen cetak: kop surat di atas, identitas
+                  pasien, lalu isian sampai tanda tangan dokter spesialis radiologi di bawah. */}
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '0.75rem',
+                  padding: '0.75rem',
+                  marginBottom: '1rem',
+                  background: '#f8fafc',
+                  border: '0.5px solid #cbd5e1',
+                  borderRadius: 'var(--radius-card)',
+                }}
+              >
+                <div className="form-field form-field--full" style={{ gridColumn: '1 / -1' }}>
+                  <label htmlFor="usg-pendaftaran">Ambil dari Pendaftaran (Opsional)</label>
+                  <select
+                    id="usg-pendaftaran"
+                    value=""
+                    onChange={(e) => {
+                      const selected = pendaftaranOptions.find((p) => p.id === e.target.value);
+                      if (selected) {
+                        setForm((f) => ({
+                          ...f,
+                          namaPasien: selected.namaPasien,
+                          regCode: selected.noRegistrasi,
+                        }));
+                      }
+                    }}
+                  >
+                    <option value="">-- Pilih Pasien / Ketik Manual di Bawah --</option>
+                    {pendaftaranOptions.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.namaPasien} ({p.noRegistrasi})
+                      </option>
+                    ))}
+                  </select>
                 </div>
+                <div className="form-field">
+                  <label htmlFor="usg-nama">Nama Pasien *</label>
+                  <input
+                    id="usg-nama"
+                    required
+                    value={form.namaPasien}
+                    onChange={(e) => setForm((f) => ({ ...f, namaPasien: e.target.value }))}
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="usg-regcode">No. Reg</label>
+                  <input
+                    id="usg-regcode"
+                    value={form.regCode}
+                    onChange={(e) => setForm((f) => ({ ...f, regCode: e.target.value }))}
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="usg-jenis">Jenis Pemeriksaan</label>
+                  <input
+                    id="usg-jenis"
+                    value={form.jenisPemeriksaan}
+                    onChange={(e) => setForm((f) => ({ ...f, jenisPemeriksaan: e.target.value }))}
+                    placeholder="Contoh: USG Abdomen"
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="usg-tanggal">Tanggal *</label>
+                  <input
+                    id="usg-tanggal"
+                    type="date"
+                    required
+                    value={form.tanggal}
+                    onChange={(e) => setForm((f) => ({ ...f, tanggal: e.target.value }))}
+                  />
+                </div>
+              </div>
 
-                <div className="aifoto-frame">
-                  <div className="aifoto-frame__titlebar">📋 Data Pemeriksaan</div>
-                  <div className="aifoto-frame__body">
-                    <div className="form-field">
-                      <label htmlFor="usg-pendaftaran">Ambil dari Pendaftaran (Opsional)</label>
-                      <select
-                        id="usg-pendaftaran"
-                        value=""
-                        onChange={(e) => {
-                          const selected = pendaftaranOptions.find((p) => p.id === e.target.value);
-                          if (selected) {
-                            setForm((f) => ({
-                              ...f,
-                              namaPasien: selected.namaPasien,
-                              regCode: selected.noRegistrasi,
-                            }));
-                          }
-                        }}
-                      >
-                        <option value="">-- Pilih Pasien / Ketik Manual di Bawah --</option>
-                        {pendaftaranOptions.map((p) => (
-                          <option key={p.id} value={p.id}>
-                            {p.namaPasien} ({p.noRegistrasi})
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="form-field">
-                      <label htmlFor="usg-nama">Nama Pasien *</label>
-                      <input
-                        id="usg-nama"
-                        required
-                        value={form.namaPasien}
-                        onChange={(e) => setForm((f) => ({ ...f, namaPasien: e.target.value }))}
-                      />
-                    </div>
-                    <div className="form-field">
-                      <label htmlFor="usg-regcode">No. Reg</label>
-                      <input
-                        id="usg-regcode"
-                        value={form.regCode}
-                        onChange={(e) => setForm((f) => ({ ...f, regCode: e.target.value }))}
-                      />
-                    </div>
-                    <div className="form-field">
-                      <label htmlFor="usg-jenis">Jenis Pemeriksaan</label>
-                      <input
-                        id="usg-jenis"
-                        value={form.jenisPemeriksaan}
-                        onChange={(e) => setForm((f) => ({ ...f, jenisPemeriksaan: e.target.value }))}
-                        placeholder="Contoh: USG Abdomen"
-                      />
-                    </div>
-                    <div className="form-field">
-                      <label htmlFor="usg-tanggal">Tanggal *</label>
-                      <input
-                        id="usg-tanggal"
-                        type="date"
-                        required
-                        value={form.tanggal}
-                        onChange={(e) => setForm((f) => ({ ...f, tanggal: e.target.value }))}
-                      />
-                    </div>
-                    <div className="form-field">
-                      <label htmlFor="usg-radiolog">Nama Radiolog/Dokter</label>
-                      <select
-                        id="usg-radiolog"
-                        value={form.radiologNama}
-                        onChange={(e) => setForm((f) => ({ ...f, radiologNama: e.target.value }))}
-                      >
-                        <option value="">-- Pilih Radiolog --</option>
-                        {form.radiologNama && !radiologOptions.some((r) => r.nama === form.radiologNama) && (
-                          <option value={form.radiologNama}>{form.radiologNama}</option>
-                        )}
-                        {radiologOptions.map((r) => (
-                          <option key={r.id} value={r.nama}>
-                            {r.nama}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="form-field">
-                      <label htmlFor="usg-analisa" style={{ color: '#2b4c9b', fontWeight: 700 }}>
-                        Analisa:
-                      </label>
-                      <textarea
-                        id="usg-analisa"
-                        rows={4}
-                        value={form.analisa}
-                        onChange={(e) => setForm((f) => ({ ...f, analisa: e.target.value }))}
-                        placeholder="Diisi manual oleh radiolog"
-                        style={{ border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                      />
-                    </div>
-                    <div className="form-field">
-                      <label htmlFor="usg-kesan" style={{ color: '#2b4c9b', fontWeight: 700 }}>
-                        Kesan:
-                      </label>
-                      <textarea
-                        id="usg-kesan"
-                        rows={3}
-                        value={form.kesan}
-                        onChange={(e) => setForm((f) => ({ ...f, kesan: e.target.value }))}
-                        placeholder="Diisi manual oleh radiolog"
-                        style={{ border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                      />
-                    </div>
+              <div style={{ marginBottom: '1rem' }}>
+                <label htmlFor="usg-foto" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                  Foto USG *
+                </label>
+                {!form.fotoDataUrl ? (
+                  <label htmlFor="usg-foto" className="aifoto-upload aifoto-photo-box" style={{ cursor: 'pointer', maxWidth: 420, margin: '0.4rem auto 0' }}>
+                    <span className="aifoto-upload__icon">📤</span>
+                    <strong>Klik untuk unggah foto USG</strong>
+                    <p className="aifoto-upload__hint">JPEG, PNG, GIF, atau WEBP</p>
+                  </label>
+                ) : (
+                  <div className="aifoto-photo-box aifoto-photo-box--filled" style={{ maxWidth: 420, height: 320, margin: '0.4rem auto 0' }}>
+                    <img src={form.fotoDataUrl} alt="Preview foto USG" />
                   </div>
+                )}
+                <input
+                  id="usg-foto"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFotoFileChange}
+                  style={form.fotoDataUrl ? { display: 'block', margin: '0.4rem auto 0' } : { display: 'none' }}
+                />
+              </div>
+
+              <div className="form-field form-field--full">
+                <label htmlFor="usg-analisa" style={{ color: '#2b4c9b', fontWeight: 700 }}>
+                  Analisa:
+                </label>
+                <textarea
+                  id="usg-analisa"
+                  rows={4}
+                  value={form.analisa}
+                  onChange={(e) => setForm((f) => ({ ...f, analisa: e.target.value }))}
+                  placeholder="Diisi manual oleh radiolog"
+                  style={{ border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                />
+              </div>
+              <div className="form-field form-field--full">
+                <label htmlFor="usg-kesan" style={{ color: '#2b4c9b', fontWeight: 700 }}>
+                  Kesan:
+                </label>
+                <textarea
+                  id="usg-kesan"
+                  rows={3}
+                  value={form.kesan}
+                  onChange={(e) => setForm((f) => ({ ...f, kesan: e.target.value }))}
+                  placeholder="Diisi manual oleh radiolog"
+                  style={{ border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
+                <div style={{ width: 220 }}>
+                  <label
+                    htmlFor="usg-radiolog"
+                    style={{ display: 'block', fontSize: '0.8rem', textAlign: 'center', marginBottom: '2.5rem' }}
+                  >
+                    Tanda Tangan
+                    <br />
+                    Dokter Spesialis Radiologi
+                  </label>
+                  <select
+                    id="usg-radiolog"
+                    value={form.radiologNama}
+                    onChange={(e) => setForm((f) => ({ ...f, radiologNama: e.target.value }))}
+                    style={{
+                      textAlign: 'center',
+                      fontWeight: 700,
+                      borderTop: '1px solid #1a1a1a',
+                      borderLeft: 'none',
+                      borderRight: 'none',
+                      borderBottom: 'none',
+                      borderRadius: 0,
+                      background: 'transparent',
+                    }}
+                  >
+                    <option value="">( ................................. )</option>
+                    {form.radiologNama && !radiologOptions.some((r) => r.nama === form.radiologNama) && (
+                      <option value={form.radiologNama}>{form.radiologNama}</option>
+                    )}
+                    {radiologOptions.map((r) => (
+                      <option key={r.id} value={r.nama}>
+                        {r.nama}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
             </div>
