@@ -97,6 +97,22 @@ function chartSrc(interval: string): string {
   return `https://s.tradingview.com/embed-widget/advanced-chart/?locale=id#${encodeURIComponent(JSON.stringify(config))}`;
 }
 
+/** Kalender ekonomi live (TradingView) — sumber jadwal FOMC/NFP/dll yang
+ * update sendiri, dipasangkan dengan simbol XAUUSD supaya jadwal yang
+ * relevan untuk emas ikut ditandai penting. */
+function economicCalendarSrc(): string {
+  const config = {
+    colorTheme: 'light',
+    isTransparent: false,
+    width: '100%',
+    height: '460',
+    locale: 'id',
+    importanceFilter: '-1,0,1',
+    currencyFilter: 'USD',
+  };
+  return `https://s.tradingview.com/embed-widget/events/?locale=id#${encodeURIComponent(JSON.stringify(config))}`;
+}
+
 const cardStyle: React.CSSProperties = {
   border: `1px solid ${BLUE}`,
   borderRadius: 'var(--radius-card)',
@@ -574,6 +590,26 @@ export function TradingPage() {
       <div id="tr-jadwal-section" style={cardStyle}>
         <div style={cardTitlebarStyle}>📅 Jadwal Tahunan (Event Ekonomi)</div>
         <div style={cardBodyStyle}>
+          <p style={{ margin: '0 0 0.5rem', fontWeight: 700, color: BLUE }}>
+            🔴 Kalender Live (konek TradingView, update otomatis)
+          </p>
+          <div
+            style={{
+              border: '1px solid var(--color-border)',
+              borderRadius: '8px',
+              overflow: 'hidden',
+              marginBottom: '1.25rem',
+              borderLeft: `4px solid ${YELLOW}`,
+            }}
+          >
+            <iframe
+              title="Kalender Ekonomi Live"
+              src={economicCalendarSrc()}
+              style={{ width: '100%', height: 460, border: 'none', display: 'block' }}
+            />
+          </div>
+
+          <p style={{ margin: '0 0 0.5rem', fontWeight: 700, color: BLUE }}>📝 Catatan Jadwal Saya (manual)</p>
           <form onSubmit={(e) => void handleJadwalSubmit(e)} className="form-grid">
             <div className="form-field">
               <label htmlFor="tr-jadwal-tanggal" style={{ color: BLUE, fontWeight: 700 }}>Tanggal</label>
