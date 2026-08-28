@@ -26,6 +26,7 @@ export const MAIN_NAV_CATEGORIES: readonly NavCategory[] = [
     label: 'Pendaftaran',
     iconName: 'clipboard',
     items: [
+      { id: 'pendaftaran', label: 'Pendaftaran', shortLabel: 'Pendaftaran' },
       { id: 'pendaftaran-umum', label: 'Pendaftaran Umum', shortLabel: 'Pendaftaran Umum' },
       { id: 'admin-pendaftaran', label: 'Admin Pendaftaran', shortLabel: 'Admin Pendaftaran' },
     ],
@@ -149,6 +150,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'usg', label: 'USG', shortLabel: 'USG' },
   { id: 'pasien', label: 'Data & Registrasi Radiologi', shortLabel: 'Registrasi Radiologi' },
   { id: 'laboratorium', label: 'Laboratorium', shortLabel: 'Laboratorium' },
+  { id: 'pendaftaran', label: 'Pendaftaran', shortLabel: 'Pendaftaran' },
   { id: 'pendaftaran-umum', label: 'Pendaftaran Umum', shortLabel: 'Pendaftaran Umum' },
   { id: 'admin-pendaftaran', label: 'Admin Pendaftaran', shortLabel: 'Admin Pendaftaran' },
   { id: 'transfer', label: 'Transfer', shortLabel: 'Transfer' },

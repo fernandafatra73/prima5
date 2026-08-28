@@ -34,6 +34,7 @@ import { MusikPage } from './pages/MusikPage.tsx';
 import { FatraPage } from './pages/FatraPage.tsx';
 import { MegaDataHubPage } from './pages/MegaDataHubPage.tsx';
 import { PendaftaranUmumPage } from './pages/PendaftaranUmumPage.tsx';
+import { PendaftaranHubPage } from './pages/PendaftaranHubPage.tsx';
 import { TransferPage } from './pages/TransferPage.tsx';
 import { DaftarTelponPage } from './pages/DaftarTelponPage.tsx';
 import { KalenderPage } from './pages/KalenderPage.tsx';
@@ -138,6 +139,8 @@ function renderViewContent(
       return <RadiologiPage />;
     case 'pasien':
       return <PasienPage />;
+    case 'pendaftaran':
+      return <PendaftaranHubPage />;
     case 'pendaftaran-umum':
       return <PendaftaranUmumPage />;
     case 'transfer':
