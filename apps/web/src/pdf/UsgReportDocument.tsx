@@ -121,6 +121,11 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
             </View>
           </View>
 
+          <View style={styles.section}>
+            <Text style={styles.sectionLabel}>Klinis:</Text>
+            <Text style={styles.sectionBody}>{data.analisa || '—'}</Text>
+          </View>
+
           {data.fotoDataUrl ? (
             <View style={styles.photoContainer}>
               <Image style={styles.photo} src={data.fotoDataUrl} />
@@ -128,17 +133,12 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
           ) : null}
 
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Analisa:</Text>
-            <Text style={styles.sectionBody}>{data.analisa || '—'}</Text>
-          </View>
-
-          <View style={styles.section}>
             <Text style={styles.sectionLabel}>Kesan:</Text>
             <Text style={styles.sectionBody}>{data.kesan || '—'}</Text>
           </View>
 
           <Text style={styles.disclaimer}>
-            * Analisa dan kesan di atas diisi manual oleh radiolog/dokter berdasarkan pembacaan
+            * Klinis dan kesan di atas diisi manual oleh radiolog/dokter berdasarkan pembacaan
             USG, bukan hasil deteksi otomatis / AI. Tgl Cetak: {data.tanggalCetak}.
           </Text>
 

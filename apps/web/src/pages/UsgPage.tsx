@@ -465,6 +465,20 @@ export function UsgPage() {
                 </div>
               </div>
 
+              <div className="form-field form-field--full">
+                <label htmlFor="usg-analisa" style={{ color: '#2b4c9b', fontWeight: 700 }}>
+                  Klinis:
+                </label>
+                <textarea
+                  id="usg-analisa"
+                  rows={4}
+                  value={form.analisa}
+                  onChange={(e) => setForm((f) => ({ ...f, analisa: e.target.value }))}
+                  placeholder="Diisi manual oleh radiolog"
+                  style={{ border: '1px solid #cbd5e1', borderRadius: '4px' }}
+                />
+              </div>
+
               <div style={{ marginBottom: '1rem' }}>
                 <label htmlFor="usg-foto" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
                   Foto USG *
@@ -489,19 +503,6 @@ export function UsgPage() {
                 />
               </div>
 
-              <div className="form-field form-field--full">
-                <label htmlFor="usg-analisa" style={{ color: '#2b4c9b', fontWeight: 700 }}>
-                  Analisa:
-                </label>
-                <textarea
-                  id="usg-analisa"
-                  rows={4}
-                  value={form.analisa}
-                  onChange={(e) => setForm((f) => ({ ...f, analisa: e.target.value }))}
-                  placeholder="Diisi manual oleh radiolog"
-                  style={{ border: '1px solid #cbd5e1', borderRadius: '4px' }}
-                />
-              </div>
               <div className="form-field form-field--full">
                 <label htmlFor="usg-kesan" style={{ color: '#2b4c9b', fontWeight: 700 }}>
                   Kesan:
