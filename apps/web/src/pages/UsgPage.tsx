@@ -33,6 +33,11 @@ interface RadiologOption {
   readonly nama: string;
 }
 
+interface DokterOption {
+  readonly id: string;
+  readonly nama: string;
+}
+
 interface PendaftaranOption {
   readonly id: string;
   readonly noRegistrasi: string;
@@ -100,6 +105,7 @@ export function UsgPage() {
   const [previewFilename, setPreviewFilename] = useState('usg.pdf');
 
   const [radiologOptions, setRadiologOptions] = useState<RadiologOption[]>([]);
+  const [dokterOptions, setDokterOptions] = useState<DokterOption[]>([]);
   const [pendaftaranOptions, setPendaftaranOptions] = useState<PendaftaranOption[]>([]);
   const [kopSurat, setKopSurat] = useState<KopSuratData | null>(null);
   const [logoFallback, setLogoFallback] = useState('');
@@ -110,6 +116,15 @@ export function UsgPage() {
       setRadiologOptions(res.items);
     } catch {
       setRadiologOptions([]);
+    }
+  }, []);
+
+  const loadDokterOptions = useCallback(async () => {
+    try {
+      const res = await apiGet<{ items: DokterOption[] }>('/api/dokter?limit=200');
+      setDokterOptions(res.items);
+    } catch {
+      setDokterOptions([]);
     }
   }, []);
 
@@ -137,9 +152,10 @@ export function UsgPage() {
 
   useEffect(() => {
     void loadRadiologOptions();
+    void loadDokterOptions();
     void loadPendaftaranOptions();
     void loadKopSurat();
-  }, [loadRadiologOptions, loadPendaftaranOptions, loadKopSurat]);
+  }, [loadRadiologOptions, loadDokterOptions, loadPendaftaranOptions, loadKopSurat]);
 
   function resetForm() {
     setForm(emptyForm);
@@ -447,11 +463,21 @@ export function UsgPage() {
                 </div>
                 <div className="form-field">
                   <label htmlFor="usg-dokter-pengirim">Dokter Pengirim</label>
-                  <input
+                  <select
                     id="usg-dokter-pengirim"
                     value={form.dokterPengirim}
                     onChange={(e) => setForm((f) => ({ ...f, dokterPengirim: e.target.value }))}
-                  />
+                  >
+                    <option value="">-- Pilih Dokter Pengirim --</option>
+                    {form.dokterPengirim && !dokterOptions.some((d) => d.nama === form.dokterPengirim) && (
+                      <option value={form.dokterPengirim}>{form.dokterPengirim}</option>
+                    )}
+                    {dokterOptions.map((d) => (
+                      <option key={d.id} value={d.nama}>
+                        {d.nama}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div className="form-field">
                   <label htmlFor="usg-tanggal">Tanggal *</label>
