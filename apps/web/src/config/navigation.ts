@@ -28,6 +28,7 @@ export const MAIN_NAV_CATEGORIES: readonly NavCategory[] = [
     items: [
       { id: 'pendaftaran', label: 'Pendaftaran', shortLabel: 'Pendaftaran' },
       { id: 'pendaftaran-umum', label: 'Pendaftaran Umum', shortLabel: 'Pendaftaran Umum' },
+      { id: 'admin-klinik', label: 'Admin Klinik', shortLabel: 'Admin Klinik' },
     ],
   },
   {
@@ -98,7 +99,6 @@ export const MAIN_NAV_CATEGORIES: readonly NavCategory[] = [
       { id: 'keuangan-pembukuan', label: 'Sistem Keuangan & Pembukuan', shortLabel: 'Buku Kas & Keuangan' },
       { id: 'hasil-perbulan', label: 'Hasil Perbulan', shortLabel: 'Hasil Perbulan' },
       { id: 'penggajian', label: 'Penggajian', shortLabel: 'Penggajian' },
-      { id: 'admin-klinik', label: 'Admin Klinik', shortLabel: 'Admin Klinik' },
       { id: 'logo-perusahaan', label: 'Logo Perusahaan', shortLabel: 'Logo Perusahaan' },
       { id: 'sharing', label: 'Manajemen Sharing Dokter', shortLabel: 'Sharing Dokter' },
     ],
