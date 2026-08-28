@@ -480,6 +480,24 @@ export function UsgPage() {
                   </select>
                 </div>
                 <div className="form-field">
+                  <label htmlFor="usg-radiolog">Radiolog</label>
+                  <select
+                    id="usg-radiolog"
+                    value={form.radiologNama}
+                    onChange={(e) => setForm((f) => ({ ...f, radiologNama: e.target.value }))}
+                  >
+                    <option value="">-- Pilih Radiolog --</option>
+                    {form.radiologNama && !radiologOptions.some((r) => r.nama === form.radiologNama) && (
+                      <option value={form.radiologNama}>{form.radiologNama}</option>
+                    )}
+                    {radiologOptions.map((r) => (
+                      <option key={r.id} value={r.nama}>
+                        {r.nama}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                <div className="form-field">
                   <label htmlFor="usg-tanggal">Tanggal *</label>
                   <input
                     id="usg-tanggal"
@@ -545,39 +563,21 @@ export function UsgPage() {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1.25rem' }}>
                 <div style={{ width: 220 }}>
-                  <label
-                    htmlFor="usg-radiolog"
-                    style={{ display: 'block', fontSize: '0.8rem', textAlign: 'center', marginBottom: '2.5rem' }}
-                  >
-                    Tanda Tangan
-                    <br />
-                    Dokter Spesialis Radiologi
-                  </label>
-                  <select
-                    id="usg-radiolog"
-                    value={form.radiologNama}
-                    onChange={(e) => setForm((f) => ({ ...f, radiologNama: e.target.value }))}
+                  <p style={{ margin: '0 0 2.5rem', fontSize: '0.8rem', textAlign: 'center' }}>
+                    Teman Sejawat
+                  </p>
+                  <div
                     style={{
                       textAlign: 'center',
                       fontWeight: 700,
+                      fontSize: '0.85rem',
                       borderTop: '1px solid #1a1a1a',
-                      borderLeft: 'none',
-                      borderRight: 'none',
-                      borderBottom: 'none',
-                      borderRadius: 0,
-                      background: 'transparent',
+                      paddingTop: '0.25rem',
                     }}
                   >
-                    <option value="">( ................................. )</option>
-                    {form.radiologNama && !radiologOptions.some((r) => r.nama === form.radiologNama) && (
-                      <option value={form.radiologNama}>{form.radiologNama}</option>
-                    )}
-                    {radiologOptions.map((r) => (
-                      <option key={r.id} value={r.nama}>
-                        {r.nama}
-                      </option>
-                    ))}
-                  </select>
+                    {form.radiologNama || '( ................................. )'}
+                  </div>
+                  <p style={{ margin: '0.1rem 0 0', fontSize: '0.8rem', textAlign: 'center' }}>Radiolog</p>
                 </div>
               </div>
             </div>
