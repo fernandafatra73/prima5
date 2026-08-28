@@ -66,6 +66,7 @@ import { SharingPage } from './pages/SharingPage.tsx';
 import { LaporanTahunanPage } from './pages/LaporanTahunanPage.tsx';
 import { LaporanPajakPage } from './pages/LaporanPajakPage.tsx';
 import { LaporanPajakBulananPage } from './pages/LaporanPajakBulananPage.tsx';
+import { HasilPerbulanPage } from './pages/HasilPerbulanPage.tsx';
 import { LaporanNeracaPage } from './pages/LaporanNeracaPage.tsx';
 import { TempletPage } from './pages/TempletPage.tsx';
 import { AnalisaFotoRontgenPage } from './pages/AnalisaFotoRontgenPage.tsx';
@@ -248,6 +249,8 @@ function renderViewContent(
       return <AbsensiPage />;
     case 'keuangan-pembukuan':
       return <KeuanganPembukuanPage />;
+    case 'hasil-perbulan':
+      return <HasilPerbulanPage />;
     case 'penggajian':
       return <PenggajianPage />;
     case 'petugas-kasir':

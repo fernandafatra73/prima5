@@ -93,6 +93,7 @@ export const MAIN_NAV_CATEGORIES: readonly NavCategory[] = [
     iconName: 'currency',
     items: [
       { id: 'keuangan-pembukuan', label: 'Sistem Keuangan & Pembukuan', shortLabel: 'Buku Kas & Keuangan' },
+      { id: 'hasil-perbulan', label: 'Hasil Perbulan', shortLabel: 'Hasil Perbulan' },
       { id: 'penggajian', label: 'Penggajian', shortLabel: 'Penggajian' },
       { id: 'petugas-kasir', label: 'Kasir', shortLabel: 'Kasir' },
       { id: 'petugas-admin-klinik', label: 'Petugas Admin Klinik', shortLabel: 'Petugas Admin Klinik' },
@@ -147,6 +148,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'farmasi-bhp', label: 'Manajemen Farmasi & BHP', shortLabel: 'Stok Obat & BHP' },
   { id: 'kwitansi-farmasi', label: 'Kwitansi Farmasi', shortLabel: 'Kwitansi Farmasi' },
   { id: 'keuangan-pembukuan', label: 'Sistem Keuangan & Pembukuan', shortLabel: 'Buku Kas & Keuangan' },
+  { id: 'hasil-perbulan', label: 'Hasil Perbulan', shortLabel: 'Hasil Perbulan' },
   { id: 'penggajian', label: 'Penggajian', shortLabel: 'Penggajian' },
   { id: 'petugas-kasir', label: 'Kasir', shortLabel: 'Kasir' },
   { id: 'petugas-admin-klinik', label: 'Petugas Admin Klinik', shortLabel: 'Petugas Admin Klinik' },
@@ -274,6 +276,7 @@ export type Departemen = 'PENDAFTARAN' | 'RADIOLOGI' | 'LABORATORIUM' | 'KEUANGA
 /** Menu/halaman yang hanya boleh diakses role manajemen (ADMIN atau CEO). */
 export const MANAGEMENT_ONLY_NAV_IDS: ReadonlySet<AppViewId> = new Set([
   'keuangan-pembukuan',
+  'hasil-perbulan',
   'penggajian',
   'sharing',
   'laporan-tahunan',
