@@ -73,6 +73,7 @@ import { HasilPerbulanPage } from './pages/HasilPerbulanPage.tsx';
 import { LaporanNeracaPage } from './pages/LaporanNeracaPage.tsx';
 import { TempletPage } from './pages/TempletPage.tsx';
 import { AnalisaFotoRontgenPage } from './pages/AnalisaFotoRontgenPage.tsx';
+import { UsgPage } from './pages/UsgPage.tsx';
 import { AdminPage } from './pages/AdminPage.tsx';
 import { FarmasiBhpPage } from './pages/FarmasiBhpPage.tsx';
 import { FarmasiKwitansiPage } from './pages/FarmasiKwitansiPage.tsx';
@@ -245,6 +246,8 @@ function renderViewContent(
       return <BhpRadiologiPage />;
     case 'analisa-foto-rontgen':
       return <AnalisaFotoRontgenPage />;
+    case 'usg':
+      return <UsgPage />;
     case 'role':
       return <RolePage />;
     case 'admin':

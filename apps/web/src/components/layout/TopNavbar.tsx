@@ -65,6 +65,7 @@ const DROPDOWN_TINT_CLASS: Readonly<Record<string, string>> = {
 const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'category', categoryId: 'pendaftaran', icon: IconClipboard },
   { type: 'link', id: 'radiologi', label: 'Radiologi', icon: IconStethoscope },
+  { type: 'link', id: 'usg', label: 'USG', icon: IconStethoscope },
   { type: 'link', id: 'laboratorium', label: 'Laboratorium', icon: IconTag },
   { type: 'category', categoryId: 'keuangan', icon: IconCurrency },
   { type: 'category', categoryId: 'master-sistem', icon: IconShield },

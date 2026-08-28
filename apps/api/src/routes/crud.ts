@@ -2842,6 +2842,141 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  app.get<{ Querystring: ListQuery }>('/api/usg', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const q = req.query.q?.trim();
+    const where = q ? { namaPasien: { contains: q } } : {};
+    const [total, items] = await Promise.all([
+      prisma.usg.count({ where }),
+      prisma.usg.findMany({
+        where,
+        orderBy: { tanggal: 'desc' },
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          namaPasien: true,
+          regCode: true,
+          jenisPemeriksaan: true,
+          tanggal: true,
+          fotoDataUrl: true,
+          analisa: true,
+          kesan: true,
+          radiologNama: true,
+        },
+      }),
+    ]);
+    return {
+      items: items.map((u) => ({
+        id: u.id,
+        namaPasien: u.namaPasien,
+        regCode: u.regCode,
+        jenisPemeriksaan: u.jenisPemeriksaan,
+        tanggal: u.tanggal.toISOString(),
+        fotoDataUrl: u.fotoDataUrl,
+        analisa: u.analisa,
+        kesan: u.kesan,
+        radiologNama: u.radiologNama,
+      })),
+      pagination: buildPaginationMeta(total, page, limit),
+    };
+  });
+
+  app.post<{
+    Body: {
+      namaPasien: string;
+      regCode?: string;
+      jenisPemeriksaan?: string;
+      tanggal?: string;
+      fotoDataUrl: string;
+      analisa?: string;
+      kesan?: string;
+      radiologNama?: string;
+    };
+  }>('/api/usg', async (req, reply) => {
+    const b = req.body;
+    if (!b.namaPasien?.trim() || !b.fotoDataUrl?.trim()) {
+      return badRequest(reply, 'namaPasien dan fotoDataUrl wajib diisi');
+    }
+    const item = await prisma.usg.create({
+      data: {
+        namaPasien: b.namaPasien.trim(),
+        regCode: b.regCode?.trim() || null,
+        jenisPemeriksaan: b.jenisPemeriksaan?.trim() || null,
+        tanggal: b.tanggal ? new Date(b.tanggal) : new Date(),
+        fotoDataUrl: b.fotoDataUrl,
+        analisa: b.analisa?.trim() || null,
+        kesan: b.kesan?.trim() || null,
+        radiologNama: b.radiologNama?.trim() || null,
+      },
+    });
+    return reply.status(201).send({
+      item: {
+        id: item.id,
+        namaPasien: item.namaPasien,
+        regCode: item.regCode,
+        jenisPemeriksaan: item.jenisPemeriksaan,
+        tanggal: item.tanggal.toISOString(),
+        fotoDataUrl: item.fotoDataUrl,
+        analisa: item.analisa,
+        kesan: item.kesan,
+        radiologNama: item.radiologNama,
+      },
+    });
+  });
+
+  app.patch<{
+    Params: { id: string };
+    Body: {
+      namaPasien?: string;
+      regCode?: string;
+      jenisPemeriksaan?: string;
+      tanggal?: string;
+      fotoDataUrl?: string;
+      analisa?: string;
+      kesan?: string;
+      radiologNama?: string;
+    };
+  }>('/api/usg/:id', async (req, reply) => {
+    const existing = await prisma.usg.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Data USG tidak ditemukan' });
+    const item = await prisma.usg.update({
+      where: { id: req.params.id },
+      data: {
+        namaPasien: req.body.namaPasien?.trim() ?? existing.namaPasien,
+        regCode: req.body.regCode !== undefined ? req.body.regCode?.trim() || null : existing.regCode,
+        jenisPemeriksaan:
+          req.body.jenisPemeriksaan !== undefined
+            ? req.body.jenisPemeriksaan?.trim() || null
+            : existing.jenisPemeriksaan,
+        tanggal: req.body.tanggal ? new Date(req.body.tanggal) : existing.tanggal,
+        fotoDataUrl: req.body.fotoDataUrl ?? existing.fotoDataUrl,
+        analisa: req.body.analisa !== undefined ? req.body.analisa?.trim() || null : existing.analisa,
+        kesan: req.body.kesan !== undefined ? req.body.kesan?.trim() || null : existing.kesan,
+        radiologNama:
+          req.body.radiologNama !== undefined ? req.body.radiologNama?.trim() || null : existing.radiologNama,
+      },
+    });
+    return {
+      item: {
+        id: item.id,
+        namaPasien: item.namaPasien,
+        regCode: item.regCode,
+        jenisPemeriksaan: item.jenisPemeriksaan,
+        tanggal: item.tanggal.toISOString(),
+        fotoDataUrl: item.fotoDataUrl,
+        analisa: item.analisa,
+        kesan: item.kesan,
+        radiologNama: item.radiologNama,
+      },
+    };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/usg/:id', async (req) => {
+    await prisma.usg.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
   app.get('/api/kop-surat', async () => {
     const item = await prisma.kopSurat.findUnique({ where: { id: 'default' } });
     if (!item) {

@@ -54,6 +54,7 @@ export const MAIN_NAV_CATEGORIES: readonly NavCategory[] = [
       { id: 'advantage', label: 'Advantage', shortLabel: 'Advantage' },
       { id: 'bhp-radiologi', label: 'BHP', shortLabel: 'BHP' },
       { id: 'analisa-foto-rontgen', label: 'Analisa Foto Rontgen', shortLabel: 'Analisa Foto Rontgen' },
+      { id: 'usg', label: 'USG', shortLabel: 'USG' },
     ],
   },
   {
@@ -145,6 +146,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'mega-data', label: 'Mega Data', shortLabel: 'Mega Data' },
   { id: 'pengaturan', label: 'Pengaturan', shortLabel: 'Pengaturan' },
   { id: 'radiologi', label: 'Radiologi', shortLabel: 'Radiologi' },
+  { id: 'usg', label: 'USG', shortLabel: 'USG' },
   { id: 'pasien', label: 'Data & Registrasi Radiologi', shortLabel: 'Registrasi Radiologi' },
   { id: 'laboratorium', label: 'Laboratorium', shortLabel: 'Laboratorium' },
   { id: 'pendaftaran-umum', label: 'Pendaftaran Umum', shortLabel: 'Pendaftaran Umum' },
