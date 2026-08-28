@@ -3,7 +3,7 @@ import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
 import { ModalFormFooter } from '../components/ui/ModalFormFooter.tsx';
-import { TableRowActions } from '../components/ui/TableRowActions.tsx';
+import { IconPencil, IconPrint, IconTrash } from '../components/icons/ActionIcons.tsx';
 import { useListQueryParams, useListSearch } from '../hooks/useListQueryParams.ts';
 import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
@@ -150,6 +150,7 @@ export function UsgPage() {
     });
     setError(null);
     setEditing(item);
+    document.getElementById('usg-form-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function handleFotoFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -216,15 +217,15 @@ export function UsgPage() {
   async function handlePrint(item: UsgItem) {
     setPrintingId(item.id);
     try {
-      const [logoRes, kopSurat] = await Promise.all([
+      const [logoRes, kopSuratRes] = await Promise.all([
         loadLogoDataUrl().catch(() => ''),
         apiGet<{ item: KopSuratData }>('/api/kop-surat').catch(() => null),
       ]);
       const data: UsgReportData = {
-        logoSrc: kopSurat?.item.logoDataUrl || logoRes,
-        namaKlinik: kopSurat?.item.namaKlinik || 'KLINIK PRIMA HUSADA',
-        alamatKlinik: kopSurat?.item.alamat || '',
-        teleponKlinik: kopSurat?.item.telepon || '',
+        logoSrc: kopSuratRes?.item.logoDataUrl || logoRes,
+        namaKlinik: kopSuratRes?.item.namaKlinik || 'KLINIK PRIMA HUSADA',
+        alamatKlinik: kopSuratRes?.item.alamat || '',
+        teleponKlinik: kopSuratRes?.item.telepon || '',
         namaPasien: item.namaPasien,
         regCode: item.regCode || '',
         jenisPemeriksaan: item.jenisPemeriksaan || '',
@@ -245,11 +246,32 @@ export function UsgPage() {
     }
   }
 
+  const latestTanggal = items[0]?.tanggal ? formatTanggalDisplay(items[0].tanggal) : '—';
+
   return (
     <>
+      <div className="usg-hero" id="usg-form-top">
+        <div className="usg-hero__icon">🩻</div>
+        <div>
+          <h2 className="usg-hero__title">USG — Ultrasonografi</h2>
+          <p className="usg-hero__subtitle">
+            Arsip pemeriksaan USG pasien, lengkap dengan analisa &amp; kesan manual radiolog.
+          </p>
+        </div>
+        <div className="usg-hero__stat">
+          <span className="usg-hero__stat-value">{pagination.total}</span>
+          <span className="usg-hero__stat-label">Total Pemeriksaan</span>
+        </div>
+        <div className="usg-hero__stat">
+          <span className="usg-hero__stat-value" style={{ fontSize: '1rem' }}>{latestTanggal}</span>
+          <span className="usg-hero__stat-label">Data Terbaru</span>
+        </div>
+      </div>
+
+      {editing && (
       <div className="aifoto-frame" style={{ marginBottom: '1.25rem' }}>
         <div className="aifoto-frame__titlebar">
-          {editing ? `✏️ Ubah Data USG — ${editing.namaPasien}` : '📝 Tambah Data USG'}
+          {`✏️ Ubah Data USG — ${editing.namaPasien}`}
         </div>
         <div className="aifoto-frame__body">
           <form onSubmit={(e) => void handleSubmit(e)} className="form-grid">
@@ -301,6 +323,7 @@ export function UsgPage() {
                   </div>
                 </div>
               </div>
+
               {/* Identitas Pasien — persis urutan dokumen cetak: kop surat di atas, identitas
                   pasien, lalu isian sampai tanda tangan dokter spesialis radiologi di bawah. */}
               <div
@@ -467,21 +490,23 @@ export function UsgPage() {
               </div>
             </div>
 
+            <p className="form-grid--full" style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+              Klik Batal untuk menutup form ini tanpa menyimpan perubahan.
+            </p>
+
             <ModalFormFooter
               onCancel={resetForm}
-              submitLabel={editing ? 'Simpan Perubahan' : 'Simpan'}
+              submitLabel="Simpan Perubahan"
               loading={submitting}
             />
           </form>
         </div>
       </div>
+      )}
 
       <ListPageShell
-        title="USG"
-        subtitle="Arsip pemeriksaan USG pasien beserta analisa & kesan yang diisi manual oleh radiolog/dokter"
-        metrics={[
-          { label: 'Total Data', value: String(pagination.total), tone: 'blue', iconKind: 'clipboard' },
-        ]}
+        title="Riwayat Pemeriksaan USG"
+        subtitle="Klik kartu untuk mengubah, mencetak, atau menghapus data"
         searchPlaceholder="Cari nama pasien..."
         searchValue={search}
         onSearchChange={setSearch}
@@ -491,62 +516,59 @@ export function UsgPage() {
         pagination={pagination}
         onPageChange={setPage}
       >
-        <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Foto</th>
-                <th>Tanggal</th>
-                <th>Nama Pasien</th>
-                <th>Pemeriksaan</th>
-                <th>Kesan</th>
-                <th>Radiolog</th>
-                <th>Aksi</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 ? (
-                <tr>
-                  <td colSpan={7} style={{ textAlign: 'center', padding: '1.5rem' }}>
-                    Belum ada data USG.
-                  </td>
-                </tr>
-              ) : (
-                items.map((item) => (
-                  <tr key={item.id}>
-                    <td>
-                      <img
-                        src={item.fotoDataUrl}
-                        alt={`Foto USG ${item.namaPasien}`}
-                        style={{ width: 56, height: 56, objectFit: 'cover', borderRadius: '6px', border: '1px solid var(--color-border)' }}
-                      />
-                    </td>
-                    <td>{formatTanggalDisplay(item.tanggal)}</td>
-                    <td style={{ fontWeight: 600 }}>
-                      {item.namaPasien}
-                      {item.regCode && (
-                        <div style={{ fontSize: '0.78rem', color: 'var(--color-text-muted)' }}>{item.regCode}</div>
-                      )}
-                    </td>
-                    <td>{item.jenisPemeriksaan || '—'}</td>
-                    <td style={{ maxWidth: '220px', whiteSpace: 'normal' }}>{item.kesan || '—'}</td>
-                    <td>{item.radiologNama || '—'}</td>
-                    <td>
-                      <TableRowActions
-                        onEdit={() => openEdit(item)}
-                        onDelete={() => setDeleting(item)}
-                        onPrint={() => void handlePrint(item)}
-                        editLabel="Ubah data USG"
-                        deleteLabel="Hapus data USG"
-                        printLabel={printingId === item.id ? 'Membuat PDF...' : 'Cetak hasil USG'}
-                      />
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+        {items.length === 0 ? (
+          <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-muted)' }}>
+            Belum ada data USG.
+          </p>
+        ) : (
+          <div className="usg-gallery">
+            {items.map((item) => (
+              <div className="usg-card" key={item.id}>
+                <div className="usg-card__photo">
+                  <img src={item.fotoDataUrl} alt={`Foto USG ${item.namaPasien}`} />
+                  <span className="usg-card__date-badge">{formatTanggalDisplay(item.tanggal)}</span>
+                </div>
+                <div className="usg-card__body">
+                  <h3 className="usg-card__name">{item.namaPasien}</h3>
+                  {item.jenisPemeriksaan && (
+                    <span className="usg-card__badge">{item.jenisPemeriksaan}</span>
+                  )}
+                  <p className="usg-card__kesan">{item.kesan || 'Belum ada kesan.'}</p>
+                  <div className="usg-card__meta">
+                    🩺 {item.radiologNama || 'Radiolog belum ditentukan'}
+                  </div>
+                </div>
+                <div className="usg-card__actions">
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--ghost"
+                    style={{ border: '1px solid var(--color-border)' }}
+                    onClick={() => openEdit(item)}
+                  >
+                    <IconPencil className="icon-btn__svg" /> Ubah
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--ghost"
+                    style={{ border: '1px solid var(--color-border)' }}
+                    onClick={() => void handlePrint(item)}
+                    disabled={printingId === item.id}
+                  >
+                    <IconPrint className="icon-btn__svg" /> {printingId === item.id ? '...' : 'Cetak'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--ghost"
+                    style={{ border: '1px solid var(--color-border)', color: 'var(--color-danger, #dc2626)' }}
+                    onClick={() => setDeleting(item)}
+                  >
+                    <IconTrash className="icon-btn__svg" /> Hapus
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </ListPageShell>
 
       <ConfirmModal
