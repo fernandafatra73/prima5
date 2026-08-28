@@ -16,9 +16,12 @@ import '../components/ui/ui.css';
 interface UsgItem {
   readonly id: string;
   readonly namaPasien: string;
+  readonly umur: string | null;
+  readonly alamat: string | null;
   readonly regCode: string | null;
   readonly jenisPemeriksaan: string | null;
   readonly tanggal: string;
+  readonly dokterPengirim: string | null;
   readonly fotoDataUrl: string;
   readonly analisa: string | null;
   readonly kesan: string | null;
@@ -34,6 +37,9 @@ interface PendaftaranOption {
   readonly id: string;
   readonly noRegistrasi: string;
   readonly namaPasien: string;
+  readonly umur: string | null;
+  readonly alamat: string | null;
+  readonly dokterPengirim: string | null;
 }
 
 interface KopSuratData {
@@ -58,9 +64,12 @@ function formatTanggalDisplay(dateStr: string): string {
 
 const emptyForm = {
   namaPasien: '',
+  umur: '',
+  alamat: '',
   regCode: '',
   jenisPemeriksaan: '',
   tanggal: new Date().toISOString().split('T')[0]!,
+  dokterPengirim: '',
   fotoDataUrl: '',
   analisa: '',
   kesan: '',
@@ -140,9 +149,12 @@ export function UsgPage() {
   function openEdit(item: UsgItem) {
     setForm({
       namaPasien: item.namaPasien,
+      umur: item.umur ?? '',
+      alamat: item.alamat ?? '',
       regCode: item.regCode ?? '',
       jenisPemeriksaan: item.jenisPemeriksaan ?? '',
       tanggal: item.tanggal.split('T')[0]!,
+      dokterPengirim: item.dokterPengirim ?? '',
       fotoDataUrl: item.fotoDataUrl,
       analisa: item.analisa ?? '',
       kesan: item.kesan ?? '',
@@ -176,9 +188,12 @@ export function UsgPage() {
     try {
       const body = {
         namaPasien: form.namaPasien,
+        umur: form.umur || undefined,
+        alamat: form.alamat || undefined,
         regCode: form.regCode || undefined,
         jenisPemeriksaan: form.jenisPemeriksaan || undefined,
         tanggal: form.tanggal,
+        dokterPengirim: form.dokterPengirim || undefined,
         fotoDataUrl: form.fotoDataUrl,
         analisa: form.analisa || undefined,
         kesan: form.kesan || undefined,
@@ -227,9 +242,12 @@ export function UsgPage() {
         alamatKlinik: kopSuratRes?.item.alamat || '',
         teleponKlinik: kopSuratRes?.item.telepon || '',
         namaPasien: item.namaPasien,
+        umur: item.umur || '',
+        alamat: item.alamat || '',
         regCode: item.regCode || '',
         jenisPemeriksaan: item.jenisPemeriksaan || '',
         tanggalLabel: formatTanggalDisplay(item.tanggal),
+        dokterPengirim: item.dokterPengirim || '',
         fotoDataUrl: item.fotoDataUrl,
         analisa: item.analisa || '',
         kesan: item.kesan || '',
@@ -349,7 +367,10 @@ export function UsgPage() {
                         setForm((f) => ({
                           ...f,
                           namaPasien: selected.namaPasien,
+                          umur: selected.umur ?? f.umur,
+                          alamat: selected.alamat ?? f.alamat,
                           regCode: selected.noRegistrasi,
+                          dokterPengirim: selected.dokterPengirim ?? f.dokterPengirim,
                         }));
                       }
                     }}
@@ -372,11 +393,20 @@ export function UsgPage() {
                   />
                 </div>
                 <div className="form-field">
-                  <label htmlFor="usg-regcode">No. Reg</label>
+                  <label htmlFor="usg-umur">Umur</label>
                   <input
-                    id="usg-regcode"
-                    value={form.regCode}
-                    onChange={(e) => setForm((f) => ({ ...f, regCode: e.target.value }))}
+                    id="usg-umur"
+                    value={form.umur}
+                    onChange={(e) => setForm((f) => ({ ...f, umur: e.target.value }))}
+                    placeholder="Contoh: 35 tahun"
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="usg-alamat">Alamat</label>
+                  <input
+                    id="usg-alamat"
+                    value={form.alamat}
+                    onChange={(e) => setForm((f) => ({ ...f, alamat: e.target.value }))}
                   />
                 </div>
                 <div className="form-field">
@@ -386,6 +416,22 @@ export function UsgPage() {
                     value={form.jenisPemeriksaan}
                     onChange={(e) => setForm((f) => ({ ...f, jenisPemeriksaan: e.target.value }))}
                     placeholder="Contoh: USG Abdomen"
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="usg-regcode">No. Reg</label>
+                  <input
+                    id="usg-regcode"
+                    value={form.regCode}
+                    onChange={(e) => setForm((f) => ({ ...f, regCode: e.target.value }))}
+                  />
+                </div>
+                <div className="form-field">
+                  <label htmlFor="usg-dokter-pengirim">Dokter Pengirim</label>
+                  <input
+                    id="usg-dokter-pengirim"
+                    value={form.dokterPengirim}
+                    onChange={(e) => setForm((f) => ({ ...f, dokterPengirim: e.target.value }))}
                   />
                 </div>
                 <div className="form-field">

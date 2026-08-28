@@ -463,9 +463,12 @@ model AnalisaFotoRontgen {
 model Usg {
   id               String   @id @default(cuid())
   namaPasien       String
+  umur             String?
+  alamat           String?
   regCode          String?
   jenisPemeriksaan String?
   tanggal          DateTime @default(now())
+  dokterPengirim   String?
   fotoDataUrl      String
   analisa          String?
   kesan            String?

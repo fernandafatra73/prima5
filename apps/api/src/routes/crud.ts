@@ -2856,9 +2856,12 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         select: {
           id: true,
           namaPasien: true,
+          umur: true,
+          alamat: true,
           regCode: true,
           jenisPemeriksaan: true,
           tanggal: true,
+          dokterPengirim: true,
           fotoDataUrl: true,
           analisa: true,
           kesan: true,
@@ -2870,9 +2873,12 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       items: items.map((u) => ({
         id: u.id,
         namaPasien: u.namaPasien,
+        umur: u.umur,
+        alamat: u.alamat,
         regCode: u.regCode,
         jenisPemeriksaan: u.jenisPemeriksaan,
         tanggal: u.tanggal.toISOString(),
+        dokterPengirim: u.dokterPengirim,
         fotoDataUrl: u.fotoDataUrl,
         analisa: u.analisa,
         kesan: u.kesan,
@@ -2885,9 +2891,12 @@ export async function registerCrudRoutes(app: FastifyInstance) {
   app.post<{
     Body: {
       namaPasien: string;
+      umur?: string;
+      alamat?: string;
       regCode?: string;
       jenisPemeriksaan?: string;
       tanggal?: string;
+      dokterPengirim?: string;
       fotoDataUrl: string;
       analisa?: string;
       kesan?: string;
@@ -2901,9 +2910,12 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     const item = await prisma.usg.create({
       data: {
         namaPasien: b.namaPasien.trim(),
+        umur: b.umur?.trim() || null,
+        alamat: b.alamat?.trim() || null,
         regCode: b.regCode?.trim() || null,
         jenisPemeriksaan: b.jenisPemeriksaan?.trim() || null,
         tanggal: b.tanggal ? new Date(b.tanggal) : new Date(),
+        dokterPengirim: b.dokterPengirim?.trim() || null,
         fotoDataUrl: b.fotoDataUrl,
         analisa: b.analisa?.trim() || null,
         kesan: b.kesan?.trim() || null,
@@ -2914,9 +2926,12 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       item: {
         id: item.id,
         namaPasien: item.namaPasien,
+        umur: item.umur,
+        alamat: item.alamat,
         regCode: item.regCode,
         jenisPemeriksaan: item.jenisPemeriksaan,
         tanggal: item.tanggal.toISOString(),
+        dokterPengirim: item.dokterPengirim,
         fotoDataUrl: item.fotoDataUrl,
         analisa: item.analisa,
         kesan: item.kesan,
@@ -2929,9 +2944,12 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     Params: { id: string };
     Body: {
       namaPasien?: string;
+      umur?: string;
+      alamat?: string;
       regCode?: string;
       jenisPemeriksaan?: string;
       tanggal?: string;
+      dokterPengirim?: string;
       fotoDataUrl?: string;
       analisa?: string;
       kesan?: string;
@@ -2944,12 +2962,18 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       where: { id: req.params.id },
       data: {
         namaPasien: req.body.namaPasien?.trim() ?? existing.namaPasien,
+        umur: req.body.umur !== undefined ? req.body.umur?.trim() || null : existing.umur,
+        alamat: req.body.alamat !== undefined ? req.body.alamat?.trim() || null : existing.alamat,
         regCode: req.body.regCode !== undefined ? req.body.regCode?.trim() || null : existing.regCode,
         jenisPemeriksaan:
           req.body.jenisPemeriksaan !== undefined
             ? req.body.jenisPemeriksaan?.trim() || null
             : existing.jenisPemeriksaan,
         tanggal: req.body.tanggal ? new Date(req.body.tanggal) : existing.tanggal,
+        dokterPengirim:
+          req.body.dokterPengirim !== undefined
+            ? req.body.dokterPengirim?.trim() || null
+            : existing.dokterPengirim,
         fotoDataUrl: req.body.fotoDataUrl ?? existing.fotoDataUrl,
         analisa: req.body.analisa !== undefined ? req.body.analisa?.trim() || null : existing.analisa,
         kesan: req.body.kesan !== undefined ? req.body.kesan?.trim() || null : existing.kesan,
@@ -2961,9 +2985,12 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       item: {
         id: item.id,
         namaPasien: item.namaPasien,
+        umur: item.umur,
+        alamat: item.alamat,
         regCode: item.regCode,
         jenisPemeriksaan: item.jenisPemeriksaan,
         tanggal: item.tanggal.toISOString(),
+        dokterPengirim: item.dokterPengirim,
         fotoDataUrl: item.fotoDataUrl,
         analisa: item.analisa,
         kesan: item.kesan,

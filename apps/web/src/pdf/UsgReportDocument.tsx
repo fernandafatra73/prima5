@@ -13,9 +13,12 @@ export interface UsgReportData {
   readonly alamatKlinik: string;
   readonly teleponKlinik: string;
   readonly namaPasien: string;
+  readonly umur: string;
+  readonly alamat: string;
   readonly regCode: string;
   readonly jenisPemeriksaan: string;
   readonly tanggalLabel: string;
+  readonly dokterPengirim: string;
   readonly fotoDataUrl: string;
   readonly analisa: string;
   readonly kesan: string;
@@ -39,11 +42,15 @@ const styles = StyleSheet.create({
   reportTitle: { fontSize: 12, fontWeight: 'bold', color: BLUE, textTransform: 'uppercase' },
 
   infoGrid: {
-    flexDirection: 'row', justifyContent: 'space-between', marginVertical: 6,
+    marginVertical: 6,
     padding: 6, backgroundColor: '#f8fafc', borderWidth: 0.5, borderColor: '#cbd5e1',
   },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  infoRowSpacing: { marginTop: 4 },
+  infoCell: { width: '48%' },
   infoText: { fontSize: 8.5 },
   bold: { fontWeight: 'bold' },
+  tanggalLine: { textAlign: 'center', fontSize: 8.5, marginTop: 2 },
 
   photoContainer: {
     marginVertical: 8, alignItems: 'center', borderWidth: 0.8, borderColor: BLACK, padding: 8,
@@ -86,21 +93,34 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
 
           <View style={styles.titleSection}>
             <Text style={styles.reportTitle}>Hasil Pemeriksaan USG</Text>
+            <Text style={styles.tanggalLine}>Tanggal Pemeriksaan: {data.tanggalLabel}</Text>
           </View>
 
           <View style={styles.infoGrid}>
-            <Text style={styles.infoText}>
-              Nama Pasien: <Text style={styles.bold}>{data.namaPasien}</Text>
-            </Text>
-            <Text style={styles.infoText}>
-              No. Reg: <Text style={styles.bold}>{data.regCode || '-'}</Text>
-            </Text>
-            <Text style={styles.infoText}>
-              Pemeriksaan: <Text style={styles.bold}>{data.jenisPemeriksaan || '-'}</Text>
-            </Text>
-            <Text style={styles.infoText}>
-              Tanggal: <Text style={styles.bold}>{data.tanggalLabel}</Text>
-            </Text>
+            <View style={styles.infoRow}>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                Nama Pasien: <Text style={styles.bold}>{data.namaPasien}</Text>
+              </Text>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                Umur: <Text style={styles.bold}>{data.umur || '-'}</Text>
+              </Text>
+            </View>
+            <View style={[styles.infoRow, styles.infoRowSpacing]}>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                Alamat: <Text style={styles.bold}>{data.alamat || '-'}</Text>
+              </Text>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                Pemeriksaan: <Text style={styles.bold}>{data.jenisPemeriksaan || '-'}</Text>
+              </Text>
+            </View>
+            <View style={[styles.infoRow, styles.infoRowSpacing]}>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                No. Reg: <Text style={styles.bold}>{data.regCode || '-'}</Text>
+              </Text>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                Dokter Pengirim: <Text style={styles.bold}>{data.dokterPengirim || '-'}</Text>
+              </Text>
+            </View>
           </View>
 
           {data.fotoDataUrl ? (
