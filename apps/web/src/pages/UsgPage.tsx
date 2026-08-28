@@ -90,6 +90,7 @@ export function UsgPage() {
   } = usePaginatedList<UsgItem>('/api/usg', queryParams);
   const reload = useMutationReload(reloadList);
 
+  const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<UsgItem | null>(null);
   const [deleting, setDeleting] = useState<UsgItem | null>(null);
   const [submitting, setSubmitting] = useState(false);
@@ -144,6 +145,15 @@ export function UsgPage() {
     setForm(emptyForm);
     setError(null);
     setEditing(null);
+    setFormOpen(false);
+  }
+
+  function openCreate() {
+    setForm(emptyForm);
+    setError(null);
+    setEditing(null);
+    setFormOpen(true);
+    document.getElementById('usg-form-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function openEdit(item: UsgItem) {
@@ -162,6 +172,7 @@ export function UsgPage() {
     });
     setError(null);
     setEditing(item);
+    setFormOpen(true);
     document.getElementById('usg-form-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
@@ -284,12 +295,20 @@ export function UsgPage() {
           <span className="usg-hero__stat-value" style={{ fontSize: '1rem' }}>{latestTanggal}</span>
           <span className="usg-hero__stat-label">Data Terbaru</span>
         </div>
+        <button
+          type="button"
+          className="btn btn--sm"
+          style={{ background: '#ffffff', color: '#1d4ed8', fontWeight: 700, border: 'none' }}
+          onClick={openCreate}
+        >
+          + Tambah Pasien
+        </button>
       </div>
 
-      {editing && (
+      {formOpen && (
       <div className="aifoto-frame" style={{ marginBottom: '1.25rem' }}>
         <div className="aifoto-frame__titlebar">
-          {`✏️ Ubah Data USG — ${editing.namaPasien}`}
+          {editing ? `✏️ Ubah Data USG — ${editing.namaPasien}` : '📝 Tambah Pasien USG'}
         </div>
         <div className="aifoto-frame__body">
           <form onSubmit={(e) => void handleSubmit(e)} className="form-grid">
@@ -537,12 +556,12 @@ export function UsgPage() {
             </div>
 
             <p className="form-grid--full" style={{ margin: '0.5rem 0 0', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-              Klik Batal untuk menutup form ini tanpa menyimpan perubahan.
+              Klik Batal untuk menutup form ini tanpa menyimpan.
             </p>
 
             <ModalFormFooter
               onCancel={resetForm}
-              submitLabel="Simpan Perubahan"
+              submitLabel={editing ? 'Simpan Perubahan' : 'Simpan'}
               loading={submitting}
             />
           </form>
