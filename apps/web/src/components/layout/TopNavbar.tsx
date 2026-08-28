@@ -35,28 +35,10 @@ interface MenuItem {
   readonly label: string;
 }
 
-interface ExternalLinkItem {
-  readonly id: string;
-  readonly label: string;
-  readonly url: string;
-}
-
-const SOSMED_ITEMS: readonly ExternalLinkItem[] = [
-  { id: 'youtube', label: 'YouTube', url: 'https://www.youtube.com/' },
-  { id: 'snackvideo', label: 'SnackVideo', url: 'https://www.snackvideo.com/' },
-  { id: 'tiktok', label: 'TikTok', url: 'https://www.tiktok.com/' },
-  { id: 'facebook', label: 'Facebook', url: 'https://www.facebook.com/' },
-  { id: 'shopee', label: 'Shopee', url: 'https://shopee.co.id/' },
-  { id: 'instagram', label: 'Instagram', url: 'https://www.instagram.com/' },
-  { id: 'whatsapp-sosmed', label: 'WhatsApp', url: 'https://www.whatsapp.com/' },
-  { id: 'telegram-sosmed', label: 'Telegram', url: 'https://telegram.org/' },
-];
-
 type NavbarSpec =
   | { readonly type: 'link'; readonly id: AppViewId; readonly label: string; readonly icon: IconComponent }
   | { readonly type: 'category'; readonly categoryId: string; readonly icon: IconComponent }
-  | { readonly type: 'group'; readonly groupId: string; readonly label: string; readonly icon: IconComponent; readonly items: readonly MenuItem[] }
-  | { readonly type: 'external-group'; readonly groupId: string; readonly label: string; readonly icon: IconComponent; readonly items: readonly ExternalLinkItem[] };
+  | { readonly type: 'group'; readonly groupId: string; readonly label: string; readonly icon: IconComponent; readonly items: readonly MenuItem[] };
 
 const DROPDOWN_TINT_CLASS: Readonly<Record<string, string>> = {
   keuangan: 'app-navbar__dropdown--keuangan',
@@ -74,7 +56,7 @@ const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'link', id: 'mega-data', label: 'Mega Data', icon: IconTag },
   { type: 'link', id: 'ai-radiologi', label: 'AI Radiologi', icon: IconStethoscope },
   { type: 'link', id: 'hak-akses', label: 'Hak Akses', icon: IconShield },
-  { type: 'external-group', groupId: 'sosmed', label: 'Sosmed', icon: IconShare, items: SOSMED_ITEMS },
+  { type: 'link', id: 'sosmed', label: 'Sosmed', icon: IconShare },
 ];
 
 export function TopNavbar({ activeId, onNavigate, role, departemen, onLogout }: TopNavbarProps) {
@@ -123,47 +105,6 @@ export function TopNavbar({ activeId, onNavigate, role, departemen, onLogout }: 
                 <Icon className="app-navbar__link-icon" />
                 <span>{spec.label}</span>
               </button>
-            );
-          }
-
-          if (spec.type === 'external-group') {
-            const Icon = spec.icon;
-            const isOpen = openMenuId === spec.groupId;
-            return (
-              <div key={spec.groupId} className="app-navbar__category">
-                <button
-                  type="button"
-                  className={`app-navbar__link ${isOpen ? 'app-navbar__link--open' : ''}`}
-                  onClick={() => setOpenMenuId(isOpen ? null : spec.groupId)}
-                  aria-expanded={isOpen}
-                  aria-haspopup="menu"
-                >
-                  <Icon className="app-navbar__link-icon" />
-                  <span>{spec.label}</span>
-                  <span className="app-navbar__caret" aria-hidden>
-                    ▾
-                  </span>
-                </button>
-
-                {isOpen && (
-                  <ul className="app-navbar__dropdown" role="menu">
-                    {spec.items.map((item) => (
-                      <li key={item.id} role="none">
-                        <a
-                          href={item.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          role="menuitem"
-                          className="app-navbar__dropdown-link"
-                          onClick={() => setOpenMenuId(null)}
-                        >
-                          {item.label}
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                )}
-              </div>
             );
           }
 

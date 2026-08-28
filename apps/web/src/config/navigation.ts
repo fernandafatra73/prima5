@@ -144,6 +144,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'usg', label: 'USG', shortLabel: 'USG' },
   { id: 'pasien', label: 'Data & Registrasi Radiologi', shortLabel: 'Registrasi Radiologi' },
   { id: 'laboratorium', label: 'Laboratorium', shortLabel: 'Laboratorium' },
+  { id: 'sosmed', label: 'Sosmed', shortLabel: 'Sosmed' },
   { id: 'pendaftaran', label: 'Pendaftaran', shortLabel: 'Pendaftaran' },
   { id: 'pendaftaran-umum', label: 'Pendaftaran Umum', shortLabel: 'Pendaftaran Umum' },
   { id: 'transfer', label: 'Transfer', shortLabel: 'Transfer' },
