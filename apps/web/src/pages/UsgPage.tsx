@@ -257,13 +257,16 @@ export function UsgPage() {
               className="form-field form-grid--full"
               style={{
                 gap: 0,
-                maxWidth: 720,
+                width: '210mm',
+                maxWidth: '100%',
+                minHeight: '297mm',
+                boxSizing: 'border-box',
                 margin: '0 auto',
                 background: '#ffffff',
                 border: '1px solid #cbd5e1',
                 borderRadius: 'var(--radius-card)',
                 boxShadow: 'var(--shadow-card)',
-                padding: '1.5rem',
+                padding: '15mm',
               }}
             >
               <div
