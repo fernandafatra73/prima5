@@ -145,6 +145,7 @@ export function HasilPerbulanPage({ modul = 'RADIOLOGI' }: HasilPerbulanPageProp
   const [isEditing, setIsEditing] = useState(false);
   const [editForm, setEditForm] = useState<EditForm>(emptyEditForm);
   const [editLabelForm, setEditLabelForm] = useState<GajiLabelItem>(emptyLabelForm);
+  const [editJumlahPasien, setEditJumlahPasien] = useState('0');
   const [saving, setSaving] = useState(false);
 
   const fetchData = useCallback(async () => {
@@ -186,6 +187,7 @@ export function HasilPerbulanPage({ modul = 'RADIOLOGI' }: HasilPerbulanPageProp
     if (!item) return;
     setEditForm(formToItem(item));
     setEditLabelForm(labelData);
+    setEditJumlahPasien(String(item.jumlahPasien));
     setError(null);
     setIsEditing(true);
   }
@@ -215,6 +217,13 @@ export function HasilPerbulanPage({ modul = 'RADIOLOGI' }: HasilPerbulanPageProp
           akumulasiPenyusutanAwalTahun: n(editForm.akumulasiPenyusutanAwalTahun),
         }),
         apiPatch('/api/laporan/gaji-label', { modul, ...editLabelForm }),
+        apiPatch('/api/laporan/pajak/override', {
+          year,
+          bulan: item.no,
+          modul,
+          jumlahPasien: n(editJumlahPasien),
+          harga: n(editForm.harga),
+        }),
       ]);
       setIsEditing(false);
       await fetchData();
@@ -379,8 +388,27 @@ export function HasilPerbulanPage({ modul = 'RADIOLOGI' }: HasilPerbulanPageProp
             <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, borderBottom: '1px dashed var(--color-border)', paddingBottom: '0.3rem' }}>
               <span>Pendapatan Jasa Pelayanan</span>
             </div>
-            {field('harga', `Harga (Jumlah Pasien: ${item.jumlahPasien}, otomatis)`, item.harga)}
-            {staticRow('Total Pendapatan', isEditing ? n(editForm.harga) * item.jumlahPasien : item.pendapatan, { bold: true })}
+            {!isEditing ? (
+              staticRow(`Jumlah Pasien`, item.jumlahPasien)
+            ) : (
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.5rem', padding: '0.25rem 0' }}>
+                <label htmlFor="hp-jumlahPasien" style={{ flex: 1 }}>Jumlah Pasien</label>
+                <input
+                  id="hp-jumlahPasien"
+                  type="number"
+                  step="1"
+                  value={editJumlahPasien}
+                  onChange={(e) => setEditJumlahPasien(e.target.value)}
+                  style={{ width: '150px', textAlign: 'right' }}
+                />
+              </div>
+            )}
+            {field('harga', 'Harga per Pasien', item.harga)}
+            {staticRow(
+              'Total Pendapatan',
+              isEditing ? n(editForm.harga) * n(editJumlahPasien) : item.pendapatan,
+              { bold: true },
+            )}
 
             <h4 style={{ marginBottom: '0.25rem', marginTop: '1.25rem' }}>Beban Usaha</h4>
             {field('biayaSewaTempat', 'Beban Sewa Tempat', item.biayaSewaTempat)}
