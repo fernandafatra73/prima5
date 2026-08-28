@@ -59,19 +59,6 @@ const SOSMED_ITEMS: readonly ExternalLinkItem[] = [
   { id: 'telegram-sosmed', label: 'Telegram', url: 'https://telegram.org/' },
 ];
 
-const MEGA_DATA_ITEMS: readonly MenuItem[] = [
-  { id: 'fatra', label: 'Fatra' },
-  { id: 'musik-ph', label: 'Musik-PH' },
-  { id: 'templet', label: 'Templet' },
-  { id: 'transfer', label: 'Transfer' },
-  { id: 'daftar-telpon', label: 'Daftar Telpon' },
-  { id: 'kalender', label: 'Kalender' },
-  { id: 'whatsapp', label: 'WhatsApp' },
-  { id: 'telegram', label: 'Telegram' },
-  { id: 'kalkulator', label: 'Kalkulator' },
-  { id: 'ai-gemini', label: 'AI Gemini' },
-];
-
 type NavbarSpec =
   | { readonly type: 'link'; readonly id: AppViewId; readonly label: string; readonly icon: IconComponent }
   | { readonly type: 'category'; readonly categoryId: string; readonly icon: IconComponent }
@@ -91,7 +78,7 @@ const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'category', categoryId: 'master-sistem', icon: IconShield },
   { type: 'group', groupId: 'pengaturan', label: 'Pengaturan', icon: IconSettings, items: PENGATURAN_ITEMS },
   { type: 'category', categoryId: 'farmasi', icon: IconDocument },
-  { type: 'group', groupId: 'mega-data', label: 'Mega Data', icon: IconTag, items: MEGA_DATA_ITEMS },
+  { type: 'link', id: 'mega-data', label: 'Mega Data', icon: IconTag },
   { type: 'category', categoryId: 'anatomi', icon: IconStethoscope },
   { type: 'link', id: 'ai-radiologi', label: 'AI Radiologi', icon: IconStethoscope },
   { type: 'link', id: 'hak-akses', label: 'Hak Akses', icon: IconShield },

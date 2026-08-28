@@ -142,6 +142,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'templet', label: 'Templet', shortLabel: 'Templet' },
   { id: 'musik-ph', label: 'Musik-PH', shortLabel: 'Musik-PH' },
   { id: 'fatra', label: 'Fatra', shortLabel: 'Fatra' },
+  { id: 'mega-data', label: 'Mega Data', shortLabel: 'Mega Data' },
   { id: 'radiologi', label: 'Radiologi', shortLabel: 'Radiologi' },
   { id: 'pasien', label: 'Data & Registrasi Radiologi', shortLabel: 'Registrasi Radiologi' },
   { id: 'laboratorium', label: 'Laboratorium', shortLabel: 'Laboratorium' },

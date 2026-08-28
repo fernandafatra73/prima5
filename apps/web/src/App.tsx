@@ -32,6 +32,7 @@ import { KlasifikasiPaketPage } from './pages/KlasifikasiPaketPage.tsx';
 import { HitunganLedPage } from './pages/HitunganLedPage.tsx';
 import { MusikPage } from './pages/MusikPage.tsx';
 import { FatraPage } from './pages/FatraPage.tsx';
+import { MegaDataHubPage } from './pages/MegaDataHubPage.tsx';
 import { PendaftaranUmumPage } from './pages/PendaftaranUmumPage.tsx';
 import { TransferPage } from './pages/TransferPage.tsx';
 import { DaftarTelponPage } from './pages/DaftarTelponPage.tsx';
@@ -129,6 +130,8 @@ function renderViewContent(
       return <MusikPage />;
     case 'fatra':
       return <FatraPage />;
+    case 'mega-data':
+      return <MegaDataHubPage />;
     case 'radiologi':
       return <RadiologiPage />;
     case 'pasien':
