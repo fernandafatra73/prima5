@@ -24,6 +24,7 @@ import { SharingRadiologPage } from './pages/SharingRadiologPage.tsx';
 import { JenisPemeriksaanPage } from './pages/JenisPemeriksaanPage.tsx';
 import { KesanPage } from './pages/KesanPage.tsx';
 import { LaboratoriumPage } from './pages/LaboratoriumPage.tsx';
+import { LaboratoriumHubPage } from './pages/LaboratoriumHubPage.tsx';
 import { LabDuplikatPage } from './pages/LabDuplikatPage.tsx';
 import { HargaPemeriksaanLabPage } from './pages/HargaPemeriksaanLabPage.tsx';
 import { PaketLabMasterPage } from './pages/PaketLabMasterPage.tsx';
@@ -156,6 +157,8 @@ function renderViewContent(
       return <DataTerbesarPage onNavigate={navigate} />;
     case 'harga-pemeriksaan-lab':
       return <HargaPemeriksaanLabPage />;
+    case 'laboratorium':
+      return <LaboratoriumHubPage />;
     case 'lab':
       return <LaboratoriumPage onNavigate={navigate} />;
     case 'lab-duplikat':

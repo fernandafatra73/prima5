@@ -79,14 +79,13 @@ type NavbarSpec =
   | { readonly type: 'external-group'; readonly groupId: string; readonly label: string; readonly icon: IconComponent; readonly items: readonly ExternalLinkItem[] };
 
 const DROPDOWN_TINT_CLASS: Readonly<Record<string, string>> = {
-  laboratorium: 'app-navbar__dropdown--laboratorium',
   keuangan: 'app-navbar__dropdown--keuangan',
 };
 
 const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'category', categoryId: 'pendaftaran', icon: IconClipboard },
   { type: 'link', id: 'radiologi', label: 'Radiologi', icon: IconStethoscope },
-  { type: 'category', categoryId: 'laboratorium', icon: IconTag },
+  { type: 'link', id: 'laboratorium', label: 'Laboratorium', icon: IconTag },
   { type: 'category', categoryId: 'perhitungan-pajak', icon: IconCurrency },
   { type: 'category', categoryId: 'keuangan', icon: IconCurrency },
   { type: 'category', categoryId: 'master-sistem', icon: IconShield },

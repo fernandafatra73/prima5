@@ -61,6 +61,7 @@ export const MAIN_NAV_CATEGORIES: readonly NavCategory[] = [
     label: 'Laboratorium',
     iconName: 'flask',
     items: [
+      { id: 'laboratorium', label: 'Laboratorium', shortLabel: 'Laboratorium' },
       { id: 'lab', label: 'Registrasi Lab', shortLabel: 'Registrasi Lab' },
       { id: 'lab-duplikat', label: 'Duplikat Registrasi Lab', shortLabel: 'Duplikat Registrasi' },
       { id: 'kwitansi-laboratorium', label: 'Kwitansi', shortLabel: 'Kwitansi' },
@@ -143,6 +144,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'fatra', label: 'Fatra', shortLabel: 'Fatra' },
   { id: 'radiologi', label: 'Radiologi', shortLabel: 'Radiologi' },
   { id: 'pasien', label: 'Data & Registrasi Radiologi', shortLabel: 'Registrasi Radiologi' },
+  { id: 'laboratorium', label: 'Laboratorium', shortLabel: 'Laboratorium' },
   { id: 'pendaftaran-umum', label: 'Pendaftaran Umum', shortLabel: 'Pendaftaran Umum' },
   { id: 'admin-pendaftaran', label: 'Admin Pendaftaran', shortLabel: 'Admin Pendaftaran' },
   { id: 'transfer', label: 'Transfer', shortLabel: 'Transfer' },
