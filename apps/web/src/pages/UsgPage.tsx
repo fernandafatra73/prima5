@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
@@ -87,6 +87,8 @@ export function UsgPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [printingId, setPrintingId] = useState<string | null>(null);
+  const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
+  const [previewFilename, setPreviewFilename] = useState('usg.pdf');
 
   const [radiologOptions, setRadiologOptions] = useState<RadiologOption[]>([]);
   const [pendaftaranOptions, setPendaftaranOptions] = useState<PendaftaranOption[]>([]);
@@ -241,12 +243,8 @@ export function UsgPage() {
         }),
       };
       const blob = await pdf(<UsgReportDocument data={data} />).toBlob();
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = `USG_${item.namaPasien}.pdf`;
-      anchor.click();
-      URL.revokeObjectURL(url);
+      setPreviewBlob(blob);
+      setPreviewFilename(`USG_${item.namaPasien}.pdf`);
     } finally {
       setPrintingId(null);
     }
@@ -530,6 +528,70 @@ export function UsgPage() {
         onClose={() => setDeleting(null)}
         onConfirm={() => void handleDeleteConfirm()}
       />
+
+      <UsgPdfPreviewModal
+        open={previewBlob !== null}
+        blob={previewBlob}
+        filename={previewFilename}
+        onClose={() => setPreviewBlob(null)}
+      />
     </>
+  );
+}
+
+interface UsgPdfPreviewModalProps {
+  readonly open: boolean;
+  readonly blob: Blob | null;
+  readonly filename: string;
+  readonly onClose: () => void;
+}
+
+function UsgPdfPreviewModal({ open, blob, filename, onClose }: UsgPdfPreviewModalProps) {
+  const [url, setUrl] = useState<string | null>(null);
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+
+  useEffect(() => {
+    if (!blob) {
+      setUrl(null);
+      return;
+    }
+    const objectUrl = URL.createObjectURL(blob);
+    setUrl(objectUrl);
+    return () => URL.revokeObjectURL(objectUrl);
+  }, [blob]);
+
+  function handlePrint() {
+    const win = iframeRef.current?.contentWindow;
+    if (!win) return;
+    win.focus();
+    win.print();
+  }
+
+  function handleDownload() {
+    if (!blob) return;
+    const objectUrl = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = objectUrl;
+    anchor.download = filename;
+    anchor.click();
+    URL.revokeObjectURL(objectUrl);
+  }
+
+  return (
+    <Modal open={open} title="Pratinjau Hasil USG" onClose={onClose} size="xl">
+      <div className="pdf-preview__toolbar">
+        <button type="button" className="btn btn--primary btn--sm" onClick={handlePrint}>
+          Cetak
+        </button>
+        <button type="button" className="btn btn--ghost btn--sm" onClick={handleDownload}>
+          Unduh PDF
+        </button>
+      </div>
+      {url ? (
+        <iframe ref={iframeRef} title="Pratinjau PDF USG" className="pdf-preview__frame" src={url} />
+      ) : (
+        <p className="loading-text">Menyiapkan PDF…</p>
+      )}
+    </Modal>
   );
 }
