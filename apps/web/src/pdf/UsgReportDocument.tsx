@@ -56,7 +56,8 @@ const styles = StyleSheet.create({
   photoContainer: {
     alignItems: 'center', borderWidth: 0.8, borderColor: BLACK, padding: 8,
   },
-  photo: { maxWidth: 260, maxHeight: 260, objectFit: 'contain' },
+  photo: { maxWidth: 320, maxHeight: 320, objectFit: 'contain' },
+  photoHalf: { maxWidth: 235, maxHeight: 235, objectFit: 'contain' },
 
   section: { marginTop: 8 },
   sectionLabel: { fontSize: 9.5, fontWeight: 'bold', color: BLUE, marginBottom: 3 },
@@ -135,12 +136,18 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
             <View style={styles.photoRow}>
               {data.fotoDataUrl ? (
                 <View style={styles.photoContainer}>
-                  <Image style={styles.photo} src={data.fotoDataUrl} />
+                  <Image
+                    style={data.fotoDataUrl2 ? styles.photoHalf : styles.photo}
+                    src={data.fotoDataUrl}
+                  />
                 </View>
               ) : null}
               {data.fotoDataUrl2 ? (
                 <View style={styles.photoContainer}>
-                  <Image style={styles.photo} src={data.fotoDataUrl2} />
+                  <Image
+                    style={data.fotoDataUrl ? styles.photoHalf : styles.photo}
+                    src={data.fotoDataUrl2}
+                  />
                 </View>
               ) : null}
             </View>
