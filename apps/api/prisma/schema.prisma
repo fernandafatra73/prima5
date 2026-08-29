@@ -482,6 +482,8 @@ model Usg {
   dokterPengirim   String?
   fotoDataUrl      String
   fotoDataUrl2     String?
+  fotoDataUrl3     String?
+  fotoDataUrl4     String?
   analisa          String?
   kesan            String?
   radiologNama     String?

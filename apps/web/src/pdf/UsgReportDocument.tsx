@@ -21,6 +21,8 @@ export interface UsgReportData {
   readonly dokterPengirim: string;
   readonly fotoDataUrl: string;
   readonly fotoDataUrl2: string;
+  readonly fotoDataUrl3: string;
+  readonly fotoDataUrl4: string;
   readonly analisa: string;
   readonly kesan: string;
   readonly radiologNama: string;
@@ -52,12 +54,15 @@ const styles = StyleSheet.create({
   infoText: { fontSize: 8.5 },
   bold: { fontWeight: 'bold' },
 
-  photoRow: { flexDirection: 'row', justifyContent: 'center', gap: 8, marginVertical: 8 },
+  photoStack: { marginVertical: 8 },
+  photoRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
+  photoRowSpacing: { marginTop: 8 },
   photoContainer: {
     alignItems: 'center', borderWidth: 0.8, borderColor: BLACK, padding: 8,
   },
   photo: { maxWidth: 320, maxHeight: 320, objectFit: 'contain' },
   photoHalf: { maxWidth: 235, maxHeight: 235, objectFit: 'contain' },
+  photoQuarter: { maxWidth: 195, maxHeight: 195, objectFit: 'contain' },
 
   section: { marginTop: 8 },
   sectionLabel: { fontSize: 9.5, fontWeight: 'bold', color: BLUE, marginBottom: 3 },
@@ -80,6 +85,12 @@ const styles = StyleSheet.create({
 });
 
 export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
+  const photos = [data.fotoDataUrl, data.fotoDataUrl2, data.fotoDataUrl3, data.fotoDataUrl4].filter(
+    (src): src is string => Boolean(src),
+  );
+  const photoStyle = photos.length >= 3 ? styles.photoQuarter : photos.length === 2 ? styles.photoHalf : styles.photo;
+  const photoRows = photos.length > 2 ? [photos.slice(0, 2), photos.slice(2, 4)] : [photos];
+
   return (
     <Document title={`USG_${data.namaPasien}.pdf`}>
       <Page size="A4" style={styles.page}>
@@ -132,24 +143,20 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
             <Text style={styles.sectionBody}>{data.analisa || '—'}</Text>
           </View>
 
-          {(data.fotoDataUrl || data.fotoDataUrl2) ? (
-            <View style={styles.photoRow}>
-              {data.fotoDataUrl ? (
-                <View style={styles.photoContainer}>
-                  <Image
-                    style={data.fotoDataUrl2 ? styles.photoHalf : styles.photo}
-                    src={data.fotoDataUrl}
-                  />
+          {photos.length > 0 ? (
+            <View style={styles.photoStack}>
+              {photoRows.map((row, rowIndex) => (
+                <View
+                  key={rowIndex}
+                  style={rowIndex > 0 ? [styles.photoRow, styles.photoRowSpacing] : styles.photoRow}
+                >
+                  {row.map((src, photoIndex) => (
+                    <View key={photoIndex} style={styles.photoContainer}>
+                      <Image style={photoStyle} src={src} />
+                    </View>
+                  ))}
                 </View>
-              ) : null}
-              {data.fotoDataUrl2 ? (
-                <View style={styles.photoContainer}>
-                  <Image
-                    style={data.fotoDataUrl ? styles.photoHalf : styles.photo}
-                    src={data.fotoDataUrl2}
-                  />
-                </View>
-              ) : null}
+              ))}
             </View>
           ) : null}
 

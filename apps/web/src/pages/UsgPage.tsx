@@ -24,6 +24,8 @@ interface UsgItem {
   readonly dokterPengirim: string | null;
   readonly fotoDataUrl: string;
   readonly fotoDataUrl2: string | null;
+  readonly fotoDataUrl3: string | null;
+  readonly fotoDataUrl4: string | null;
   readonly analisa: string | null;
   readonly kesan: string | null;
   readonly radiologNama: string | null;
@@ -78,6 +80,8 @@ const emptyForm = {
   dokterPengirim: '',
   fotoDataUrl: '',
   fotoDataUrl2: '',
+  fotoDataUrl3: '',
+  fotoDataUrl4: '',
   analisa: '',
   kesan: '',
   radiologNama: '',
@@ -103,6 +107,7 @@ export function UsgPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [printingId, setPrintingId] = useState<string | null>(null);
+  const [printChoice, setPrintChoice] = useState<UsgItem | null>(null);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [previewFilename, setPreviewFilename] = useState('usg.pdf');
 
@@ -185,6 +190,8 @@ export function UsgPage() {
       dokterPengirim: item.dokterPengirim ?? '',
       fotoDataUrl: item.fotoDataUrl,
       fotoDataUrl2: item.fotoDataUrl2 ?? '',
+      fotoDataUrl3: item.fotoDataUrl3 ?? '',
+      fotoDataUrl4: item.fotoDataUrl4 ?? '',
       analisa: item.analisa ?? '',
       kesan: item.kesan ?? '',
       radiologNama: item.radiologNama ?? '',
@@ -195,7 +202,10 @@ export function UsgPage() {
     document.getElementById('usg-form-top')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
-  function handleFotoFileChange(field: 'fotoDataUrl' | 'fotoDataUrl2', e: React.ChangeEvent<HTMLInputElement>) {
+  function handleFotoFileChange(
+    field: 'fotoDataUrl' | 'fotoDataUrl2' | 'fotoDataUrl3' | 'fotoDataUrl4',
+    e: React.ChangeEvent<HTMLInputElement>,
+  ) {
     const file = e.target.files?.[0];
     if (!file) return;
     const reader = new FileReader();
@@ -226,6 +236,8 @@ export function UsgPage() {
         dokterPengirim: form.dokterPengirim || undefined,
         fotoDataUrl: form.fotoDataUrl,
         fotoDataUrl2: form.fotoDataUrl2 || undefined,
+        fotoDataUrl3: form.fotoDataUrl3 || undefined,
+        fotoDataUrl4: form.fotoDataUrl4 || undefined,
         analisa: form.analisa || undefined,
         kesan: form.kesan || undefined,
         radiologNama: form.radiologNama || undefined,
@@ -260,13 +272,18 @@ export function UsgPage() {
     }
   }
 
-  async function handlePrint(item: UsgItem) {
+  async function handlePrint(item: UsgItem, maxPhotos: 1 | 2 | 4) {
+    setPrintChoice(null);
     setPrintingId(item.id);
     try {
       const [logoRes, kopSuratRes] = await Promise.all([
         loadLogoDataUrl().catch(() => ''),
         apiGet<{ item: KopSuratData }>('/api/kop-surat').catch(() => null),
       ]);
+      const photos = [item.fotoDataUrl, item.fotoDataUrl2 ?? '', item.fotoDataUrl3 ?? '', item.fotoDataUrl4 ?? ''].slice(
+        0,
+        maxPhotos,
+      );
       const data: UsgReportData = {
         logoSrc: kopSuratRes?.item.logoDataUrl || logoRes,
         namaKlinik: kopSuratRes?.item.namaKlinik || 'KLINIK PRIMA HUSADA',
@@ -279,8 +296,10 @@ export function UsgPage() {
         jenisPemeriksaan: item.jenisPemeriksaan || '',
         tanggalLabel: formatTanggalDisplay(item.tanggal),
         dokterPengirim: item.dokterPengirim || '',
-        fotoDataUrl: item.fotoDataUrl,
-        fotoDataUrl2: item.fotoDataUrl2 || '',
+        fotoDataUrl: photos[0] || '',
+        fotoDataUrl2: photos[1] || '',
+        fotoDataUrl3: photos[2] || '',
+        fotoDataUrl4: photos[3] || '',
         analisa: item.analisa || '',
         kesan: item.kesan || '',
         radiologNama: item.radiologNama || '',
@@ -574,6 +593,52 @@ export function UsgPage() {
                     style={form.fotoDataUrl2 ? { display: 'block', margin: '0.4rem auto 0' } : { display: 'none' }}
                   />
                 </div>
+
+                <div style={{ flex: '1 1 200px', maxWidth: 200 }}>
+                  <label htmlFor="usg-foto-3" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                    Foto USG 3 (Opsional)
+                  </label>
+                  {!form.fotoDataUrl3 ? (
+                    <label htmlFor="usg-foto-3" className="aifoto-upload aifoto-photo-box" style={{ cursor: 'pointer', height: 200, margin: '0.4rem auto 0' }}>
+                      <span className="aifoto-upload__icon">📤</span>
+                      <p className="aifoto-upload__hint">Klik untuk unggah</p>
+                    </label>
+                  ) : (
+                    <div className="aifoto-photo-box aifoto-photo-box--filled" style={{ height: 200, margin: '0.4rem auto 0' }}>
+                      <img src={form.fotoDataUrl3} alt="Preview foto USG 3" />
+                    </div>
+                  )}
+                  <input
+                    id="usg-foto-3"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFotoFileChange('fotoDataUrl3', e)}
+                    style={form.fotoDataUrl3 ? { display: 'block', margin: '0.4rem auto 0' } : { display: 'none' }}
+                  />
+                </div>
+
+                <div style={{ flex: '1 1 200px', maxWidth: 200 }}>
+                  <label htmlFor="usg-foto-4" style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)' }}>
+                    Foto USG 4 (Opsional)
+                  </label>
+                  {!form.fotoDataUrl4 ? (
+                    <label htmlFor="usg-foto-4" className="aifoto-upload aifoto-photo-box" style={{ cursor: 'pointer', height: 200, margin: '0.4rem auto 0' }}>
+                      <span className="aifoto-upload__icon">📤</span>
+                      <p className="aifoto-upload__hint">Klik untuk unggah</p>
+                    </label>
+                  ) : (
+                    <div className="aifoto-photo-box aifoto-photo-box--filled" style={{ height: 200, margin: '0.4rem auto 0' }}>
+                      <img src={form.fotoDataUrl4} alt="Preview foto USG 4" />
+                    </div>
+                  )}
+                  <input
+                    id="usg-foto-4"
+                    type="file"
+                    accept="image/*"
+                    onChange={(e) => handleFotoFileChange('fotoDataUrl4', e)}
+                    style={form.fotoDataUrl4 ? { display: 'block', margin: '0.4rem auto 0' } : { display: 'none' }}
+                  />
+                </div>
               </div>
 
               <div className="form-field form-field--full">
@@ -674,7 +739,7 @@ export function UsgPage() {
                     type="button"
                     className="btn btn--sm btn--ghost"
                     style={{ border: '1px solid var(--color-border)' }}
-                    onClick={() => void handlePrint(item)}
+                    onClick={() => setPrintChoice(item)}
                     disabled={printingId === item.id}
                   >
                     <IconPrint className="icon-btn__svg" /> {printingId === item.id ? '...' : 'Cetak'}
@@ -709,7 +774,48 @@ export function UsgPage() {
         filename={previewFilename}
         onClose={() => setPreviewBlob(null)}
       />
+
+      {printChoice && (
+        <UsgPrintChoiceModal
+          item={printChoice}
+          onClose={() => setPrintChoice(null)}
+          onChoose={(count) => void handlePrint(printChoice, count)}
+        />
+      )}
     </>
+  );
+}
+
+interface UsgPrintChoiceModalProps {
+  readonly item: UsgItem;
+  readonly onClose: () => void;
+  readonly onChoose: (count: 1 | 2 | 4) => void;
+}
+
+function UsgPrintChoiceModal({ item, onClose, onChoose }: UsgPrintChoiceModalProps) {
+  const availableCount = [item.fotoDataUrl, item.fotoDataUrl2, item.fotoDataUrl3, item.fotoDataUrl4].filter(
+    Boolean,
+  ).length;
+
+  return (
+    <Modal open title="Pilih Jumlah Foto untuk Dicetak" onClose={onClose} size="md">
+      <p style={{ margin: '0 0 1rem', color: 'var(--color-text-muted)' }}>
+        Data ini memiliki {availableCount} foto. Pilih berapa foto yang ingin ditampilkan pada hasil cetak.
+      </p>
+      <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+        {([1, 2, 4] as const).map((count) => (
+          <button
+            key={count}
+            type="button"
+            className="btn btn--sm btn--primary"
+            disabled={count > 1 && availableCount < 2}
+            onClick={() => onChoose(count)}
+          >
+            {count} Foto
+          </button>
+        ))}
+      </div>
+    </Modal>
   );
 }
 
