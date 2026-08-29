@@ -369,14 +369,6 @@ export function UsgPage() {
           <span className="usg-hero__stat-value" style={{ fontSize: '1rem' }}>{latestTanggal}</span>
           <span className="usg-hero__stat-label">Data Terbaru</span>
         </div>
-        <button
-          type="button"
-          className="btn btn--sm"
-          style={{ background: '#ffffff', color: '#1d4ed8', fontWeight: 700, border: 'none' }}
-          onClick={openCreate}
-        >
-          + Tambah Pasien
-        </button>
       </div>
 
       {formOpen && (
