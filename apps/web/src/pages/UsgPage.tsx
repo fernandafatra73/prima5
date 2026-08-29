@@ -2,13 +2,13 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
-import { ModalFormFooter } from '../components/ui/ModalFormFooter.tsx';
 import { IconPencil, IconPrint, IconTrash } from '../components/icons/ActionIcons.tsx';
 import { useListQueryParams, useListSearch } from '../hooks/useListQueryParams.ts';
 import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
 import { UsgReportDocument, type UsgReportData } from '../pdf/UsgReportDocument.tsx';
+import { UsgKesanReportDocument, type UsgKesanReportData } from '../pdf/UsgKesanReportDocument.tsx';
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
 import { pdf } from '@react-pdf/renderer';
 import '../components/ui/ui.css';
@@ -108,6 +108,7 @@ export function UsgPage() {
   const [form, setForm] = useState(emptyForm);
   const [printingId, setPrintingId] = useState<string | null>(null);
   const [printChoice, setPrintChoice] = useState<UsgItem | null>(null);
+  const [printingKesanId, setPrintingKesanId] = useState<string | null>(null);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [previewFilename, setPreviewFilename] = useState('usg.pdf');
 
@@ -312,6 +313,39 @@ export function UsgPage() {
       setPreviewFilename(`USG_${item.namaPasien}.pdf`);
     } finally {
       setPrintingId(null);
+    }
+  }
+
+  async function handlePrintKesan(item: UsgItem) {
+    setPrintingKesanId(item.id);
+    try {
+      const [logoRes, kopSuratRes] = await Promise.all([
+        loadLogoDataUrl().catch(() => ''),
+        apiGet<{ item: KopSuratData }>('/api/kop-surat').catch(() => null),
+      ]);
+      const data: UsgKesanReportData = {
+        logoSrc: kopSuratRes?.item.logoDataUrl || logoRes,
+        namaKlinik: kopSuratRes?.item.namaKlinik || 'KLINIK PRIMA HUSADA',
+        alamatKlinik: kopSuratRes?.item.alamat || '',
+        teleponKlinik: kopSuratRes?.item.telepon || '',
+        namaPasien: item.namaPasien,
+        umur: item.umur || '',
+        alamat: item.alamat || '',
+        regCode: item.regCode || '',
+        jenisPemeriksaan: item.jenisPemeriksaan || '',
+        tanggalLabel: formatTanggalDisplay(item.tanggal),
+        dokterPengirim: item.dokterPengirim || '',
+        kesan: item.kesan || '',
+        radiologNama: item.radiologNama || '',
+        tanggalCetak: new Date().toLocaleDateString('id-ID', {
+          day: '2-digit', month: 'long', year: 'numeric',
+        }),
+      };
+      const blob = await pdf(<UsgKesanReportDocument data={data} />).toBlob();
+      setPreviewBlob(blob);
+      setPreviewFilename(`Kesan_USG_${item.namaPasien}.pdf`);
+    } finally {
+      setPrintingKesanId(null);
     }
   }
 
@@ -682,11 +716,17 @@ export function UsgPage() {
               Klik Batal untuk menutup form ini tanpa menyimpan.
             </p>
 
-            <ModalFormFooter
-              onCancel={resetForm}
-              submitLabel={editing ? 'Simpan Perubahan' : 'Simpan'}
-              loading={submitting}
-            />
+            <div className="form-actions form-actions--end form-grid--full">
+              <button type="submit" className="btn btn--primary" disabled={submitting}>
+                {submitting ? 'Menyimpan…' : editing ? 'Simpan Perubahan' : 'Simpan'}
+              </button>
+              <button type="button" className="btn btn--ghost" onClick={resetForm}>
+                Batal
+              </button>
+              <button type="button" className="btn btn--ghost" onClick={resetForm}>
+                Tutup
+              </button>
+            </div>
           </form>
         </div>
       </div>
@@ -703,6 +743,11 @@ export function UsgPage() {
         loading={loading}
         pagination={pagination}
         onPageChange={setPage}
+        action={
+          <button type="button" className="btn btn--primary" onClick={openCreate}>
+            + Tambah Pasien
+          </button>
+        }
       >
         {items.length === 0 ? (
           <p style={{ textAlign: 'center', padding: '2rem', color: 'var(--color-text-muted)' }}>
@@ -743,6 +788,15 @@ export function UsgPage() {
                     disabled={printingId === item.id}
                   >
                     <IconPrint className="icon-btn__svg" /> {printingId === item.id ? '...' : 'Cetak'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--ghost"
+                    style={{ border: '1px solid var(--color-border)' }}
+                    onClick={() => void handlePrintKesan(item)}
+                    disabled={printingKesanId === item.id}
+                  >
+                    <IconPrint className="icon-btn__svg" /> {printingKesanId === item.id ? '...' : 'Kesan'}
                   </button>
                   <button
                     type="button"

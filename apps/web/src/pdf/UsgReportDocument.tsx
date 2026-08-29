@@ -66,6 +66,7 @@ const styles = StyleSheet.create({
 
   section: { marginTop: 8 },
   sectionLabel: { fontSize: 9.5, fontWeight: 'bold', color: BLUE, marginBottom: 3 },
+  sectionLabelInline: { fontSize: 9.5, fontWeight: 'bold', color: BLUE },
   sectionBody: {
     fontSize: 9.5, lineHeight: 1.5, padding: 6, borderWidth: 0.5, borderColor: '#cbd5e1', minHeight: 30,
   },
@@ -139,8 +140,10 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
           </View>
 
           <View style={styles.section}>
-            <Text style={styles.sectionLabel}>Klinis:</Text>
-            <Text style={styles.sectionBody}>{data.analisa || '—'}</Text>
+            <Text style={styles.sectionBody}>
+              <Text style={styles.sectionLabelInline}>Klinis: </Text>
+              {data.analisa || '—'}
+            </Text>
           </View>
 
           {photos.length > 0 ? (

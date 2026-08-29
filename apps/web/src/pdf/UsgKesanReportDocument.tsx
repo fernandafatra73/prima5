@@ -1,0 +1,147 @@
+import {
+  Document,
+  Image,
+  Page,
+  StyleSheet,
+  Text,
+  View,
+} from '@react-pdf/renderer';
+
+export interface UsgKesanReportData {
+  readonly logoSrc: string;
+  readonly namaKlinik: string;
+  readonly alamatKlinik: string;
+  readonly teleponKlinik: string;
+  readonly namaPasien: string;
+  readonly umur: string;
+  readonly alamat: string;
+  readonly regCode: string;
+  readonly jenisPemeriksaan: string;
+  readonly tanggalLabel: string;
+  readonly dokterPengirim: string;
+  readonly kesan: string;
+  readonly radiologNama: string;
+  readonly tanggalCetak: string;
+}
+
+const BLUE = '#2b4c9b';
+const BLACK = '#1a1a1a';
+
+const styles = StyleSheet.create({
+  page: { padding: 24, fontFamily: 'Helvetica', fontSize: 10.5, color: BLACK },
+  frame: { height: '100%', borderWidth: 1, borderColor: BLACK, padding: 16, flexDirection: 'column' },
+  headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
+  logo: { width: 48, height: 48, marginRight: 12 },
+  headerText: { flex: 1 },
+  clinicName: { fontSize: 16, fontWeight: 'bold', color: BLUE, marginBottom: 2 },
+  clinicAddress: { fontSize: 9, color: BLACK, lineHeight: 1.35 },
+  divider: { height: 2.5, backgroundColor: BLUE, marginVertical: 8 },
+  titleSection: { textAlign: 'center', marginVertical: 8 },
+  reportTitle: { fontSize: 14, fontWeight: 'bold', color: BLUE, textTransform: 'uppercase' },
+  reportSubtitle: { fontSize: 9.5, color: '#475569', marginTop: 2 },
+
+  infoGrid: {
+    marginVertical: 10,
+    padding: 8, backgroundColor: '#f8fafc', borderWidth: 0.5, borderColor: '#cbd5e1',
+  },
+  infoRow: { flexDirection: 'row', justifyContent: 'space-between' },
+  infoRowSpacing: { marginTop: 5 },
+  infoCell: { width: '48%' },
+  infoText: { fontSize: 9.5 },
+  bold: { fontWeight: 'bold' },
+
+  kesanSection: { marginTop: 16, flexGrow: 1 },
+  kesanLabel: {
+    fontSize: 12, fontWeight: 'bold', color: BLUE, marginBottom: 6, textTransform: 'uppercase',
+  },
+  kesanBody: {
+    fontSize: 12, lineHeight: 1.8, padding: 14, borderWidth: 1, borderColor: BLACK, minHeight: 160,
+  },
+
+  disclaimer: { fontSize: 6.5, fontStyle: 'italic', color: '#64748b', marginTop: 10 },
+
+  signatureSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 24, paddingHorizontal: 20 },
+  signatureBox: { alignItems: 'center', width: 190 },
+  signatureTitle: { fontSize: 9, marginBottom: 32 },
+  signatureName: {
+    fontSize: 9, fontWeight: 'bold', width: '100%', textAlign: 'center',
+  },
+  signatureRole: {
+    fontSize: 9, textAlign: 'center', marginTop: 1, borderTopWidth: 0.8, borderColor: BLACK,
+    paddingTop: 2, width: '100%',
+  },
+});
+
+export function UsgKesanReportDocument({ data }: { readonly data: UsgKesanReportData }) {
+  return (
+    <Document title={`Kesan_USG_${data.namaPasien}.pdf`}>
+      <Page size="A4" style={styles.page}>
+        <View style={styles.frame}>
+          <View style={styles.headerRow}>
+            {data.logoSrc ? <Image style={styles.logo} src={data.logoSrc} /> : null}
+            <View style={styles.headerText}>
+              <Text style={styles.clinicName}>{data.namaKlinik}</Text>
+              <Text style={styles.clinicAddress}>
+                {data.alamatKlinik}
+                {data.teleponKlinik ? ` Telp. ${data.teleponKlinik}` : ''}
+              </Text>
+            </View>
+          </View>
+          <View style={styles.divider} />
+
+          <View style={styles.titleSection}>
+            <Text style={styles.reportTitle}>Kesan Pemeriksaan USG</Text>
+            <Text style={styles.reportSubtitle}>Ringkasan hasil untuk dokter pengirim / pasien</Text>
+          </View>
+
+          <View style={styles.infoGrid}>
+            <View style={styles.infoRow}>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                Nama Pasien: <Text style={styles.bold}>{data.namaPasien}</Text>
+              </Text>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                Umur: <Text style={styles.bold}>{data.umur || '-'}</Text>
+              </Text>
+            </View>
+            <View style={[styles.infoRow, styles.infoRowSpacing]}>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                Alamat: <Text style={styles.bold}>{data.alamat || '-'}</Text>
+              </Text>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                Pemeriksaan: <Text style={styles.bold}>{data.jenisPemeriksaan || '-'}</Text>
+              </Text>
+            </View>
+            <View style={[styles.infoRow, styles.infoRowSpacing]}>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                No. Reg: <Text style={styles.bold}>{data.regCode || '-'}</Text>
+              </Text>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                Dokter Pengirim: <Text style={styles.bold}>{data.dokterPengirim || '-'}</Text>
+              </Text>
+            </View>
+            <View style={[styles.infoRow, styles.infoRowSpacing]}>
+              <Text style={[styles.infoText, styles.infoCell]}>
+                Tanggal Pemeriksaan: <Text style={styles.bold}>{data.tanggalLabel || '-'}</Text>
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.kesanSection}>
+            <Text style={styles.kesanLabel}>Kesan:</Text>
+            <Text style={styles.kesanBody}>{data.kesan || '—'}</Text>
+          </View>
+
+          <Text style={styles.disclaimer}>Tgl Cetak: {data.tanggalCetak}</Text>
+
+          <View style={styles.signatureSection}>
+            <View style={styles.signatureBox}>
+              <Text style={styles.signatureTitle}>Teman Sejawat</Text>
+              <Text style={styles.signatureName}>{data.radiologNama}</Text>
+              <Text style={styles.signatureRole}>Radiolog</Text>
+            </View>
+          </View>
+        </View>
+      </Page>
+    </Document>
+  );
+}
