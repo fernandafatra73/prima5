@@ -2021,21 +2021,31 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       return badRequest(reply, 'namaPasien dan tanggalMasuk wajib diisi');
     }
     const noRegistrasi = req.body.noRegistrasi?.trim() || await nextPendaftaranUmumCode(prisma);
-    const item = await prisma.pendaftaranUmum.create({
-      data: {
-        noRegistrasi,
-        namaPasien: req.body.namaPasien.trim(),
-        umur: req.body.umur?.trim() || null,
-        alamat: req.body.alamat?.trim() || null,
-        telpon: req.body.telpon?.trim() || null,
-        tanggalMasuk: new Date(req.body.tanggalMasuk),
-        dokterPengirim: req.body.dokterPengirim?.trim() || null,
-        klinis: req.body.klinis?.trim() || null,
-        admin: req.body.admin?.trim() || null,
-        foto: req.body.foto?.trim() || null,
-      },
-    });
-    return reply.status(201).send({ item });
+    try {
+      const item = await prisma.pendaftaranUmum.create({
+        data: {
+          noRegistrasi,
+          namaPasien: req.body.namaPasien.trim(),
+          umur: req.body.umur?.trim() || null,
+          alamat: req.body.alamat?.trim() || null,
+          telpon: req.body.telpon?.trim() || null,
+          tanggalMasuk: new Date(req.body.tanggalMasuk),
+          dokterPengirim: req.body.dokterPengirim?.trim() || null,
+          klinis: req.body.klinis?.trim() || null,
+          admin: req.body.admin?.trim() || null,
+          foto: req.body.foto?.trim() || null,
+        },
+      });
+      return reply.status(201).send({ item });
+    } catch (err: unknown) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
+        return badRequest(
+          reply,
+          `Nomor registrasi "${noRegistrasi}" sudah dipakai. Coba simpan ulang untuk mendapat nomor baru.`,
+        );
+      }
+      throw err;
+    }
   });
 
   app.patch<{
@@ -2057,23 +2067,30 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     const existing = await prisma.pendaftaranUmum.findUnique({ where: { id: req.params.id } });
     if (!existing) return reply.status(404).send({ error: 'Pendaftaran tidak ditemukan' });
 
-    const item = await prisma.pendaftaranUmum.update({
-      where: { id: req.params.id },
-      data: {
-        noRegistrasi: req.body.noRegistrasi?.trim() ?? existing.noRegistrasi,
-        namaPasien: req.body.namaPasien?.trim() ?? existing.namaPasien,
-        umur: req.body.umur !== undefined ? req.body.umur?.trim() || null : existing.umur,
-        alamat: req.body.alamat !== undefined ? req.body.alamat?.trim() || null : existing.alamat,
-        telpon: req.body.telpon !== undefined ? req.body.telpon?.trim() || null : existing.telpon,
-        tanggalMasuk: req.body.tanggalMasuk ? new Date(req.body.tanggalMasuk) : existing.tanggalMasuk,
-        dokterPengirim: req.body.dokterPengirim !== undefined ? req.body.dokterPengirim?.trim() || null : existing.dokterPengirim,
-        klinis: req.body.klinis !== undefined ? req.body.klinis?.trim() || null : existing.klinis,
-        admin: req.body.admin !== undefined ? req.body.admin?.trim() || null : existing.admin,
-        foto: req.body.foto !== undefined ? req.body.foto?.trim() || null : existing.foto,
-        status: req.body.status ?? existing.status,
-      },
-    });
-    return { item };
+    try {
+      const item = await prisma.pendaftaranUmum.update({
+        where: { id: req.params.id },
+        data: {
+          noRegistrasi: req.body.noRegistrasi?.trim() ?? existing.noRegistrasi,
+          namaPasien: req.body.namaPasien?.trim() ?? existing.namaPasien,
+          umur: req.body.umur !== undefined ? req.body.umur?.trim() || null : existing.umur,
+          alamat: req.body.alamat !== undefined ? req.body.alamat?.trim() || null : existing.alamat,
+          telpon: req.body.telpon !== undefined ? req.body.telpon?.trim() || null : existing.telpon,
+          tanggalMasuk: req.body.tanggalMasuk ? new Date(req.body.tanggalMasuk) : existing.tanggalMasuk,
+          dokterPengirim: req.body.dokterPengirim !== undefined ? req.body.dokterPengirim?.trim() || null : existing.dokterPengirim,
+          klinis: req.body.klinis !== undefined ? req.body.klinis?.trim() || null : existing.klinis,
+          admin: req.body.admin !== undefined ? req.body.admin?.trim() || null : existing.admin,
+          foto: req.body.foto !== undefined ? req.body.foto?.trim() || null : existing.foto,
+          status: req.body.status ?? existing.status,
+        },
+      });
+      return { item };
+    } catch (err: unknown) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
+        return badRequest(reply, `Nomor registrasi "${req.body.noRegistrasi?.trim()}" sudah dipakai oleh pendaftaran lain.`);
+      }
+      throw err;
+    }
   });
 
   app.delete<{ Params: { id: string } }>('/api/pendaftaran-umum/:id', async (req) => {

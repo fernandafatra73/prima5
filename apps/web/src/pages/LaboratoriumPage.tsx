@@ -212,6 +212,7 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
   const [dokterList, setDokterList] = useState<Dokter[]>([]);
     const [pendaftaranList, setPendaftaranList] = useState<PendaftaranUmumItem[]>([]);
   const [regSaving, setRegSaving] = useState(false);
+  const [regError, setRegError] = useState<string | null>(null);
   
     const [regNama, setRegNama] = useState('');
   const [regTanggalLahir, setRegTanggalLahir] = useState('');
@@ -564,8 +565,12 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
 
   async function handleRegisterPasien(e: React.FormEvent) {
     e.preventDefault();
+    setRegError(null);
+    if (!regTanggalLahir) {
+      setRegError('Format umur tidak dikenali. Gunakan mis. "32 tahun", "6 bulan", atau "10 hari".');
+      return;
+    }
     setRegSaving(true);
-    setError(null);
     try {
       const res = await apiPost<{ item: { id: string } }>('/api/pasien', {
         nama: regNama,
@@ -595,7 +600,7 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
       setRegModalOpen(false);
       await reload({ resetPage: true });
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Gagal mendaftar pasien');
+      setRegError(err instanceof Error ? err.message : 'Gagal mendaftar pasien');
     } finally {
       setRegSaving(false);
     }
@@ -823,6 +828,7 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
               setRegAdmin('');
               setRegAnalisId('');
               setRegLabRows([]);
+              setRegError(null);
               setRegModalOpen(true);
               void loadRegistrationMasters();
             }}
@@ -1672,6 +1678,8 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
                 />
               </div>
             </div>
+
+            {regError && <div className="alert alert--error form-field--full">{regError}</div>}
 
             <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.6rem', borderTop: '1px solid var(--color-border)', paddingTop: '1rem', marginTop: '0.5rem', gridColumn: '1 / -1' }}>
               <button type="button" className="btn btn--ghost" onClick={() => setRegModalOpen(false)}>
