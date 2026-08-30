@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
+import { apiDelete, apiGet, apiPost } from '../lib/api.ts';
 
 interface JadwalItem {
   readonly id: string;
@@ -55,7 +55,6 @@ const TEHNIK_RILIS_MINGGUAN = [
 
 const BLUE = '#1d4ed8';
 const YELLOW = '#eab308';
-const GREEN = '#16a34a';
 
 function formatTanggalDisplay(dateStr: string): string {
   try {
@@ -67,48 +66,19 @@ function formatTanggalDisplay(dateStr: string): string {
   }
 }
 
-interface PivotResult {
-  readonly pivot: number;
-  readonly r1: number;
-  readonly r2: number;
-  readonly r3: number;
-  readonly s1: number;
-  readonly s2: number;
-  readonly s3: number;
-  readonly signal: 'BELI' | 'JUAL' | 'NETRAL';
-  readonly alasan: string;
-}
-
-/** Kalkulator Pivot Point standar (High/Low/Close) — dipakai untuk
- * menghasilkan level support/resistance & sinyal beli/jual sederhana
- * berdasarkan posisi harga saat ini terhadap pivot & level R1/S1.
- * Bukan rekomendasi finansial — hanya bantu baca level teknikal umum. */
-function computePivot(high: number, low: number, close: number, current: number): PivotResult {
-  const pivot = (high + low + close) / 3;
-  const r1 = 2 * pivot - low;
-  const s1 = 2 * pivot - high;
-  const r2 = pivot + (high - low);
-  const s2 = pivot - (high - low);
-  const r3 = high + 2 * (pivot - low);
-  const s3 = low - 2 * (high - pivot);
-
-  let signal: PivotResult['signal'] = 'NETRAL';
-  let alasan = 'Harga berada di sekitar pivot, belum ada bias arah yang jelas.';
-  if (current >= r1) {
-    signal = 'JUAL';
-    alasan = 'Harga sudah menyentuh/melewati resistance R1 — rawan koreksi turun.';
-  } else if (current <= s1) {
-    signal = 'BELI';
-    alasan = 'Harga sudah menyentuh/melewati support S1 — berpotensi pantul naik.';
-  } else if (current > pivot) {
-    signal = 'BELI';
-    alasan = 'Harga di atas pivot — bias jangka pendek cenderung bullish (naik).';
-  } else if (current < pivot) {
-    signal = 'JUAL';
-    alasan = 'Harga di bawah pivot — bias jangka pendek cenderung bearish (turun).';
+/** Sama seperti formatTanggalDisplay, tapi termasuk jam — dipakai khusus
+ * untuk jurnal Analisa & Level (yang tanggalnya bisa diisi manual sampai ke
+ * jam), bukan untuk Jadwal Trading yang cuma tanggal tanpa jam. */
+function formatTanggalJamDisplay(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const tanggal = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    const jam = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    return `${tanggal}, ${jam} WIB`;
+  } catch {
+    return dateStr;
   }
-
-  return { pivot, r1, r2, r3, s1, s2, s3, signal, alasan };
 }
 
 function chartSrc(interval: string): string {
@@ -174,24 +144,6 @@ export function TradingPage() {
   const [jadwalSubmitting, setJadwalSubmitting] = useState(false);
 
   const [analisaList, setAnalisaList] = useState<AnalisaItem[]>([]);
-  const [analisaText, setAnalisaText] = useState('');
-  const [support, setSupport] = useState('');
-  const [resistance, setResistance] = useState('');
-  const [analisaSubmitting, setAnalisaSubmitting] = useState(false);
-
-  const [editingAnalisaId, setEditingAnalisaId] = useState<string | null>(null);
-  const [editAnalisaText, setEditAnalisaText] = useState('');
-  const [editSupport, setEditSupport] = useState('');
-  const [editResistance, setEditResistance] = useState('');
-  const [editAnalisaSaving, setEditAnalisaSaving] = useState(false);
-
-  const [showKalkulator, setShowKalkulator] = useState(false);
-  const [highInput, setHighInput] = useState('');
-  const [lowInput, setLowInput] = useState('');
-  const [closeInput, setCloseInput] = useState('');
-  const [currentInput, setCurrentInput] = useState('');
-  const [pivotResult, setPivotResult] = useState<PivotResult | null>(null);
-  const [kalkulatorError, setKalkulatorError] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
 
@@ -242,95 +194,6 @@ export function TradingPage() {
   async function handleJadwalDelete(id: string) {
     await apiDelete(`/api/trading-jadwal/${id}`);
     await loadJadwal();
-  }
-
-  async function handleAnalisaSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    if (!analisaText.trim()) return;
-    setAnalisaSubmitting(true);
-    setError(null);
-    try {
-      await apiPost('/api/trading-analisa', {
-        analisa: analisaText.trim(),
-        support: support.trim() || undefined,
-        resistance: resistance.trim() || undefined,
-      });
-      setAnalisaText('');
-      setSupport('');
-      setResistance('');
-      await loadAnalisa();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal menyimpan analisa');
-    } finally {
-      setAnalisaSubmitting(false);
-    }
-  }
-
-  async function handleAnalisaDelete(id: string) {
-    await apiDelete(`/api/trading-analisa/${id}`);
-    await loadAnalisa();
-  }
-
-  function openEditAnalisa(item: AnalisaItem) {
-    setEditingAnalisaId(item.id);
-    setEditAnalisaText(item.analisa);
-    setEditSupport(item.support ?? '');
-    setEditResistance(item.resistance ?? '');
-  }
-
-  function cancelEditAnalisa() {
-    setEditingAnalisaId(null);
-  }
-
-  async function handleAnalisaEditSave(id: string) {
-    setEditAnalisaSaving(true);
-    try {
-      await apiPatch(`/api/trading-analisa/${id}`, {
-        analisa: editAnalisaText.trim(),
-        support: editSupport.trim() || undefined,
-        resistance: editResistance.trim() || undefined,
-      });
-      setEditingAnalisaId(null);
-      await loadAnalisa();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Gagal menyimpan perubahan analisa');
-    } finally {
-      setEditAnalisaSaving(false);
-    }
-  }
-
-  function handleHitungAnalisa(e: React.FormEvent) {
-    e.preventDefault();
-    const h = Number(highInput);
-    const l = Number(lowInput);
-    const c = Number(closeInput);
-    const cur = Number(currentInput);
-    if (!highInput || !lowInput || !closeInput || !currentInput || [h, l, c, cur].some((n) => isNaN(n))) {
-      setKalkulatorError('Isi High, Low, Close, dan Harga Saat Ini dengan angka yang valid.');
-      setPivotResult(null);
-      return;
-    }
-    if (l > h) {
-      setKalkulatorError('Low tidak boleh lebih besar dari High.');
-      setPivotResult(null);
-      return;
-    }
-    setKalkulatorError(null);
-    setPivotResult(computePivot(h, l, c, cur));
-  }
-
-  function handleGunakanUntukJurnal() {
-    if (!pivotResult) return;
-    const { s1, s2, s3, r1, r2, r3, pivot, signal, alasan } = pivotResult;
-    const ringkas =
-      `Sinyal: ${signal} — ${alasan} ` +
-      `(H=${highInput}, L=${lowInput}, C=${closeInput}, Harga saat ini=${currentInput}, Pivot=${pivot.toFixed(2)}) ` +
-      `Rencana: BELI di area Support (S1 ${s1.toFixed(2)}, S2 ${s2.toFixed(2)}, S3 ${s3.toFixed(2)}); ` +
-      `JUAL di area Resistance (R1 ${r1.toFixed(2)}, R2 ${r2.toFixed(2)}, R3 ${r3.toFixed(2)}).`;
-    setAnalisaText(ringkas);
-    setSupport(`S1 ${s1.toFixed(2)} · S2 ${s2.toFixed(2)} · S3 ${s3.toFixed(2)}`);
-    setResistance(`R1 ${r1.toFixed(2)} · R2 ${r2.toFixed(2)} · R3 ${r3.toFixed(2)}`);
-    document.getElementById('tr-analisa')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   return (
@@ -429,41 +292,6 @@ export function TradingPage() {
             >
               🎯 Tehnik Trading
             </button>
-            <button
-              type="button"
-              onClick={() =>
-                document.getElementById('tr-beli-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-              }
-              style={{
-                padding: '0.35rem 0.9rem',
-                borderRadius: '999px',
-                border: `1px solid ${GREEN}`,
-                background: 'transparent',
-                color: 'var(--color-text)',
-                fontWeight: 700,
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-              }}
-            >
-              🛒 Beli
-            </button>
-            <button
-              type="button"
-              onClick={() => setShowKalkulator((v) => !v)}
-              style={{
-                marginLeft: 'auto',
-                padding: '0.35rem 0.9rem',
-                borderRadius: '999px',
-                border: `1px solid ${BLUE}`,
-                background: BLUE,
-                color: '#ffffff',
-                fontWeight: 700,
-                fontSize: '0.8rem',
-                cursor: 'pointer',
-              }}
-            >
-              🔍 {showKalkulator ? 'Tutup Analisa' : 'Analisa Grafik (Beli/Jual)'}
-            </button>
           </div>
           <div
             style={{
@@ -498,7 +326,7 @@ export function TradingPage() {
                 }}
               >
                 <div style={{ fontWeight: 700, marginBottom: '0.3rem', color: YELLOW }}>
-                  📊 Analisa Terakhir — {formatTanggalDisplay(analisaList[0]!.tanggal)}
+                  📊 Analisa Terakhir — {formatTanggalJamDisplay(analisaList[0]!.tanggal)}
                 </div>
                 {analisaList[0]!.support && (
                   <div style={{ color: '#86efac' }}>Support: {analisaList[0]!.support}</div>
@@ -507,307 +335,6 @@ export function TradingPage() {
                   <div style={{ color: '#fca5a5' }}>Resistance: {analisaList[0]!.resistance}</div>
                 )}
               </div>
-            )}
-          </div>
-        </div>
-      </div>
-
-      {showKalkulator && (
-        <div style={cardStyle}>
-          <div style={cardTitlebarStyle}>🔍 Analisa Grafik — Sinyal Beli/Jual &amp; Support/Resistance</div>
-          <div style={cardBodyStyle}>
-            <p style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
-              Lihat nilai High, Low, Close (dari periode di grafik atas) dan harga saat ini, lalu masukkan di
-              bawah. Sinyal dihitung dengan rumus Pivot Point standar — bukan rekomendasi finansial, hanya
-              bantuan baca level teknikal.
-            </p>
-            <form onSubmit={handleHitungAnalisa} className="form-grid">
-              <div className="form-field">
-                <label htmlFor="tr-high" style={{ color: BLUE, fontWeight: 700 }}>High</label>
-                <input
-                  id="tr-high"
-                  value={highInput}
-                  onChange={(e) => setHighInput(e.target.value)}
-                  placeholder="Contoh: 2405.30"
-                  style={{ borderLeft: `3px solid ${YELLOW}` }}
-                />
-              </div>
-              <div className="form-field">
-                <label htmlFor="tr-low" style={{ color: BLUE, fontWeight: 700 }}>Low</label>
-                <input
-                  id="tr-low"
-                  value={lowInput}
-                  onChange={(e) => setLowInput(e.target.value)}
-                  placeholder="Contoh: 2385.10"
-                  style={{ borderLeft: `3px solid ${YELLOW}` }}
-                />
-              </div>
-              <div className="form-field">
-                <label htmlFor="tr-close" style={{ color: BLUE, fontWeight: 700 }}>Close</label>
-                <input
-                  id="tr-close"
-                  value={closeInput}
-                  onChange={(e) => setCloseInput(e.target.value)}
-                  placeholder="Contoh: 2398.00"
-                  style={{ borderLeft: `3px solid ${YELLOW}` }}
-                />
-              </div>
-              <div className="form-field">
-                <label htmlFor="tr-current" style={{ color: BLUE, fontWeight: 700 }}>Harga Saat Ini</label>
-                <input
-                  id="tr-current"
-                  value={currentInput}
-                  onChange={(e) => setCurrentInput(e.target.value)}
-                  placeholder="Contoh: 2401.50"
-                  style={{ borderLeft: `3px solid ${YELLOW}` }}
-                />
-              </div>
-              <div className="form-grid--full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                <button type="submit" className="btn btn--primary">
-                  Hitung Analisa
-                </button>
-              </div>
-            </form>
-
-            {kalkulatorError && (
-              <div className="alert alert--error" style={{ marginTop: '0.75rem' }}>
-                {kalkulatorError}
-              </div>
-            )}
-
-            {pivotResult && (
-              <div style={{ marginTop: '1rem' }}>
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.75rem',
-                    padding: '0.9rem 1rem',
-                    borderRadius: '8px',
-                    marginBottom: '0.85rem',
-                    background:
-                      pivotResult.signal === 'BELI' ? '#dcfce7' : pivotResult.signal === 'JUAL' ? '#fee2e2' : '#f1f5f9',
-                    border: `1px solid ${
-                      pivotResult.signal === 'BELI' ? '#16a34a' : pivotResult.signal === 'JUAL' ? '#dc2626' : '#94a3b8'
-                    }`,
-                  }}
-                >
-                  <span
-                    style={{
-                      fontWeight: 800,
-                      fontSize: '1.1rem',
-                      color:
-                        pivotResult.signal === 'BELI' ? '#16a34a' : pivotResult.signal === 'JUAL' ? '#dc2626' : '#475569',
-                    }}
-                  >
-                    {pivotResult.signal === 'BELI' ? '📈 BELI' : pivotResult.signal === 'JUAL' ? '📉 JUAL' : '➖ NETRAL'}
-                  </span>
-                  <span style={{ fontSize: '0.85rem' }}>{pivotResult.alasan}</span>
-                </div>
-
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
-                    gap: '0.6rem',
-                    marginBottom: '0.85rem',
-                  }}
-                >
-                  {[
-                    { label: 'Resistance 3', value: pivotResult.r3, tone: '#dc2626' },
-                    { label: 'Resistance 2', value: pivotResult.r2, tone: '#dc2626' },
-                    { label: 'Resistance 1', value: pivotResult.r1, tone: '#dc2626' },
-                    { label: 'Pivot', value: pivotResult.pivot, tone: BLUE },
-                    { label: 'Support 1', value: pivotResult.s1, tone: '#16a34a' },
-                    { label: 'Support 2', value: pivotResult.s2, tone: '#16a34a' },
-                    { label: 'Support 3', value: pivotResult.s3, tone: '#16a34a' },
-                  ].map((row) => (
-                    <div
-                      key={row.label}
-                      style={{
-                        padding: '0.5rem',
-                        borderRadius: '6px',
-                        border: '1px solid var(--color-border)',
-                        textAlign: 'center',
-                      }}
-                    >
-                      <div style={{ fontSize: '0.7rem', color: 'var(--color-text-muted)' }}>{row.label}</div>
-                      <div style={{ fontWeight: 700, color: row.tone }}>{row.value.toFixed(2)}</div>
-                    </div>
-                  ))}
-                </div>
-
-                <button type="button" className="btn btn--sm btn--primary" onClick={handleGunakanUntukJurnal}>
-                  💾 Gunakan untuk Jurnal Analisa
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div id="tr-beli-section" style={cardStyle}>
-        <div style={cardTitlebarStyle}>📝 Analisa &amp; Level Sebelum Beli XAU</div>
-        <div style={cardBodyStyle}>
-          <form onSubmit={(e) => void handleAnalisaSubmit(e)} className="form-grid">
-            <div className="form-field form-field--full">
-              <label htmlFor="tr-analisa" style={{ color: BLUE, fontWeight: 700 }}>Analisa</label>
-              <textarea
-                id="tr-analisa"
-                rows={3}
-                value={analisaText}
-                onChange={(e) => setAnalisaText(e.target.value)}
-                placeholder="Contoh: Harga mendekati support kuat, momentum RSI oversold, rencana entry buy..."
-                required
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="tr-support" style={{ color: BLUE, fontWeight: 700 }}>Support</label>
-              <input
-                id="tr-support"
-                value={support}
-                onChange={(e) => setSupport(e.target.value)}
-                placeholder="Contoh: 2380.50"
-                style={{ borderLeft: `3px solid ${YELLOW}` }}
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="tr-resistance" style={{ color: BLUE, fontWeight: 700 }}>Resistance</label>
-              <input
-                id="tr-resistance"
-                value={resistance}
-                onChange={(e) => setResistance(e.target.value)}
-                placeholder="Contoh: 2410.00"
-                style={{ borderLeft: `3px solid ${YELLOW}` }}
-              />
-            </div>
-            <div className="form-grid--full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
-              <button type="submit" className="btn btn--primary" disabled={analisaSubmitting}>
-                {analisaSubmitting ? 'Menyimpan…' : '+ Simpan Analisa'}
-              </button>
-            </div>
-          </form>
-
-          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-            {analisaList.length === 0 ? (
-              <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>Belum ada catatan analisa.</p>
-            ) : (
-              analisaList.map((item) => {
-                const isEditing = editingAnalisaId === item.id;
-                return (
-                <div
-                  key={item.id}
-                  style={{
-                    padding: '0.75rem',
-                    border: '1px solid var(--color-border)',
-                    borderLeft: `4px solid ${YELLOW}`,
-                    borderRadius: '6px',
-                    background: '#f8fafc',
-                  }}
-                >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.3rem' }}>
-                    <strong style={{ fontSize: '0.78rem', color: BLUE }}>{formatTanggalDisplay(item.tanggal)}</strong>
-                    <div style={{ display: 'flex', gap: '0.35rem' }}>
-                      {isEditing ? (
-                        <>
-                          <button
-                            type="button"
-                            className="btn btn--xs btn--primary"
-                            onClick={() => void handleAnalisaEditSave(item.id)}
-                            disabled={editAnalisaSaving}
-                          >
-                            {editAnalisaSaving ? 'Menyimpan…' : '💾 Simpan'}
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn--xs btn--ghost"
-                            onClick={cancelEditAnalisa}
-                            disabled={editAnalisaSaving}
-                          >
-                            Batal
-                          </button>
-                        </>
-                      ) : (
-                        <>
-                          <button
-                            type="button"
-                            className="btn btn--xs btn--ghost"
-                            onClick={() => openEditAnalisa(item)}
-                          >
-                            ✏️ Edit
-                          </button>
-                          <button
-                            type="button"
-                            className="btn btn--xs btn--ghost"
-                            onClick={() => void handleAnalisaDelete(item.id)}
-                            style={{ color: '#dc2626' }}
-                          >
-                            Hapus
-                          </button>
-                        </>
-                      )}
-                    </div>
-                  </div>
-
-                  {isEditing ? (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                      <textarea
-                        rows={3}
-                        value={editAnalisaText}
-                        onChange={(e) => setEditAnalisaText(e.target.value)}
-                        style={{ fontSize: '0.85rem' }}
-                      />
-                      <div style={{ display: 'flex', gap: '0.5rem' }}>
-                        <input
-                          value={editSupport}
-                          onChange={(e) => setEditSupport(e.target.value)}
-                          placeholder="Support"
-                          style={{ flex: 1, borderLeft: '3px solid #16a34a' }}
-                        />
-                        <input
-                          value={editResistance}
-                          onChange={(e) => setEditResistance(e.target.value)}
-                          placeholder="Resistance"
-                          style={{ flex: 1, borderLeft: '3px solid #dc2626' }}
-                        />
-                      </div>
-                    </div>
-                  ) : (
-                    <>
-                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem' }}>{item.analisa}</p>
-                      <div style={{ display: 'flex', gap: '0.6rem' }}>
-                        <div
-                          style={{
-                            border: '1px solid #86efac',
-                            borderRadius: '6px',
-                            background: '#f0fdf4',
-                            padding: '0.3rem 0.6rem',
-                          }}
-                        >
-                          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#16a34a' }}>SUPPORT</div>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#15803d' }}>
-                            {item.support || '—'}
-                          </div>
-                        </div>
-                        <div
-                          style={{
-                            border: '1px solid #fca5a5',
-                            borderRadius: '6px',
-                            background: '#fef2f2',
-                            padding: '0.3rem 0.6rem',
-                          }}
-                        >
-                          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#dc2626' }}>RESISTANCE</div>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#b91c1c' }}>
-                            {item.resistance || '—'}
-                          </div>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-                );
-              })
             )}
           </div>
         </div>
