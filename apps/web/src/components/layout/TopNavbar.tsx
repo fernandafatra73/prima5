@@ -170,12 +170,6 @@ export function TopNavbar({ activeId, onNavigate, role, departemen, onLogout }: 
       </nav>
 
       <div className="app-navbar__actions">
-        <div className="app-navbar__user">
-          <div className="app-navbar__avatar" aria-hidden>
-            FF
-          </div>
-        </div>
-
         <button type="button" className="app-navbar__icon-btn" aria-label="Logout" onClick={onLogout}>
           <IconLogout />
         </button>
