@@ -221,6 +221,7 @@ export function TradingPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [hargaXau, setHargaXau] = useState<{ price: number; updatedAt: string } | null>(null);
+  const [hargaBinance, setHargaBinance] = useState<{ price: number; updatedAt: string } | null>(null);
 
   async function loadJadwal() {
     try {
@@ -250,11 +251,26 @@ export function TradingPage() {
     }
   }
 
+  async function loadHargaBinance() {
+    try {
+      const res = await apiGet<{ price: number; updatedAt: string }>('/api/trading-harga-binance');
+      setHargaBinance(res);
+    } catch {
+      // Binance memblokir sebagian IP datacenter/region — kalau gagal, badge
+      // ini disembunyikan saja, jangan ganggu bagian lain halaman.
+      setHargaBinance(null);
+    }
+  }
+
   useEffect(() => {
     void loadJadwal();
     void loadAnalisa();
     void loadHargaXau();
-    const timer = setInterval(() => void loadHargaXau(), 30_000);
+    void loadHargaBinance();
+    const timer = setInterval(() => {
+      void loadHargaXau();
+      void loadHargaBinance();
+    }, 30_000);
     return () => clearInterval(timer);
   }, []);
 
@@ -405,14 +421,14 @@ export function TradingPage() {
         <div>
           <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Trading XAU/USD</h2>
           <p style={{ margin: '0.15rem 0 0', fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)' }}>
-            Harga XAU dari Exness, TradingView,{' '}
+            Harga XAU/USD &amp; harga{' '}
             <a
               href="https://www.binance.bh/en/futures/PAXGUSDT"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#ffffff', textDecoration: 'underline' }}
             >
-              Binance
+              Binance PAXGUSDT
             </a>{' '}
             — update setiap saat.
           </p>
@@ -519,6 +535,26 @@ export function TradingPage() {
                 <span style={{ fontWeight: 700, color: YELLOW }}>🪙 XAU/USD</span>
                 <span style={{ fontWeight: 800 }}>
                   ${hargaXau.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
+            {hargaBinance && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.35rem 0.9rem',
+                  borderRadius: '999px',
+                  background: 'rgba(15, 23, 42, 0.88)',
+                  color: '#ffffff',
+                  fontSize: '0.8rem',
+                }}
+                title={`Update ${formatTanggalJamDisplay(hargaBinance.updatedAt)}`}
+              >
+                <span style={{ fontWeight: 700, color: '#f0b90b' }}>🟡 Binance PAXGUSDT</span>
+                <span style={{ fontWeight: 800 }}>
+                  ${hargaBinance.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>
               </div>
             )}

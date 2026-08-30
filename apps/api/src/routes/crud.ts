@@ -6,6 +6,7 @@ import { hashPassword } from '../lib/password.js';
 import { nextPendaftaranUmumCode, nextRegCode } from '../lib/regCode.js';
 import { buildPaginationMeta, parsePagination } from '../lib/pagination.js';
 import { fetchXauSpotPrice } from '../lib/xausGoldPrice.js';
+import { fetchBinancePaxgPrice } from '../lib/binancePaxgPrice.js';
 import {
   adminKlinikListWhere,
   aiRadiologiGrupListWhere,
@@ -2969,6 +2970,17 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     } catch (err) {
       return reply.status(502).send({
         error: err instanceof Error ? err.message : 'Gagal mengambil harga XAU/USD',
+      });
+    }
+  });
+
+  app.get('/api/trading-harga-binance', async (_req, reply) => {
+    try {
+      const spot = await fetchBinancePaxgPrice();
+      return spot;
+    } catch (err) {
+      return reply.status(502).send({
+        error: err instanceof Error ? err.message : 'Gagal mengambil harga Binance PAXGUSDT',
       });
     }
   });
