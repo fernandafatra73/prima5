@@ -377,7 +377,12 @@ export function PendaftaranUmumPage() {
       pagination={pagination}
       onPageChange={setPage}
       action={
-        <button type="button" className="btn btn--primary" onClick={openCreate}>
+        <button
+          type="button"
+          className="btn btn--primary"
+          onClick={openCreate}
+          style={{ background: 'linear-gradient(135deg, #1d4ed8, #b91c1c)' }}
+        >
           + Tambah Pendaftaran
         </button>
       }
