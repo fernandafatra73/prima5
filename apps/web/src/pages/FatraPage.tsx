@@ -101,6 +101,15 @@ export function FatraPage() {
     void connectCamera(true).finally(() => setRefreshing(false));
   }
 
+  function handleStopCamera() {
+    if (recordingState !== 'idle') return;
+    streamRef.current?.getTracks().forEach((track) => track.stop());
+    streamRef.current = null;
+    sharedCameraStreamPromise = null;
+    if (videoRef.current) videoRef.current.srcObject = null;
+    setCameraReady(false);
+  }
+
   useEffect(() => {
     let cancelled = false;
 
@@ -391,6 +400,17 @@ export function FatraPage() {
         >
           {refreshing ? '⏳ Menyambungkan…' : '🔄 Refresh'}
         </button>
+        {cameraReady && (
+          <button
+            type="button"
+            className="fatra-toolbar__btn fatra-toolbar__btn--stop"
+            onClick={handleStopCamera}
+            disabled={recordingState !== 'idle'}
+            title={recordingState !== 'idle' ? 'Stop rekaman dulu sebelum mematikan kamera' : 'Matikan kamera'}
+          >
+            🛑 Stop Kamera
+          </button>
+        )}
 
         <span className="fatra-status-pill">
           💾 File tersimpan: <strong>{savedCount}</strong>
