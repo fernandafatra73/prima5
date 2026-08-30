@@ -194,8 +194,9 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
     'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember',
   ];
 
-  /** PPh Final UMKM (PP 23/2018): 0.5% dari total penerimaan bruto per bulan. */
-  const TARIF_PAJAK_FINAL = 0.005;
+  /** PPh Final UMKM (PP 23/2018): default 0.5% dari total penerimaan bruto per
+   * bulan — bisa diubah per tahun lewat field tarifPajakPersen (baris bulan 1). */
+  const DEFAULT_TARIF_PAJAK_PERSEN = 0.5;
 
   app.get<{ Querystring: { year?: string; modul?: string } }>('/api/laporan/pajak', async (req) => {
     const yearStr = req.query.year || new Date().getFullYear().toString();
@@ -208,13 +209,20 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
     const startOfYear = new Date(year, 0, 1);
     const endOfYear = new Date(year, 11, 31, 23, 59, 59, 999);
 
-    const [records, overrides] = await Promise.all([
+    const [records, overrides, bulan1] = await Promise.all([
       prisma.pasienDuplikat.findMany({
         where: { asalModul: modul, registeredAt: { gte: startOfYear, lte: endOfYear } },
         select: { registeredAt: true, totalHarga: true },
       }),
       prisma.laporanPajakOverride.findMany({ where: { year, modul } }),
+      prisma.laporanPajakBulanan.findUnique({
+        where: { year_bulan_modul: { year, bulan: 1, modul } },
+        select: { tarifPajakPersen: true },
+      }),
     ]);
+
+    const tarifPajakPersen = bulan1 ? toNumber(bulan1.tarifPajakPersen) : DEFAULT_TARIF_PAJAK_PERSEN;
+    const tarifPajak = tarifPajakPersen / 100;
 
     const perBulan = Array.from({ length: 12 }, () => ({ jumlahPasien: 0, totalPenerimaan: 0 }));
     for (const r of records) {
@@ -235,7 +243,7 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
         : jumlahPasien > 0
           ? totalPenerimaan / jumlahPasien
           : 0;
-      const pajak = totalPenerimaan * TARIF_PAJAK_FINAL;
+      const pajak = totalPenerimaan * tarifPajak;
       return {
         no: bulanKe,
         bulan: BULAN_NAMA[idx],
@@ -254,7 +262,8 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
     return {
       year,
       modul,
-      tarifPajak: TARIF_PAJAK_FINAL,
+      tarifPajak,
+      tarifPajakPersen,
       bulan: bulanData,
       totalJumlahPasien,
       totalPenerimaan,
@@ -492,6 +501,7 @@ export async function registerDashboardRoutes(app: FastifyInstance): Promise<voi
     'hargaPeralatan', 'tarifPenyusutanTahunanPersen',
     'piutangUsaha', 'perlengkapan', 'utangUsaha',
     'modalAwalTahun', 'kasAwalTahun', 'akumulasiPenyusutanAwalTahun',
+    'tarifPajakPersen',
   ] as const;
   type PajakBulananField = (typeof PAJAK_BULANAN_FIELDS)[number];
 

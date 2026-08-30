@@ -307,6 +307,11 @@ model LaporanPajakBulanan {
   kasAwalTahun                  Decimal @default(0)
   akumulasiPenyusutanAwalTahun  Decimal @default(0)
 
+  /// Tarif PPh Final UMKM dipakai di Laporan Pajak (default 0.5% sesuai PP
+  /// 23/2018). Sama seperti field *AwalTahun di atas, berlaku satu nilai per
+  /// tahun — hanya dibaca dari baris bulan 1 (Januari).
+  tarifPajakPersen              Decimal @default(0.5)
+
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 

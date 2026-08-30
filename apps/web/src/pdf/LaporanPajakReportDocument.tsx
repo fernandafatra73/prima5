@@ -25,6 +25,7 @@ export interface LaporanPajakReportData {
   readonly totalJumlahPasien: string;
   readonly totalPenerimaanFormatted: string;
   readonly totalPajakFormatted: string;
+  readonly tarifPajakLabel: string;
 }
 
 const BLUE = '#2b4c9b';
@@ -197,7 +198,7 @@ export function LaporanPajakReportDocument({
               Tahun: <Text style={styles.bold}>{data.year}</Text>
             </Text>
             <Text style={styles.infoText}>
-              Tarif: <Text style={styles.bold}>0.5% (PPh Final UMKM)</Text>
+              Tarif: <Text style={styles.bold}>{data.tarifPajakLabel} (PPh Final UMKM)</Text>
             </Text>
             <Text style={styles.infoText}>
               Tgl Cetak: <Text style={styles.bold}>{data.tanggalCetak}</Text>
@@ -211,7 +212,7 @@ export function LaporanPajakReportDocument({
               <Text style={styles.colJumlah}>Jumlah Pasien</Text>
               <Text style={styles.colHarga}>Harga (Rata-rata)</Text>
               <Text style={styles.colTotal}>Total Penerimaan</Text>
-              <Text style={styles.colPajak}>Pajak (0.5%)</Text>
+              <Text style={styles.colPajak}>Pajak ({data.tarifPajakLabel})</Text>
             </View>
             {data.items.length === 0 ? (
               <View style={styles.trRow}>
@@ -244,10 +245,10 @@ export function LaporanPajakReportDocument({
           </View>
 
           <Text style={styles.disclaimer}>
-            * Pajak dihitung 0.5% dari Total Penerimaan (estimasi PPh Final UMKM sesuai PP
-            23/2018), berdasarkan data pasien {data.moduleLabel.toLowerCase()} yang tercatat di
-            sistem (arsip Duplikat {data.moduleLabel}). Untuk pelaporan &amp; pembayaran resmi,
-            gunakan portal DJP di sse2.pajak.go.id.
+            * Pajak dihitung {data.tarifPajakLabel} dari Total Penerimaan (estimasi PPh Final UMKM
+            sesuai PP 23/2018), berdasarkan data pasien {data.moduleLabel.toLowerCase()} yang
+            tercatat di sistem (arsip Duplikat {data.moduleLabel}). Untuk pelaporan &amp;
+            pembayaran resmi, gunakan portal DJP di sse2.pajak.go.id.
           </Text>
 
           <View style={styles.signatureSection}>

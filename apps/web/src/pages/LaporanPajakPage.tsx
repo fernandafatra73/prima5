@@ -27,10 +27,15 @@ interface BulanPajakItem {
 interface LaporanPajakData {
   readonly year: number;
   readonly tarifPajak: number;
+  readonly tarifPajakPersen: number;
   readonly bulan: readonly BulanPajakItem[];
   readonly totalJumlahPasien: number;
   readonly totalPenerimaan: number;
   readonly totalPajak: number;
+}
+
+function formatPersen(value: number): string {
+  return `${Number(value.toFixed(3))}%`;
 }
 
 interface LaporanPajakPageProps {
@@ -57,6 +62,9 @@ export function LaporanPajakPage({ modul = 'RADIOLOGI' }: LaporanPajakPageProps)
   const [resettingBulan, setResettingBulan] = useState<number | null>(null);
   const [bulananJumlahPasien, setBulananJumlahPasien] = useState<Record<number, number>>({});
 
+  const [tarifPajakInput, setTarifPajakInput] = useState('0.5');
+  const [savingTarif, setSavingTarif] = useState(false);
+
   const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -65,6 +73,7 @@ export function LaporanPajakPage({ modul = 'RADIOLOGI' }: LaporanPajakPageProps)
         `/api/laporan/pajak?year=${year}&modul=${modul}`,
       );
       setData(res);
+      setTarifPajakInput(String(res.tarifPajakPersen));
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal memuat laporan pajak');
     } finally {
@@ -75,6 +84,29 @@ export function LaporanPajakPage({ modul = 'RADIOLOGI' }: LaporanPajakPageProps)
   useEffect(() => {
     void fetchData();
   }, [fetchData]);
+
+  async function handleSaveTarifPajak() {
+    const tarifPajakPersen = Number(tarifPajakInput);
+    if (!Number.isFinite(tarifPajakPersen) || tarifPajakPersen < 0) {
+      setError('Tarif pajak harus berupa angka 0 atau lebih');
+      return;
+    }
+    setSavingTarif(true);
+    setError(null);
+    try {
+      await apiPatch('/api/laporan/pajak-bulanan', {
+        year,
+        bulan: 1,
+        modul,
+        tarifPajakPersen,
+      });
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menyimpan tarif pajak');
+    } finally {
+      setSavingTarif(false);
+    }
+  }
 
   useEffect(() => {
     apiGet<{ bulan: readonly { readonly no: number; readonly jumlahPasien: number }[] }>(
@@ -186,6 +218,7 @@ export function LaporanPajakPage({ modul = 'RADIOLOGI' }: LaporanPajakPageProps)
       totalJumlahPasien: String(data?.totalJumlahPasien ?? 0),
       totalPenerimaanFormatted: formatRupiah(data?.totalPenerimaan ?? 0),
       totalPajakFormatted: formatRupiah(data?.totalPajak ?? 0),
+      tarifPajakLabel: formatPersen(data?.tarifPajakPersen ?? 0.5),
     };
   }
 
@@ -221,7 +254,7 @@ export function LaporanPajakPage({ modul = 'RADIOLOGI' }: LaporanPajakPageProps)
     <>
       <ListPageShell
         title={`Laporan Pajak ${moduleLabel}`}
-        subtitle={`Rekap bulanan Jumlah Pasien & Total Penerimaan ${moduleLabel} beserta estimasi PPh Final UMKM (0.5% dari Total Penerimaan, sesuai PP 23/2018), dihitung dari arsip Duplikat ${moduleLabel} — bisa dikoreksi manual per bulan`}
+        subtitle={`Rekap bulanan Jumlah Pasien & Total Penerimaan ${moduleLabel} beserta estimasi PPh Final UMKM (${formatPersen(data?.tarifPajakPersen ?? 0.5)} dari Total Penerimaan, sesuai PP 23/2018), dihitung dari arsip Duplikat ${moduleLabel} — bisa dikoreksi manual per bulan`}
         metrics={[
           {
             label: 'Total Pasien Setahun',
@@ -236,7 +269,7 @@ export function LaporanPajakPage({ modul = 'RADIOLOGI' }: LaporanPajakPageProps)
             iconKind: 'document',
           },
           {
-            label: 'Total Pajak (0.5%)',
+            label: `Total Pajak (${formatPersen(data?.tarifPajakPersen ?? 0.5)})`,
             value: formatRupiah(data?.totalPajak ?? 0),
             tone: 'amber',
             iconKind: 'percent',
@@ -261,6 +294,27 @@ export function LaporanPajakPage({ modul = 'RADIOLOGI' }: LaporanPajakPageProps)
                 ))}
               </select>
             </div>
+            <div className="form-field" style={{ minWidth: '110px', margin: 0 }}>
+              <label htmlFor="filter-tarif-pajak">Tarif Pajak (%)</label>
+              <input
+                id="filter-tarif-pajak"
+                type="number"
+                min="0"
+                step="0.01"
+                value={tarifPajakInput}
+                onChange={(e) => setTarifPajakInput(e.target.value)}
+                style={{ width: '90px' }}
+              />
+            </div>
+            <button
+              type="button"
+              className="btn btn--sm btn--secondary"
+              onClick={() => void handleSaveTarifPajak()}
+              disabled={savingTarif || String(data?.tarifPajakPersen ?? 0.5) === tarifPajakInput}
+              title="Simpan tarif pajak baru untuk tahun ini — dipakai ulang tiap tahun sampai diubah lagi"
+            >
+              {savingTarif ? 'Menyimpan...' : 'Simpan Tarif'}
+            </button>
             <button
               type="button"
               className="btn btn--sm btn--primary"
@@ -299,7 +353,7 @@ export function LaporanPajakPage({ modul = 'RADIOLOGI' }: LaporanPajakPageProps)
                 <th style={{ textAlign: 'right' }}>Jumlah Pasien</th>
                 <th style={{ textAlign: 'right' }}>Harga (Rata-rata)</th>
                 <th style={{ textAlign: 'right' }}>Total Penerimaan</th>
-                <th style={{ textAlign: 'right' }}>Pajak (0.5%)</th>
+                <th style={{ textAlign: 'right' }}>Pajak ({formatPersen(data?.tarifPajakPersen ?? 0.5)})</th>
                 <th style={{ width: '90px' }}>Aksi</th>
               </tr>
             </thead>
@@ -382,7 +436,8 @@ export function LaporanPajakPage({ modul = 'RADIOLOGI' }: LaporanPajakPageProps)
         </div>
 
         <p style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)', marginTop: '1rem' }}>
-          * Pajak dihitung 0.5% dari Total Penerimaan (estimasi PPh Final UMKM sesuai PP 23/2018),
+          * Pajak dihitung {formatPersen(data?.tarifPajakPersen ?? 0.5)} dari Total Penerimaan (estimasi
+          PPh Final UMKM sesuai PP 23/2018, tarif bisa diubah lewat kolom &quot;Tarif Pajak (%)&quot; di atas),
           berdasarkan data pasien radiologi yang tercatat di sistem (arsip Duplikat Radiologi).
           Baris berlabel &quot;Manual&quot; sudah dikoreksi admin dan tidak lagi mengikuti hitungan
           otomatis sampai direset. Untuk pelaporan &amp; pembayaran resmi, gunakan portal DJP di{' '}
@@ -452,9 +507,9 @@ export function LaporanPajakPage({ modul = 'RADIOLOGI' }: LaporanPajakPageProps)
                 borderTop: '1px dashed var(--color-border)',
               }}
             >
-              <span>Pajak (0.5% dari Total Penerimaan)</span>
+              <span>Pajak ({formatPersen(data?.tarifPajakPersen ?? 0.5)} dari Total Penerimaan)</span>
               <span style={{ color: '#b45309' }}>
-                {formatRupiah(editTotalPenerimaan * 0.005)}
+                {formatRupiah(editTotalPenerimaan * (data?.tarifPajak ?? 0.005))}
               </span>
             </div>
             <ModalFormFooter
