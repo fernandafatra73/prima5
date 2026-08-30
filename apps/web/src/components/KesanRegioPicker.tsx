@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiGet, apiPatch, apiPost } from '../lib/api.ts';
+import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
 
 interface KesanBacaanItem {
   readonly id: string;
@@ -48,6 +48,13 @@ export function KesanRegioPicker({ onSelect }: KesanRegioPickerProps) {
   function cancelEditBacaan() {
     setEditingBacaanId(null);
     setNewBacaanText('');
+  }
+
+  async function deleteBacaan(bacaan: KesanBacaanItem) {
+    if (!window.confirm(`Hapus bacaan "${bacaan.teks}"?`)) return;
+    if (editingBacaanId === bacaan.id) cancelEditBacaan();
+    await apiDelete(`/api/kesan-bacaan/${bacaan.id}`);
+    await loadKesanRegioList();
   }
 
   function startEditBacaan(bacaan: KesanBacaanItem) {
@@ -163,6 +170,20 @@ export function KesanRegioPicker({ onSelect }: KesanRegioPickerProps) {
                     }}
                   >
                     ✏️
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void deleteBacaan(b)}
+                    title="Hapus bacaan ini"
+                    style={{
+                      border: 'none',
+                      borderLeft: '1px solid var(--color-border)',
+                      background: 'transparent',
+                      cursor: 'pointer',
+                      padding: '0 0.6rem',
+                    }}
+                  >
+                    🗑️
                   </button>
                 </div>
               ));
