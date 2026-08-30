@@ -2124,12 +2124,22 @@
   border-color: #bfdbfe;
 }
 
+.win-frame--navy .data-table {
+  background: #1d4ed8;
+}
+
 .win-frame--navy .data-table th:not([style]) {
-  color: #1d4ed8;
+  background: #1e3a8a;
+  color: #ffffff;
 }
 
 .win-frame--navy .data-table tbody tr:not([style]) td {
-  color: #1e3a8a;
+  color: #ffffff;
+  border-bottom-color: rgba(255, 255, 255, 0.18);
+}
+
+.win-frame--navy .data-table tbody tr:not([style]):hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 /* USG — hero header dan galeri kartu foto pemeriksaan. */

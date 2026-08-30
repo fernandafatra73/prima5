@@ -385,24 +385,24 @@ export function PendaftaranUmumPage() {
       <div style={{ overflowX: 'auto' }}>
         <table className="data-table">
           <thead>
-            <tr style={{ background: '#e0f2fe' }}>
-              <th style={{ color: '#0369a1' }}>No. Antrian</th>
-              <th style={{ color: '#0369a1' }}>No Registrasi</th>
-              <th style={{ color: '#0369a1' }}>Nama Pasien</th>
-              <th style={{ color: '#0369a1' }}>Umur</th>
-              <th style={{ color: '#0369a1' }}>Alamat</th>
-              <th style={{ color: '#0369a1' }}>Telpon</th>
-              <th style={{ color: '#0369a1' }}>Tanggal Masuk</th>
-              <th style={{ color: '#0369a1' }}>Dokter Pengirim</th>
-              <th style={{ color: '#0369a1' }}>Klinis</th>
-              <th style={{ color: '#0369a1' }}>Status</th>
-              <th style={{ color: '#0369a1' }}>Aksi</th>
+            <tr style={{ background: '#1e3a8a' }}>
+              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>No. Antrian</th>
+              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>No Registrasi</th>
+              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Nama Pasien</th>
+              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Umur</th>
+              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Alamat</th>
+              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Telpon</th>
+              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Tanggal Masuk</th>
+              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Dokter Pengirim</th>
+              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Klinis</th>
+              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Status</th>
+              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
             {items.length === 0 ? (
-              <tr>
-                <td colSpan={11} style={{ textAlign: 'center', padding: '2rem' }}>
+              <tr style={{ background: '#1d4ed8' }}>
+                <td colSpan={11} style={{ textAlign: 'center', padding: '2rem', color: '#ffffff' }}>
                   Belum ada data pendaftaran umum.
                 </td>
               </tr>
@@ -413,11 +413,12 @@ export function PendaftaranUmumPage() {
                 <tr
                   key={item.id}
                   style={{
-                    background: idx % 2 === 1 ? '#e0f2fe' : '#ffffff',
-                    borderBottom: '1px solid #bae6fd',
+                    background: idx % 2 === 1 ? '#1e40af' : '#1d4ed8',
+                    borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
+                    color: '#ffffff',
                   }}
                 >
-                  <td style={{ fontWeight: 700, color: '#0369a1' }}>{antrian ?? '—'}</td>
+                  <td style={{ fontWeight: 700, color: '#ffffff' }}>{antrian ?? '—'}</td>
                   <td>{item.noRegistrasi}</td>
                   <td><strong>{item.namaPasien}</strong></td>
                   <td>{item.umur || '-'}</td>
