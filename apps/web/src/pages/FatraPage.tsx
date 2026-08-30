@@ -35,6 +35,7 @@ export function FatraPage() {
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [recordingError, setRecordingError] = useState<string | null>(null);
   const [cameraReady, setCameraReady] = useState(false);
+  const [cameraOff, setCameraOff] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [recordingState, setRecordingState] = useState<RecordingState>('idle');
   const [savedCount, setSavedCount] = useState(0);
@@ -86,6 +87,7 @@ export function FatraPage() {
       streamRef.current = stream;
       if (videoRef.current) videoRef.current.srcObject = stream;
       setCameraError(null);
+      setCameraOff(false);
       setCameraReady(true);
     } catch (err) {
       setCameraReady(false);
@@ -108,6 +110,7 @@ export function FatraPage() {
     sharedCameraStreamPromise = null;
     if (videoRef.current) videoRef.current.srcObject = null;
     setCameraReady(false);
+    setCameraOff(true);
   }
 
   useEffect(() => {
@@ -251,7 +254,15 @@ export function FatraPage() {
   }
 
   const statusLabel =
-    recordingState === 'recording' ? 'REC' : recordingState === 'paused' ? 'PAUSED' : cameraReady ? 'LIVE' : 'MENGHUBUNGKAN…';
+    recordingState === 'recording'
+      ? 'REC'
+      : recordingState === 'paused'
+        ? 'PAUSED'
+        : cameraReady
+          ? 'LIVE'
+          : cameraOff
+            ? 'OFF'
+            : 'MENGHUBUNGKAN…';
   const statusColor =
     recordingState === 'recording' ? '#ef4444' : recordingState === 'paused' ? '#f59e0b' : cameraReady ? '#22c55e' : '#94a3b8';
 
@@ -295,8 +306,10 @@ export function FatraPage() {
                 color: '#94a3b8',
               }}
             >
-              <span style={{ fontSize: '2rem' }}>📷</span>
-              <span style={{ fontSize: '0.8rem' }}>Menghubungkan kamera…</span>
+              <span style={{ fontSize: '2rem' }}>{cameraOff ? '📴' : '📷'}</span>
+              <span style={{ fontSize: '0.8rem' }}>
+                {cameraOff ? 'Kamera dimatikan' : 'Menghubungkan kamera…'}
+              </span>
             </div>
           )}
 
