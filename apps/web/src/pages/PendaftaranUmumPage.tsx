@@ -16,6 +16,7 @@ import { PendaftaranReportDocument } from '../pdf/PendaftaranReportDocument.tsx'
 import { PendaftaranKopSuratDocument } from '../pdf/PendaftaranKopSuratDocument.tsx';
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
 import { angkaKeKata } from '../lib/terbilang.ts';
+import { getSpeechRecognitionConstructor, type SpeechRecognitionLike } from '../lib/speechRecognition.ts';
 import '../components/ui/ui.css';
 
 function todayDateStr(): string {
@@ -136,6 +137,10 @@ export function PendaftaranUmumPage() {
   const [cameraOn, setCameraOn] = useState(false);
   const cameraVideoRef = useRef<HTMLVideoElement>(null);
   const cameraStreamRef = useRef<MediaStream | null>(null);
+  const [voiceOn, setVoiceOn] = useState(false);
+  const voiceOnRef = useRef(false);
+  const recognitionRef = useRef<SpeechRecognitionLike | null>(null);
+  const activeFieldRef = useRef<HTMLInputElement | HTMLTextAreaElement | null>(null);
 
   const [formData, setFormData] = useState({
     noRegistrasi: '',
@@ -157,6 +162,8 @@ export function PendaftaranUmumPage() {
   useEffect(() => {
     return () => {
       cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+      voiceOnRef.current = false;
+      recognitionRef.current?.stop();
     };
   }, []);
 
@@ -220,6 +227,7 @@ export function PendaftaranUmumPage() {
 
   function closeModal() {
     stopCamera();
+    stopVoice();
     setCreateOpen(false);
     setEditing(null);
   }
@@ -250,6 +258,75 @@ export function PendaftaranUmumPage() {
     setFormData((prev) => ({ ...prev, foto: dataUrl }));
   }
 
+  function handleFormFocusCapture(e: React.FocusEvent<HTMLFormElement>) {
+    const target = e.target;
+    if (
+      (target instanceof HTMLInputElement && target.type === 'text') ||
+      target instanceof HTMLTextAreaElement
+    ) {
+      activeFieldRef.current = target;
+    }
+  }
+
+  function insertTextAtCursor(text: string) {
+    const el = activeFieldRef.current;
+    const fieldName = el?.name;
+    if (!el || !fieldName || !(fieldName in formData)) return;
+    const start = el.selectionStart ?? el.value.length;
+    const end = el.selectionEnd ?? el.value.length;
+    const before = el.value.slice(0, start);
+    const after = el.value.slice(end);
+    const needsSpace = before.length > 0 && !/[\s\n]$/.test(before);
+    const insertion = (needsSpace ? ' ' : '') + text;
+    const newValue = before + insertion + after;
+    const newCursorPos = (before + insertion).length;
+    setFormData((prev) => ({ ...prev, [fieldName]: newValue }));
+    requestAnimationFrame(() => {
+      el.focus();
+      el.setSelectionRange(newCursorPos, newCursorPos);
+    });
+  }
+
+  function startVoice() {
+    const Ctor = getSpeechRecognitionConstructor();
+    if (!Ctor) {
+      setError('Browser ini tidak mendukung input suara (Speech Recognition).');
+      return;
+    }
+    const recognition = new Ctor();
+    recognition.lang = 'id-ID';
+    recognition.continuous = true;
+    recognition.interimResults = false;
+    recognition.onresult = (event) => {
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i]?.[0]?.transcript.trim();
+        if (transcript) insertTextAtCursor(transcript);
+      }
+    };
+    recognition.onerror = () => {
+      // Error transien (mis. jeda tanpa suara) — biarkan onend yang menangani restart.
+    };
+    recognition.onend = () => {
+      if (voiceOnRef.current) {
+        try {
+          recognition.start();
+        } catch {
+          // Sudah berjalan — abaikan.
+        }
+      }
+    };
+    recognitionRef.current = recognition;
+    voiceOnRef.current = true;
+    setVoiceOn(true);
+    recognition.start();
+  }
+
+  function stopVoice() {
+    voiceOnRef.current = false;
+    setVoiceOn(false);
+    recognitionRef.current?.stop();
+    recognitionRef.current = null;
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -614,7 +691,31 @@ export function PendaftaranUmumPage() {
           size="lg"
           headerColor={editing ? 'default' : 'sky-red'}
         >
-          <form onSubmit={editing ? handleUpdate : handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+          <form
+            onSubmit={editing ? handleUpdate : handleCreate}
+            onFocus={handleFormFocusCapture}
+            style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className={`btn btn--sm ${voiceOn ? 'btn--primary' : 'btn--ghost'}`}
+                onClick={startVoice}
+                disabled={voiceOn}
+                style={voiceOn ? undefined : { border: '1px solid var(--color-border)' }}
+              >
+                🎤 {voiceOn ? 'Voice Aktif — Klik field lalu bicara' : 'Aktifkan Voice'}
+              </button>
+              <button
+                type="button"
+                className="btn btn--sm btn--ghost"
+                onClick={stopVoice}
+                disabled={!voiceOn}
+                style={{ border: '1px solid var(--color-border)' }}
+              >
+                🔇 Matikan Voice
+              </button>
+            </div>
             <fieldset className="legacy-groupbox">
               <legend>Data Pendaftaran</legend>
               <div className="legacy-form-layout">
