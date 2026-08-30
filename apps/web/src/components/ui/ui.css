@@ -2002,6 +2002,24 @@
   --win-close-hover-color: #1d4ed8;
 }
 
+.win-frame--blue .data-table {
+  background: #e0f2fe;
+}
+
+.win-frame--blue .data-table th:not([style]) {
+  background: #bae6fd;
+  color: #0369a1;
+}
+
+.win-frame--blue .data-table tbody tr:not([style]) td {
+  color: #0c4a6e;
+  border-bottom-color: #bae6fd;
+}
+
+.win-frame--blue .data-table tbody tr:not([style]):hover {
+  background: #cdeafe;
+}
+
 /* Modul Laboratorium */
 .win-frame--red {
   --win-border: #b91c1c;
