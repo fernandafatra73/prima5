@@ -376,7 +376,7 @@
 
 .dashboard-row {
   display: flex;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 1.5rem;
   flex-wrap: wrap;
 }
@@ -395,6 +395,10 @@
 
 .dashboard-music-player {
   width: 6cm;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
   padding: 0.9rem 1rem;
   border-radius: var(--radius-card);
   background: linear-gradient(160deg, #fffbeb 0%, #ffedd5 100%);
