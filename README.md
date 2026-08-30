@@ -50,7 +50,7 @@ If prompted for a migration name, use `init`.
 npm run dev
 ```
 
-- Web: http://localhost:5173  
+- Web: http://localhost:8000  
 - API: http://localhost:3001  
 - Vite proxies `/api/*` to the API server.
 
@@ -83,7 +83,7 @@ npm run dev
 
 ### 3. Buka di browser
 
-Buka **http://localhost:5173**
+Buka **http://localhost:8000**
 
 Anda akan melihat dashboard LabPrima dengan sidebar tetap (lebar 260px), header, dan halaman placeholder untuk setiap menu PRD.
 
