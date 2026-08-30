@@ -51,8 +51,8 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', justifyContent: 'space-between' },
   infoRowSpacing: { marginTop: 4 },
   infoCell: { width: '48%', flexDirection: 'row' },
-  infoLabelLeft: { width: 60, fontSize: 8.5 },
-  infoLabelRight: { width: 80, fontSize: 8.5 },
+  infoLabelLeft: { width: 60, fontSize: 8.5, textAlign: 'right', paddingRight: 4 },
+  infoLabelRight: { width: 80, fontSize: 8.5, textAlign: 'right', paddingRight: 4 },
   bold: { fontWeight: 'bold', fontSize: 8.5 },
 
   photoStack: { marginVertical: 8 },

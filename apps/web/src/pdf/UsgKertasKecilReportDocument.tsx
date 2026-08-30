@@ -30,8 +30,8 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', justifyContent: 'space-between' },
   infoRowSpacing: { marginTop: 3 },
   infoCell: { width: '48%', flexDirection: 'row' },
-  infoLabelLeft: { width: 46, fontSize: 6.5 },
-  infoLabelRight: { width: 60, fontSize: 6.5 },
+  infoLabelLeft: { width: 46, fontSize: 6.5, textAlign: 'right', paddingRight: 3 },
+  infoLabelRight: { width: 60, fontSize: 6.5, textAlign: 'right', paddingRight: 3 },
   bold: { fontWeight: 'bold', fontSize: 6.5 },
 
   photoStack: { marginVertical: 5 },

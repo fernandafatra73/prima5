@@ -47,8 +47,8 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', justifyContent: 'space-between' },
   infoRowSpacing: { marginTop: 5 },
   infoCell: { width: '48%', flexDirection: 'row' },
-  infoLabelLeft: { width: 100, fontSize: 9.5 },
-  infoLabelRight: { width: 90, fontSize: 9.5 },
+  infoLabelLeft: { width: 100, fontSize: 9.5, textAlign: 'right', paddingRight: 4 },
+  infoLabelRight: { width: 90, fontSize: 9.5, textAlign: 'right', paddingRight: 4 },
   bold: { fontWeight: 'bold', fontSize: 9.5 },
 
   kesanSection: { marginTop: 16, flexGrow: 1 },
