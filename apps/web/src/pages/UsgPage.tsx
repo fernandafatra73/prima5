@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
@@ -90,7 +90,29 @@ const emptyForm = {
 
 export function UsgPage() {
   const { search, setSearch } = useListSearch();
-  const queryParams = useListQueryParams({}, search);
+  const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
+
+  const dateParams = useMemo(() => {
+    if (timeFilter === 'all') return {};
+    const now = new Date();
+    const yyyy = now.getFullYear();
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const todayStr = `${yyyy}-${mm}-${dd}`;
+
+    if (timeFilter === 'today') {
+      return { startDate: todayStr, endDate: todayStr };
+    }
+    const daysAgo = timeFilter === 'week' ? 7 : 30;
+    const start = new Date(now);
+    start.setDate(now.getDate() - daysAgo);
+    const sy = start.getFullYear();
+    const sm = String(start.getMonth() + 1).padStart(2, '0');
+    const sd = String(start.getDate()).padStart(2, '0');
+    return { startDate: `${sy}-${sm}-${sd}`, endDate: todayStr };
+  }, [timeFilter]);
+
+  const queryParams = useListQueryParams({ ...(dateParams as Record<string, string>) }, search);
   const {
     items,
     pagination,
@@ -745,6 +767,44 @@ export function UsgPage() {
           <button type="button" className="btn btn--primary" onClick={openCreate}>
             + Tambah Pasien
           </button>
+        }
+        filterExtra={
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              className={`btn btn--sm ${timeFilter === 'today' ? 'btn--primary' : 'btn--ghost'}`}
+              onClick={() => { setTimeFilter(timeFilter === 'today' ? 'all' : 'today'); setPage(1); }}
+              style={timeFilter !== 'today' ? { border: '1px solid var(--color-border)' } : {}}
+            >
+              📅 Pasien Hari Ini
+            </button>
+            <button
+              type="button"
+              className={`btn btn--sm ${timeFilter === 'week' ? 'btn--primary' : 'btn--ghost'}`}
+              onClick={() => { setTimeFilter(timeFilter === 'week' ? 'all' : 'week'); setPage(1); }}
+              style={timeFilter !== 'week' ? { border: '1px solid var(--color-border)' } : {}}
+            >
+              🗓️ Pasien 1 Minggu
+            </button>
+            <button
+              type="button"
+              className={`btn btn--sm ${timeFilter === 'month' ? 'btn--primary' : 'btn--ghost'}`}
+              onClick={() => { setTimeFilter(timeFilter === 'month' ? 'all' : 'month'); setPage(1); }}
+              style={timeFilter !== 'month' ? { border: '1px solid var(--color-border)' } : {}}
+            >
+              🗓️ Pasien 1 Bulan
+            </button>
+            {timeFilter !== 'all' && (
+              <button
+                type="button"
+                className="btn btn--sm btn--ghost"
+                onClick={() => { setTimeFilter('all'); setPage(1); }}
+                style={{ border: '1px solid var(--color-border)' }}
+              >
+                Lihat Semua
+              </button>
+            )}
+          </div>
         }
       >
         {items.length === 0 ? (

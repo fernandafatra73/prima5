@@ -29,6 +29,7 @@ import {
   suratKeteranganRujukanListWhere,
   suratKeteranganSehatListWhere,
   tandaTanganElektronikListWhere,
+  usgListWhere,
 } from '../lib/searchWhere.js';
 import { syncPasienDuplikat } from '../lib/pasienDuplikat.js';
 import { computeUmur, serializeDecimal } from '../lib/serialize.js';
@@ -46,6 +47,10 @@ type PasienListQuery = ListQuery & {
   modul?: string;
 };
 type PendaftaranUmumListQuery = ListQuery & {
+  startDate?: string;
+  endDate?: string;
+};
+type UsgListQuery = ListQuery & {
   startDate?: string;
   endDate?: string;
 };
@@ -2764,10 +2769,9 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.get<{ Querystring: ListQuery }>('/api/usg', async (req) => {
+  app.get<{ Querystring: UsgListQuery }>('/api/usg', async (req) => {
     const { page, limit, skip } = parsePagination(req.query);
-    const q = req.query.q?.trim();
-    const where = q ? { namaPasien: { contains: q } } : {};
+    const where = usgListWhere(req.query);
     const [total, items] = await Promise.all([
       prisma.usg.count({ where }),
       prisma.usg.findMany({

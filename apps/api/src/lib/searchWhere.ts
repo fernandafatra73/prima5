@@ -275,6 +275,34 @@ export function pendaftaranUmumListWhere(query: {
   return where;
 }
 
+export function usgListWhere(query: {
+  q?: string;
+  startDate?: string;
+  endDate?: string;
+}): Prisma.UsgWhereInput {
+  const where: Prisma.UsgWhereInput = {};
+
+  if (query.startDate || query.endDate) {
+    const tanggal: Prisma.DateTimeFilter = {};
+    if (query.startDate) {
+      tanggal.gte = new Date(query.startDate);
+    }
+    if (query.endDate) {
+      const end = new Date(query.endDate);
+      end.setHours(23, 59, 59, 999);
+      tanggal.lte = end;
+    }
+    where.tanggal = tanggal;
+  }
+
+  const term = searchTerm(query.q);
+  if (term) {
+    where.namaPasien = { contains: term };
+  }
+
+  return where;
+}
+
 export function pasienAntreanWhere(q?: string): Prisma.PasienWhereInput {
   const where: Prisma.PasienWhereInput = { hasilStatus: 'MENUNGGU_HASIL' };
   const term = searchTerm(q);
