@@ -26,7 +26,7 @@ const hasWebDist = existsSync(join(webDistDir, 'index.html'));
 const app = Fastify({ logger: true, bodyLimit: 16 * 1024 * 1024 });
 
 await app.register(cors, {
-  origin: process.env.CORS_ORIGIN ?? 'http://localhost:8000',
+  origin: process.env.CORS_ORIGIN ?? 'http://localhost:5173',
 });
 
 app.get('/api/health', async () => ({ ok: true }));
