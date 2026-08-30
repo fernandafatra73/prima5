@@ -167,6 +167,15 @@ export function PendaftaranUmumPage() {
     };
   }, []);
 
+  // <video> cuma ter-mount setelah cameraOn true, jadi srcObject harus
+  // dipasang di sini (bukan langsung di handleOpenCamera) supaya elemennya
+  // sudah ada di DOM saat stream-nya dipasang.
+  useEffect(() => {
+    if (cameraOn && cameraVideoRef.current && cameraStreamRef.current) {
+      cameraVideoRef.current.srcObject = cameraStreamRef.current;
+    }
+  }, [cameraOn]);
+
   function openCreate() {
     setFormData({
       noRegistrasi: '',
@@ -238,7 +247,6 @@ export function PendaftaranUmumPage() {
         video: { width: { ideal: 1280 }, height: { ideal: 960 } },
       });
       cameraStreamRef.current = stream;
-      if (cameraVideoRef.current) cameraVideoRef.current.srcObject = stream;
       setCameraOn(true);
     } catch (err) {
       setError(err instanceof Error ? `Gagal mengakses kamera: ${err.message}` : 'Gagal mengakses kamera.');
