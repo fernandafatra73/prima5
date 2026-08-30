@@ -1,7 +1,7 @@
 import { useState, type ReactNode } from 'react';
 import './ui.css';
 
-export type WindowFrameColor = 'default' | 'blue' | 'red';
+export type WindowFrameColor = 'default' | 'blue' | 'red' | 'navy';
 
 interface WindowFrameProps {
   readonly title: string;

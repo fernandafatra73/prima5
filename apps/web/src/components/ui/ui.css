@@ -298,6 +298,7 @@
   width: 100%;
   border-collapse: collapse;
   font-size: 0.875rem;
+  background: var(--color-bg-surface);
 }
 
 .data-table th,
@@ -1979,6 +1980,7 @@
   --win-btn-hover: rgba(100, 116, 139, 0.18);
   --win-close-hover-bg: #e81123;
   --win-close-hover-color: #ffffff;
+  --win-body-bg: #ffffff;
   border: 1px solid var(--win-border);
   border-radius: 6px;
   box-shadow: 0 4px 16px rgba(15, 23, 42, 0.12);
@@ -2011,6 +2013,20 @@
   --win-btn-hover: rgba(255, 255, 255, 0.22);
   --win-close-hover-bg: #ffffff;
   --win-close-hover-color: #b91c1c;
+}
+
+/* Modul Pendaftaran */
+.win-frame--navy {
+  --win-border: #0f2a52;
+  --win-bar-top: #1e3a70;
+  --win-bar-bottom: #0f2a52;
+  --win-bar-border: #0a1c3a;
+  --win-title-color: #ffffff;
+  --win-btn-color: #ffffff;
+  --win-btn-hover: rgba(255, 255, 255, 0.22);
+  --win-close-hover-bg: #ffffff;
+  --win-close-hover-color: #0f2a52;
+  --win-body-bg: #123a6b;
 }
 
 .win-frame--maximized {
@@ -2090,6 +2106,15 @@
 
 .win-frame__body {
   padding: 1rem 1.25rem 1.25rem;
+  background: var(--win-body-bg);
+}
+
+.win-frame--navy .list-page__title {
+  color: #ffffff;
+}
+
+.win-frame--navy .list-page__subtitle {
+  color: #bfdbfe;
 }
 
 /* USG — hero header dan galeri kartu foto pemeriksaan. */
