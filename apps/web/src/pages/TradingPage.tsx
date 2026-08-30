@@ -405,7 +405,16 @@ export function TradingPage() {
         <div>
           <h2 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 800 }}>Trading XAU/USD</h2>
           <p style={{ margin: '0.15rem 0 0', fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)' }}>
-            Grafik live, jurnal analisa &amp; level support/resistance, jadwal event tahunan.
+            Harga XAU dari Exness, TradingView,{' '}
+            <a
+              href="https://www.binance.bh/en/futures/PAXGUSDT"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{ color: '#ffffff', textDecoration: 'underline' }}
+            >
+              Binance
+            </a>{' '}
+            — update setiap saat.
           </p>
         </div>
       </div>
