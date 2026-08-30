@@ -766,7 +766,11 @@ export function RadiologWorkPage() {
           )}
 
           <div className="form-field form-grid--full">
-            <KesanRegioPicker onSelect={(teks) => setQuickEditKesan(teks)} />
+            <KesanRegioPicker
+              onSelect={(teks) =>
+                setQuickEditKesan((prev) => clampClinicalInput(prev ? prev + '\n\n' + teks : teks))
+              }
+            />
           </div>
 
           <div className="form-field">
