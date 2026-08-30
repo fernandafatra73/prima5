@@ -179,6 +179,7 @@ export function PasienPage() {
   const [editOpen, setEditOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
   const [printingId, setPrintingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
   const [kwitansiItem, setKwitansiItem] = useState<PasienRow | null>(null);
@@ -471,6 +472,7 @@ export function PasienPage() {
     setEditingId(null);
     setSelectedPendaftaranId('');
     setSavedPasien(null);
+    setFormError(null);
   }
 
   function handleUmurManualChange(value: string) {
@@ -487,6 +489,7 @@ export function PasienPage() {
 
   async function openEdit(id: string) {
     setError(null);
+    setFormError(null);
     try {
       const res = await apiGet<{ item: PasienDetail }>(`/api/pasien/${id}`);
       const p = res.item;
@@ -663,12 +666,12 @@ export function PasienPage() {
 
   async function onSubmitAdd(e: FormEvent) {
     e.preventDefault();
+    setFormError(null);
     if (!isValidBirthDate(tanggalLahir)) {
-      setError('Tanggal lahir tidak valid');
+      setFormError('Format umur tidak dikenali. Gunakan mis. "32 tahun", "6 bulan", atau "10 hari".');
       return;
     }
     setSaving(true);
-    setError(null);
     try {
       const res = await apiPost<{ item: CetakALPasien }>('/api/pasien', {
         nama,
@@ -688,7 +691,7 @@ export function PasienPage() {
       await reload({ resetPage: true });
       await loadSummary();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Gagal menyimpan');
+      setFormError(err instanceof Error ? err.message : 'Gagal menyimpan');
     } finally {
       setSaving(false);
     }
@@ -697,16 +700,16 @@ export function PasienPage() {
   async function onSubmitEdit(e: FormEvent) {
     e.preventDefault();
     if (!editingId) return;
+    setFormError(null);
     if (!isValidBirthDate(tanggalLahir)) {
-      setError('Tanggal lahir tidak valid');
+      setFormError('Format umur tidak dikenali. Gunakan mis. "32 tahun", "6 bulan", atau "10 hari".');
       return;
     }
     if (selectedJenis.length === 0) {
-      setError('Pilih minimal satu jenis pemeriksaan');
+      setFormError('Pilih minimal satu jenis pemeriksaan');
       return;
     }
     setSaving(true);
-    setError(null);
     try {
       await apiPatch(`/api/pasien/${editingId}`, {
         nama,
@@ -733,7 +736,7 @@ export function PasienPage() {
       await reload();
       await loadSummary();
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Gagal menyimpan perubahan');
+      setFormError(err instanceof Error ? err.message : 'Gagal menyimpan perubahan');
     } finally {
       setSaving(false);
     }
@@ -1581,6 +1584,8 @@ export function PasienPage() {
                 </div>
               </div>
 
+              {formError && <div className="alert alert--error">{formError}</div>}
+
               <div className="legacy-button-rail">
                 <button type="submit" className="btn btn--primary" disabled={saving || savedPasien !== null}>
                   {saving ? 'Menyimpan…' : savedPasien ? 'Tersimpan ✓' : 'Simpan'}
@@ -1820,6 +1825,7 @@ export function PasienPage() {
           {klinisField}
           {kesanField}
           {jenisPemeriksaanField}
+          {formError && <div className="alert alert--error form-grid--full">{formError}</div>}
           <div
             className="form-grid--span-3"
             style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}
