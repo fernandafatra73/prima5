@@ -13,6 +13,7 @@ import { registerCrudRoutes } from './routes/crud.js';
 import { registerDashboardRoutes } from './routes/dashboard.js';
 import { registerKlinikRoutes } from './routes/klinik.js';
 import { registerTransferRoutes } from './routes/transfer.js';
+import { startDailyTradingPivotJob } from './lib/dailyTradingPivotJob.js';
 const port = Number(process.env.PORT ?? 3001);
 const host = process.env.HOST ?? '0.0.0.0';
 
@@ -53,6 +54,7 @@ if (hasWebDist) {
 
 try {
   await app.listen({ port, host });
+  startDailyTradingPivotJob(app);
 } catch (err) {
   app.log.error(err);
   process.exit(1);
