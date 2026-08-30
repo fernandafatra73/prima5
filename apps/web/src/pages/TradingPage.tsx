@@ -493,6 +493,26 @@ export function TradingPage() {
             >
               🛒 Beli
             </button>
+            {hargaXau && (
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  padding: '0.35rem 0.9rem',
+                  borderRadius: '999px',
+                  background: 'rgba(15, 23, 42, 0.88)',
+                  color: '#ffffff',
+                  fontSize: '0.8rem',
+                }}
+                title={`Update ${formatTanggalJamDisplay(hargaXau.updatedAt)}`}
+              >
+                <span style={{ fontWeight: 700, color: YELLOW }}>🪙 XAU/USD</span>
+                <span style={{ fontWeight: 800 }}>
+                  ${hargaXau.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </span>
+              </div>
+            )}
             <button
               type="button"
               onClick={() => setShowKalkulator((v) => !v)}
@@ -526,31 +546,6 @@ export function TradingPage() {
               src={chartSrc(interval)}
               style={{ width: '100%', height: '100%', border: 'none' }}
             />
-            {hargaXau && (
-              <div
-                style={{
-                  position: 'absolute',
-                  top: 8,
-                  left: 8,
-                  padding: '0.5rem 0.9rem',
-                  borderRadius: '8px',
-                  background: 'rgba(15, 23, 42, 0.88)',
-                  color: '#ffffff',
-                  pointerEvents: 'none',
-                  boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
-                }}
-              >
-                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: YELLOW, letterSpacing: '0.03em' }}>
-                  🪙 XAU/USD
-                </div>
-                <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1.2 }}>
-                  ${hargaXau.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-                </div>
-                <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.65)' }}>
-                  Update {formatTanggalJamDisplay(hargaXau.updatedAt)}
-                </div>
-              </div>
-            )}
             {analisaList.length > 0 && (
               <div
                 style={{
