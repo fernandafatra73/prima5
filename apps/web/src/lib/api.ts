@@ -9,9 +9,23 @@ export class ApiError extends Error {
 }
 
 async function parseJson<T>(res: Response): Promise<T> {
-  const data = (await res.json()) as T & { error?: string };
+  const text = await res.text();
+  let data: (T & { error?: string }) | undefined;
+  if (text) {
+    try {
+      data = JSON.parse(text) as T & { error?: string };
+    } catch {
+      // Bisa terjadi kalau koneksi terputus di tengah respons (mis. server
+      // restart saat request berjalan) — pesan aslinya ("Unexpected end of
+      // JSON input") membingungkan, jadi kita ganti dengan yang lebih jelas.
+      throw new ApiError('Respons server tidak valid. Coba muat ulang halaman.', res.status);
+    }
+  }
   if (!res.ok) {
-    throw new ApiError(data.error ?? `Request failed (${res.status})`, res.status);
+    throw new ApiError(data?.error ?? `Request failed (${res.status})`, res.status);
+  }
+  if (data === undefined) {
+    throw new ApiError('Respons server kosong. Coba muat ulang halaman.', res.status);
   }
   return data;
 }
