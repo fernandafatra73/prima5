@@ -24,6 +24,12 @@ const SOSMED_LINKS: readonly SosmedLink[] = [
     url: 'https://my.extrade.global/webtrading/?utm_source=mc&utm_medium=email&partner_id=12058011&utm_campaign=Weekly_Recap_XAUUSD_ACT_Chart_20260828',
     icon: '💹',
   },
+  {
+    id: 'binance',
+    label: 'Binance',
+    url: 'https://www.binance.bh/en/futures/PAXGUSDT',
+    icon: '🟡',
+  },
 ];
 
 const cardStyle: React.CSSProperties = {
