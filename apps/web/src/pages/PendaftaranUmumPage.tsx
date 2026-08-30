@@ -133,6 +133,9 @@ export function PendaftaranUmumPage() {
   const [logoSrc, setLogoSrc] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const fotoInputRef = useRef<HTMLInputElement>(null);
+  const [cameraOn, setCameraOn] = useState(false);
+  const cameraVideoRef = useRef<HTMLVideoElement>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
 
   const [formData, setFormData] = useState({
     noRegistrasi: '',
@@ -149,6 +152,12 @@ export function PendaftaranUmumPage() {
 
   useEffect(() => {
     void loadLogoDataUrl().then(setLogoSrc).catch(() => setLogoSrc(''));
+  }, []);
+
+  useEffect(() => {
+    return () => {
+      cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    };
   }, []);
 
   function openCreate() {
@@ -202,6 +211,45 @@ export function PendaftaranUmumPage() {
     reader.readAsDataURL(file);
   }
 
+  function stopCamera() {
+    cameraStreamRef.current?.getTracks().forEach((track) => track.stop());
+    cameraStreamRef.current = null;
+    if (cameraVideoRef.current) cameraVideoRef.current.srcObject = null;
+    setCameraOn(false);
+  }
+
+  function closeModal() {
+    stopCamera();
+    setCreateOpen(false);
+    setEditing(null);
+  }
+
+  async function handleOpenCamera() {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 1280 }, height: { ideal: 960 } },
+      });
+      cameraStreamRef.current = stream;
+      if (cameraVideoRef.current) cameraVideoRef.current.srcObject = stream;
+      setCameraOn(true);
+    } catch (err) {
+      setError(err instanceof Error ? `Gagal mengakses kamera: ${err.message}` : 'Gagal mengakses kamera.');
+    }
+  }
+
+  function handleCapturePhoto() {
+    const video = cameraVideoRef.current;
+    if (!video || video.videoWidth === 0 || video.videoHeight === 0) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.9);
+    setFormData((prev) => ({ ...prev, foto: dataUrl }));
+  }
+
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -220,7 +268,7 @@ export function PendaftaranUmumPage() {
         admin: formData.admin || undefined,
         foto: formData.foto || undefined,
       });
-      setCreateOpen(false);
+      closeModal();
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal membuat pendaftaran');
@@ -247,7 +295,7 @@ export function PendaftaranUmumPage() {
         admin: formData.admin || undefined,
         foto: formData.foto || undefined,
       });
-      setEditing(null);
+      closeModal();
       await reload();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal mengubah pendaftaran');
@@ -559,11 +607,12 @@ export function PendaftaranUmumPage() {
       </div>
 
       {(createOpen || editing) && (
-        <Modal 
-          open={true} 
-          title={editing ? "Ubah Pendaftaran Umum" : "Tambah Pendaftaran Umum"} 
-          onClose={() => { setCreateOpen(false); setEditing(null); }}
+        <Modal
+          open={true}
+          title={editing ? "Ubah Pendaftaran Umum" : "Tambah Pendaftaran Umum"}
+          onClose={closeModal}
           size="lg"
+          headerColor={editing ? 'default' : 'sky-red'}
         >
           <form onSubmit={editing ? handleUpdate : handleCreate} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
             <fieldset className="legacy-groupbox">
@@ -690,7 +739,17 @@ export function PendaftaranUmumPage() {
                 </div>
 
                 <div className="legacy-photo-panel">
-                  {formData.foto ? (
+                  {cameraOn ? (
+                    <div className="legacy-photo-box">
+                      <video
+                        ref={cameraVideoRef}
+                        autoPlay
+                        muted
+                        playsInline
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                      />
+                    </div>
+                  ) : formData.foto ? (
                     <div className="legacy-photo-box">
                       <img src={formData.foto} alt="Foto pasien" />
                       <button
@@ -707,13 +766,29 @@ export function PendaftaranUmumPage() {
                       <span className="legacy-photo-box__placeholder">📷</span>
                     </div>
                   )}
-                  <button
-                    type="button"
-                    className="btn btn--ghost"
-                    onClick={() => fotoInputRef.current?.click()}
-                  >
-                    Ambil Foto
-                  </button>
+                  {cameraOn ? (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button type="button" className="btn btn--primary" onClick={handleCapturePhoto}>
+                        Ambil Foto
+                      </button>
+                      <button type="button" className="btn btn--ghost" onClick={stopCamera}>
+                        Stop
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', gap: '0.5rem' }}>
+                      <button type="button" className="btn btn--ghost" onClick={() => void handleOpenCamera()}>
+                        📷 Buka Kamera
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--ghost"
+                        onClick={() => fotoInputRef.current?.click()}
+                      >
+                        Upload File
+                      </button>
+                    </div>
+                  )}
                   <input
                     ref={fotoInputRef}
                     type="file"
@@ -737,7 +812,7 @@ export function PendaftaranUmumPage() {
               <button
                 type="button"
                 className="btn btn--ghost"
-                onClick={() => { setCreateOpen(false); setEditing(null); }}
+                onClick={closeModal}
               >
                 Batal
               </button>

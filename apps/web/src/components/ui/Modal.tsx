@@ -7,7 +7,7 @@ interface ModalProps {
   readonly onClose: () => void;
   readonly children: ReactNode;
   readonly size?: 'md' | 'lg' | 'xl';
-  readonly headerColor?: 'default' | 'orange';
+  readonly headerColor?: 'default' | 'orange' | 'sky-red';
 }
 
 export function Modal({ open, title, onClose, children, size = 'md', headerColor = 'default' }: ModalProps) {
