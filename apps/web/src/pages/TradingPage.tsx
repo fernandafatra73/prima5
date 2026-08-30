@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import * as XLSX from 'xlsx';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
 
 interface JadwalItem {
@@ -14,6 +15,25 @@ interface AnalisaItem {
   readonly analisa: string;
   readonly support: string | null;
   readonly resistance: string | null;
+}
+
+/** Ekstrak Sinyal/High/Low/Close/Pivot dari teks "[Analisa Otomatis Harian]"
+ * yang dibuat job pivot harian — dipakai supaya data ini bisa disimpan
+ * sebagai tabel (Export Excel), bukan cuma teks bebas. Entri manual yang
+ * tidak cocok formatnya akan menghasilkan kolom kosong. */
+function parseAutoAnalisa(text: string): {
+  sinyal: string;
+  high: string;
+  low: string;
+  close: string;
+  pivot: string;
+} {
+  const sinyal = /Sinyal:\s*(\w+)/.exec(text)?.[1] ?? '';
+  const high = /H=([\d.]+)/.exec(text)?.[1] ?? '';
+  const low = /L=([\d.]+)/.exec(text)?.[1] ?? '';
+  const close = /C=([\d.]+)/.exec(text)?.[1] ?? '';
+  const pivot = /Pivot=([\d.]+)/.exec(text)?.[1] ?? '';
+  return { sinyal, high, low, close, pivot };
 }
 
 const TIMEFRAMES = [
@@ -202,6 +222,33 @@ export function TradingPage() {
   const [resistance, setResistance] = useState('');
   const [analisaTanggalJam, setAnalisaTanggalJam] = useState(() => toDatetimeLocalValue(new Date()));
   const [analisaSubmitting, setAnalisaSubmitting] = useState(false);
+  const [exportingAnalisaExcel, setExportingAnalisaExcel] = useState(false);
+
+  function handleExportAnalisaExcel() {
+    setExportingAnalisaExcel(true);
+    try {
+      const rows = analisaList.map((item) => {
+        const parsed = parseAutoAnalisa(item.analisa);
+        return {
+          Tanggal: formatTanggalJamDisplay(item.tanggal),
+          Sinyal: parsed.sinyal,
+          High: parsed.high,
+          Low: parsed.low,
+          Close: parsed.close,
+          Pivot: parsed.pivot,
+          Support: item.support ?? '',
+          Resistance: item.resistance ?? '',
+          Catatan: item.analisa,
+        };
+      });
+      const worksheet = XLSX.utils.json_to_sheet(rows);
+      const workbook = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(workbook, worksheet, 'Analisa XAU');
+      XLSX.writeFile(workbook, 'Analisa_Trading_XAU.xlsx');
+    } finally {
+      setExportingAnalisaExcel(false);
+    }
+  }
 
   const [editingAnalisaId, setEditingAnalisaId] = useState<string | null>(null);
   const [editAnalisaText, setEditAnalisaText] = useState('');
@@ -809,7 +856,19 @@ export function TradingPage() {
             </div>
           </form>
 
-          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+          <div style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              className="btn btn--sm btn--ghost"
+              onClick={handleExportAnalisaExcel}
+              disabled={exportingAnalisaExcel || analisaList.length === 0}
+              style={{ border: '1px solid var(--color-border)' }}
+            >
+              📊 {exportingAnalisaExcel ? 'Memproses…' : 'Simpan Tabel (Excel)'}
+            </button>
+          </div>
+
+          <div style={{ marginTop: '0.6rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
             {analisaList.length === 0 ? (
               <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>Belum ada catatan analisa.</p>
             ) : (
