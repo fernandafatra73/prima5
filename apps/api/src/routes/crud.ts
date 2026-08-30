@@ -419,7 +419,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { item };
   });
 
-  app.post<{ Body: { nama: string; nip?: string; noTelepon?: string } }>(
+  app.post<{ Body: { nama: string; nip?: string; noTelepon?: string; logoTandaTangan?: string } }>(
     '/api/petugas-lab',
     async (req, reply) => {
       if (!req.body.nama?.trim()) return badRequest(reply, 'nama wajib diisi');
@@ -428,6 +428,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
           nama: req.body.nama.trim(),
           nip: req.body.nip?.trim() || null,
           noTelepon: req.body.noTelepon?.trim() || null,
+          logoTandaTangan: req.body.logoTandaTangan || null,
         },
       });
       return reply.status(201).send({ item });
@@ -439,7 +440,10 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
-  app.patch<{ Params: { id: string }; Body: { nama?: string; nip?: string; noTelepon?: string } }>(
+  app.patch<{
+    Params: { id: string };
+    Body: { nama?: string; nip?: string; noTelepon?: string; logoTandaTangan?: string | null };
+  }>(
     '/api/petugas-lab/:id',
     async (req, reply) => {
       const existing = await prisma.petugasLab.findUnique({ where: { id: req.params.id } });
@@ -450,6 +454,8 @@ export async function registerCrudRoutes(app: FastifyInstance) {
           nama: req.body.nama?.trim() ?? existing.nama,
           nip: req.body.nip !== undefined ? req.body.nip?.trim() || null : existing.nip,
           noTelepon: req.body.noTelepon !== undefined ? req.body.noTelepon?.trim() || null : existing.noTelepon,
+          logoTandaTangan:
+            req.body.logoTandaTangan !== undefined ? req.body.logoTandaTangan || null : existing.logoTandaTangan,
         },
       });
       return { item };

@@ -15,6 +15,7 @@ interface PetugasLabItem {
   readonly nama: string;
   readonly nip: string | null;
   readonly noTelepon: string | null;
+  readonly logoTandaTangan: string | null;
   readonly createdAt: string;
 }
 
@@ -32,12 +33,14 @@ export function PetugasLabPage() {
   const [nama, setNama] = useState('');
   const [nip, setNip] = useState('');
   const [noTelepon, setNoTelepon] = useState('');
+  const [logoTandaTangan, setLogoTandaTangan] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   function openCreate() {
     setNama('');
     setNip('');
     setNoTelepon('');
+    setLogoTandaTangan(null);
     setCreateOpen(true);
   }
 
@@ -46,6 +49,19 @@ export function PetugasLabPage() {
     setNama(item.nama);
     setNip(item.nip ?? '');
     setNoTelepon(item.noTelepon ?? '');
+    setLogoTandaTangan(item.logoTandaTangan);
+  }
+
+  function handleLogoFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setLogoTandaTangan(reader.result);
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
   async function handleCreate(e: React.FormEvent) {
@@ -58,6 +74,7 @@ export function PetugasLabPage() {
         nama: nama.trim(),
         nip: nip.trim() || undefined,
         noTelepon: noTelepon.trim() || undefined,
+        logoTandaTangan: logoTandaTangan || undefined,
       });
       setCreateOpen(false);
       await reload();
@@ -78,6 +95,7 @@ export function PetugasLabPage() {
         nama: nama.trim(),
         nip: nip.trim() || undefined,
         noTelepon: noTelepon.trim() || undefined,
+        logoTandaTangan,
       });
       setEditing(null);
       await reload();
@@ -135,13 +153,14 @@ export function PetugasLabPage() {
             <th>Nama Analis</th>
             <th>NIP / SIP</th>
             <th>No. Telepon</th>
+            <th>Logo Tanda Tangan</th>
             <th>Aksi</th>
           </tr>
         </thead>
         <tbody>
           {items.length === 0 ? (
             <tr>
-              <td colSpan={5} style={{ textAlign: 'center', padding: '2rem' }}>
+              <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>
                 Belum ada data analis laboratorium.
               </td>
             </tr>
@@ -154,6 +173,17 @@ export function PetugasLabPage() {
                 </td>
                 <td>{item.nip || '—'}</td>
                 <td>{item.noTelepon || '—'}</td>
+                <td>
+                  {item.logoTandaTangan ? (
+                    <img
+                      src={item.logoTandaTangan}
+                      alt={`Tanda tangan ${item.nama}`}
+                      style={{ width: 80, height: 44, objectFit: 'contain', background: '#fff', border: '1px solid var(--color-border)', borderRadius: '4px' }}
+                    />
+                  ) : (
+                    '—'
+                  )}
+                </td>
                 <td>
                   <TableRowActions
                     onEdit={() => openEdit(item)}
@@ -205,6 +235,28 @@ export function PetugasLabPage() {
               />
             </div>
 
+            <div className="form-field">
+              <label htmlFor="petugas-logo">Logo Tanda Tangan (Opsional)</label>
+              <input id="petugas-logo" type="file" accept="image/*" onChange={handleLogoFileChange} />
+              {logoTandaTangan && (
+                <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <img
+                    src={logoTandaTangan}
+                    alt="Preview tanda tangan"
+                    style={{ width: 120, height: 64, objectFit: 'contain', border: '1px solid var(--color-border)', borderRadius: '6px', background: '#fff' }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--ghost"
+                    onClick={() => setLogoTandaTangan(null)}
+                    style={{ border: '1px solid var(--color-border)' }}
+                  >
+                    Hapus Logo
+                  </button>
+                </div>
+              )}
+            </div>
+
             <ModalFormFooter
               onCancel={() => setCreateOpen(false)}
               submitLabel="Simpan"
@@ -246,6 +298,28 @@ export function PetugasLabPage() {
                 value={noTelepon}
                 onChange={(e) => setNoTelepon(e.target.value)}
               />
+            </div>
+
+            <div className="form-field">
+              <label htmlFor="edit-petugas-logo">Logo Tanda Tangan</label>
+              <input id="edit-petugas-logo" type="file" accept="image/*" onChange={handleLogoFileChange} />
+              {logoTandaTangan && (
+                <div style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                  <img
+                    src={logoTandaTangan}
+                    alt="Preview tanda tangan"
+                    style={{ width: 120, height: 64, objectFit: 'contain', border: '1px solid var(--color-border)', borderRadius: '6px', background: '#fff' }}
+                  />
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--ghost"
+                    onClick={() => setLogoTandaTangan(null)}
+                    style={{ border: '1px solid var(--color-border)' }}
+                  >
+                    Hapus Logo
+                  </button>
+                </div>
+              )}
             </div>
 
             <ModalFormFooter
