@@ -478,14 +478,14 @@ export function LabReportDocument({ data, pageSize = 'A4', showSignature = true 
                 </View>
                 {pageRows.map((row, i) =>
                   row.isHeader ? (
-                    <View key={`${pageIdx}-${i}`} style={styles.catHeaderRow}>
-                      <Text style={styles.catHeaderText}>{row.name}</Text>
+                    <View key={`${pageIdx}-${i}`} style={styles.catHeaderRow} wrap={false}>
+                      <Text style={styles.catHeaderText}>{truncatePdfCell(row.name, 40)}</Text>
                     </View>
                   ) : (
-                    <View key={`${pageIdx}-${i}`} style={styles.trRow}>
+                    <View key={`${pageIdx}-${i}`} style={styles.trRow} wrap={false}>
                       <Text style={styles.tdName}>{truncatePdfCell(row.name, 35)}</Text>
-                      <Text style={styles.tdResult}>{renderHasil(row.result)}</Text>
-                      <Text style={styles.tdRef}>{row.reference || '-'}</Text>
+                      <Text style={styles.tdResult}>{renderHasil(truncatePdfCell(row.result || '-', 22))}</Text>
+                      <Text style={styles.tdRef}>{truncatePdfCell(row.reference || '-', 30)}</Text>
                     </View>
                   ),
                 )}
