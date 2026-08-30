@@ -2026,7 +2026,6 @@
   --win-btn-hover: rgba(255, 255, 255, 0.22);
   --win-close-hover-bg: #ffffff;
   --win-close-hover-color: #0f2a52;
-  --win-body-bg: #123a6b;
 }
 
 .win-frame--maximized {
@@ -2109,12 +2108,45 @@
   background: var(--win-body-bg);
 }
 
-.win-frame--navy .list-page__title {
+.win-frame--navy .metric-card {
+  background: #1d4ed8;
+  border-color: #1e3a8a;
+}
+
+.win-frame--navy .metric-card__label {
+  color: #dbeafe;
+}
+
+.win-frame--navy .metric-card__value {
   color: #ffffff;
 }
 
-.win-frame--navy .list-page__subtitle {
-  color: #bfdbfe;
+.win-frame--navy .data-card {
+  background: #1d4ed8;
+  border-color: #1e3a8a;
+}
+
+.win-frame--navy .table-filter-bar {
+  background: rgba(255, 255, 255, 0.08);
+  border-bottom-color: rgba(255, 255, 255, 0.25);
+}
+
+.win-frame--navy .data-table {
+  background: transparent;
+}
+
+.win-frame--navy .data-table th:not([style]) {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+}
+
+.win-frame--navy .data-table tbody tr:not([style]) td {
+  color: #ffffff;
+  border-bottom-color: rgba(255, 255, 255, 0.18);
+}
+
+.win-frame--navy .data-table tbody tr:not([style]):hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 
 /* USG — hero header dan galeri kartu foto pemeriksaan. */
