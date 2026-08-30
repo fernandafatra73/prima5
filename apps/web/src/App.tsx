@@ -83,6 +83,7 @@ import { FarmasiBhpPage } from './pages/FarmasiBhpPage.tsx';
 import { FarmasiKwitansiPage } from './pages/FarmasiKwitansiPage.tsx';
 import { AbsensiPage } from './pages/AbsensiPage.tsx';
 import { KeuanganPembukuanPage } from './pages/KeuanganPembukuanPage.tsx';
+import { KeuanganHubPage } from './pages/KeuanganHubPage.tsx';
 import { AdminKlinikPage } from './pages/AdminKlinikPage.tsx';
 import { LogoPerusahaanPage } from './pages/LogoPerusahaanPage.tsx';
 import { PengaturanHubPage } from './pages/PengaturanHubPage.tsx';
@@ -264,6 +265,8 @@ function renderViewContent(
       return <FarmasiKwitansiPage />;
     case 'absensi':
       return <AbsensiPage />;
+    case 'keuangan':
+      return <KeuanganHubPage />;
     case 'keuangan-pembukuan':
       return <KeuanganPembukuanPage />;
     case 'hasil-perbulan':

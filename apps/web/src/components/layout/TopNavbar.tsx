@@ -40,16 +40,14 @@ type NavbarSpec =
   | { readonly type: 'category'; readonly categoryId: string; readonly icon: IconComponent }
   | { readonly type: 'group'; readonly groupId: string; readonly label: string; readonly icon: IconComponent; readonly items: readonly MenuItem[] };
 
-const DROPDOWN_TINT_CLASS: Readonly<Record<string, string>> = {
-  keuangan: 'app-navbar__dropdown--keuangan',
-};
+const DROPDOWN_TINT_CLASS: Readonly<Record<string, string>> = {};
 
 const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'link', id: 'pendaftaran', label: 'Pendaftaran', icon: IconClipboard },
   { type: 'link', id: 'radiologi', label: 'Radiologi', icon: IconStethoscope },
   { type: 'link', id: 'usg', label: 'USG', icon: IconStethoscope },
   { type: 'link', id: 'laboratorium', label: 'Laboratorium', icon: IconTag },
-  { type: 'category', categoryId: 'keuangan', icon: IconCurrency },
+  { type: 'link', id: 'keuangan', label: 'Keuangan', icon: IconCurrency },
   { type: 'category', categoryId: 'master-sistem', icon: IconShield },
   { type: 'link', id: 'pengaturan', label: 'Pengaturan', icon: IconSettings },
   { type: 'category', categoryId: 'farmasi', icon: IconDocument },

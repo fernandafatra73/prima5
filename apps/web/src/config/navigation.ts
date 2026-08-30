@@ -96,6 +96,7 @@ export const MAIN_NAV_CATEGORIES: readonly NavCategory[] = [
     label: 'Keuangan',
     iconName: 'currency',
     items: [
+      { id: 'keuangan', label: 'Keuangan', shortLabel: 'Keuangan' },
       { id: 'keuangan-pembukuan', label: 'Sistem Keuangan & Pembukuan', shortLabel: 'Buku Kas & Keuangan' },
       { id: 'hasil-perbulan', label: 'Hasil Perbulan', shortLabel: 'Hasil Perbulan' },
       { id: 'penggajian', label: 'Penggajian', shortLabel: 'Penggajian' },
@@ -153,6 +154,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'absensi', label: 'Daftar Hadir Karyawan', shortLabel: 'Presensi Staff' },
   { id: 'farmasi-bhp', label: 'Manajemen Farmasi & BHP', shortLabel: 'Stok Obat & BHP' },
   { id: 'kwitansi-farmasi', label: 'Kwitansi Farmasi', shortLabel: 'Kwitansi Farmasi' },
+  { id: 'keuangan', label: 'Keuangan', shortLabel: 'Keuangan' },
   { id: 'keuangan-pembukuan', label: 'Sistem Keuangan & Pembukuan', shortLabel: 'Buku Kas & Keuangan' },
   { id: 'hasil-perbulan', label: 'Hasil Perbulan', shortLabel: 'Hasil Perbulan' },
   { id: 'penggajian', label: 'Penggajian', shortLabel: 'Penggajian' },
