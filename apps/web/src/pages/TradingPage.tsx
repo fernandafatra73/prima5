@@ -67,6 +67,29 @@ function formatTanggalDisplay(dateStr: string): string {
   }
 }
 
+/** Sama seperti formatTanggalDisplay, tapi termasuk jam — dipakai khusus
+ * untuk jurnal Analisa & Level (yang tanggalnya bisa diisi manual sampai ke
+ * jam), bukan untuk Jadwal Trading yang cuma tanggal tanpa jam. */
+function formatTanggalJamDisplay(dateStr: string): string {
+  try {
+    const d = new Date(dateStr);
+    if (isNaN(d.getTime())) return dateStr;
+    const tanggal = d.toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+    const jam = d.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+    return `${tanggal}, ${jam} WIB`;
+  } catch {
+    return dateStr;
+  }
+}
+
+/** Format Date lokal jadi string yang dipahami <input type="datetime-local">
+ * (YYYY-MM-DDTHH:mm) — pakai komponen tanggal/jam lokal, bukan toISOString
+ * yang berbasis UTC dan bisa geser tanggalnya. */
+function toDatetimeLocalValue(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 interface PivotResult {
   readonly pivot: number;
   readonly r1: number;
@@ -177,12 +200,14 @@ export function TradingPage() {
   const [analisaText, setAnalisaText] = useState('');
   const [support, setSupport] = useState('');
   const [resistance, setResistance] = useState('');
+  const [analisaTanggalJam, setAnalisaTanggalJam] = useState(() => toDatetimeLocalValue(new Date()));
   const [analisaSubmitting, setAnalisaSubmitting] = useState(false);
 
   const [editingAnalisaId, setEditingAnalisaId] = useState<string | null>(null);
   const [editAnalisaText, setEditAnalisaText] = useState('');
   const [editSupport, setEditSupport] = useState('');
   const [editResistance, setEditResistance] = useState('');
+  const [editTanggalJam, setEditTanggalJam] = useState('');
   const [editAnalisaSaving, setEditAnalisaSaving] = useState(false);
 
   const [showKalkulator, setShowKalkulator] = useState(false);
@@ -194,6 +219,8 @@ export function TradingPage() {
   const [kalkulatorError, setKalkulatorError] = useState<string | null>(null);
 
   const [error, setError] = useState<string | null>(null);
+
+  const [hargaXau, setHargaXau] = useState<{ price: number; updatedAt: string } | null>(null);
 
   async function loadJadwal() {
     try {
@@ -213,9 +240,22 @@ export function TradingPage() {
     }
   }
 
+  async function loadHargaXau() {
+    try {
+      const res = await apiGet<{ price: number; updatedAt: string }>('/api/trading-harga-xau');
+      setHargaXau(res);
+    } catch {
+      // Kartu harga live cuma pemanis di atas grafik — kalau gagal, biarkan
+      // kosong saja, jangan ganggu bagian lain halaman.
+    }
+  }
+
   useEffect(() => {
     void loadJadwal();
     void loadAnalisa();
+    void loadHargaXau();
+    const timer = setInterval(() => void loadHargaXau(), 30_000);
+    return () => clearInterval(timer);
   }, []);
 
   async function handleJadwalSubmit(e: React.FormEvent) {
@@ -250,14 +290,17 @@ export function TradingPage() {
     setAnalisaSubmitting(true);
     setError(null);
     try {
+      const tanggalIso = analisaTanggalJam ? new Date(analisaTanggalJam).toISOString() : undefined;
       await apiPost('/api/trading-analisa', {
         analisa: analisaText.trim(),
         support: support.trim() || undefined,
         resistance: resistance.trim() || undefined,
+        tanggal: tanggalIso,
       });
       setAnalisaText('');
       setSupport('');
       setResistance('');
+      setAnalisaTanggalJam(toDatetimeLocalValue(new Date()));
       await loadAnalisa();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menyimpan analisa');
@@ -276,6 +319,8 @@ export function TradingPage() {
     setEditAnalisaText(item.analisa);
     setEditSupport(item.support ?? '');
     setEditResistance(item.resistance ?? '');
+    const parsed = new Date(item.tanggal);
+    setEditTanggalJam(isNaN(parsed.getTime()) ? '' : toDatetimeLocalValue(parsed));
   }
 
   function cancelEditAnalisa() {
@@ -289,6 +334,7 @@ export function TradingPage() {
         analisa: editAnalisaText.trim(),
         support: editSupport.trim() || undefined,
         resistance: editResistance.trim() || undefined,
+        tanggal: editTanggalJam ? new Date(editTanggalJam).toISOString() : undefined,
       });
       setEditingAnalisaId(null);
       await loadAnalisa();
@@ -480,6 +526,31 @@ export function TradingPage() {
               src={chartSrc(interval)}
               style={{ width: '100%', height: '100%', border: 'none' }}
             />
+            {hargaXau && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  left: 8,
+                  padding: '0.5rem 0.9rem',
+                  borderRadius: '8px',
+                  background: 'rgba(15, 23, 42, 0.88)',
+                  color: '#ffffff',
+                  pointerEvents: 'none',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                }}
+              >
+                <div style={{ fontSize: '0.68rem', fontWeight: 700, color: YELLOW, letterSpacing: '0.03em' }}>
+                  🪙 XAU/USD
+                </div>
+                <div style={{ fontSize: '1.6rem', fontWeight: 800, lineHeight: 1.2 }}>
+                  ${hargaXau.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                </div>
+                <div style={{ fontSize: '0.62rem', color: 'rgba(255,255,255,0.65)' }}>
+                  Update {formatTanggalJamDisplay(hargaXau.updatedAt)}
+                </div>
+              </div>
+            )}
             {analisaList.length > 0 && (
               <div
                 style={{
@@ -498,7 +569,7 @@ export function TradingPage() {
                 }}
               >
                 <div style={{ fontWeight: 700, marginBottom: '0.3rem', color: YELLOW }}>
-                  📊 Analisa Terakhir — {formatTanggalDisplay(analisaList[0]!.tanggal)}
+                  📊 Analisa Terakhir — {formatTanggalJamDisplay(analisaList[0]!.tanggal)}
                 </div>
                 {analisaList[0]!.support && (
                   <div style={{ color: '#86efac' }}>Support: {analisaList[0]!.support}</div>
@@ -662,6 +733,16 @@ export function TradingPage() {
               />
             </div>
             <div className="form-field">
+              <label htmlFor="tr-tanggal-jam" style={{ color: BLUE, fontWeight: 700 }}>Tanggal &amp; Jam</label>
+              <input
+                id="tr-tanggal-jam"
+                type="datetime-local"
+                value={analisaTanggalJam}
+                onChange={(e) => setAnalisaTanggalJam(e.target.value)}
+                style={{ borderLeft: `3px solid ${YELLOW}` }}
+              />
+            </div>
+            <div className="form-field">
               <label htmlFor="tr-support" style={{ color: BLUE, fontWeight: 700 }}>Support</label>
               <input
                 id="tr-support"
@@ -706,7 +787,7 @@ export function TradingPage() {
                   }}
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.3rem' }}>
-                    <strong style={{ fontSize: '0.78rem', color: BLUE }}>{formatTanggalDisplay(item.tanggal)}</strong>
+                    <strong style={{ fontSize: '0.78rem', color: BLUE }}>{formatTanggalJamDisplay(item.tanggal)}</strong>
                     <div style={{ display: 'flex', gap: '0.35rem' }}>
                       {isEditing ? (
                         <>
@@ -751,6 +832,12 @@ export function TradingPage() {
 
                   {isEditing ? (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <input
+                        type="datetime-local"
+                        value={editTanggalJam}
+                        onChange={(e) => setEditTanggalJam(e.target.value)}
+                        style={{ borderLeft: `3px solid ${YELLOW}` }}
+                      />
                       <textarea
                         rows={3}
                         value={editAnalisaText}

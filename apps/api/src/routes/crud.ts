@@ -5,6 +5,7 @@ import { calcTotalSharing, sumHarga } from '../lib/pasienFinance.js';
 import { hashPassword } from '../lib/password.js';
 import { nextPendaftaranUmumCode, nextRegCode } from '../lib/regCode.js';
 import { buildPaginationMeta, parsePagination } from '../lib/pagination.js';
+import { fetchXauSpotPrice } from '../lib/xausGoldPrice.js';
 import {
   adminKlinikListWhere,
   aiRadiologiGrupListWhere,
@@ -2951,6 +2952,17 @@ export async function registerCrudRoutes(app: FastifyInstance) {
 
   // ─── Trading XAU/USD ────────────────────────────────────────────────────
 
+  app.get('/api/trading-harga-xau', async (_req, reply) => {
+    try {
+      const spot = await fetchXauSpotPrice();
+      return spot;
+    } catch (err) {
+      return reply.status(502).send({
+        error: err instanceof Error ? err.message : 'Gagal mengambil harga XAU/USD',
+      });
+    }
+  });
+
   app.get<{ Querystring: ListQuery }>('/api/trading-jadwal', async (req) => {
     const { page, limit, skip } = parsePagination(req.query);
     const q = req.query.q?.trim();
@@ -3017,16 +3029,19 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     };
   });
 
-  app.post<{ Body: { analisa: string; support?: string; resistance?: string } }>(
+  app.post<{ Body: { analisa: string; support?: string; resistance?: string; tanggal?: string } }>(
     '/api/trading-analisa',
     async (req, reply) => {
       const b = req.body;
       if (!b.analisa?.trim()) return badRequest(reply, 'analisa wajib diisi');
+      const tanggal = b.tanggal ? new Date(b.tanggal) : undefined;
+      if (tanggal && isNaN(tanggal.getTime())) return badRequest(reply, 'Tanggal & jam tidak valid');
       const item = await prisma.tradingAnalisa.create({
         data: {
           analisa: b.analisa.trim(),
           support: b.support?.trim() || null,
           resistance: b.resistance?.trim() || null,
+          ...(tanggal ? { tanggal } : {}),
         },
       });
       return reply.status(201).send({ item: { ...item, tanggal: item.tanggal.toISOString() } });
@@ -3035,16 +3050,23 @@ export async function registerCrudRoutes(app: FastifyInstance) {
 
   app.patch<{
     Params: { id: string };
-    Body: { analisa?: string; support?: string; resistance?: string };
+    Body: { analisa?: string; support?: string; resistance?: string; tanggal?: string };
   }>('/api/trading-analisa/:id', async (req, reply) => {
     const existing = await prisma.tradingAnalisa.findUnique({ where: { id: req.params.id } });
     if (!existing) return reply.status(404).send({ error: 'Analisa tidak ditemukan' });
+    let tanggal = existing.tanggal;
+    if (req.body.tanggal !== undefined) {
+      const parsed = new Date(req.body.tanggal);
+      if (isNaN(parsed.getTime())) return badRequest(reply, 'Tanggal & jam tidak valid');
+      tanggal = parsed;
+    }
     const item = await prisma.tradingAnalisa.update({
       where: { id: req.params.id },
       data: {
         analisa: req.body.analisa?.trim() ?? existing.analisa,
         support: req.body.support !== undefined ? req.body.support?.trim() || null : existing.support,
         resistance: req.body.resistance !== undefined ? req.body.resistance?.trim() || null : existing.resistance,
+        tanggal,
       },
     });
     return { item: { ...item, tanggal: item.tanggal.toISOString() } };
