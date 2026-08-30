@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { apiDelete, apiGet, apiPost } from '../lib/api.ts';
+import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
 
 interface JadwalItem {
   readonly id: string;
@@ -179,6 +179,12 @@ export function TradingPage() {
   const [resistance, setResistance] = useState('');
   const [analisaSubmitting, setAnalisaSubmitting] = useState(false);
 
+  const [editingAnalisaId, setEditingAnalisaId] = useState<string | null>(null);
+  const [editAnalisaText, setEditAnalisaText] = useState('');
+  const [editSupport, setEditSupport] = useState('');
+  const [editResistance, setEditResistance] = useState('');
+  const [editAnalisaSaving, setEditAnalisaSaving] = useState(false);
+
   const [showKalkulator, setShowKalkulator] = useState(false);
   const [highInput, setHighInput] = useState('');
   const [lowInput, setLowInput] = useState('');
@@ -263,6 +269,34 @@ export function TradingPage() {
   async function handleAnalisaDelete(id: string) {
     await apiDelete(`/api/trading-analisa/${id}`);
     await loadAnalisa();
+  }
+
+  function openEditAnalisa(item: AnalisaItem) {
+    setEditingAnalisaId(item.id);
+    setEditAnalisaText(item.analisa);
+    setEditSupport(item.support ?? '');
+    setEditResistance(item.resistance ?? '');
+  }
+
+  function cancelEditAnalisa() {
+    setEditingAnalisaId(null);
+  }
+
+  async function handleAnalisaEditSave(id: string) {
+    setEditAnalisaSaving(true);
+    try {
+      await apiPatch(`/api/trading-analisa/${id}`, {
+        analisa: editAnalisaText.trim(),
+        support: editSupport.trim() || undefined,
+        resistance: editResistance.trim() || undefined,
+      });
+      setEditingAnalisaId(null);
+      await loadAnalisa();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menyimpan perubahan analisa');
+    } finally {
+      setEditAnalisaSaving(false);
+    }
   }
 
   function handleHitungAnalisa(e: React.FormEvent) {
@@ -619,7 +653,9 @@ export function TradingPage() {
             {analisaList.length === 0 ? (
               <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>Belum ada catatan analisa.</p>
             ) : (
-              analisaList.map((item) => (
+              analisaList.map((item) => {
+                const isEditing = editingAnalisaId === item.id;
+                return (
                 <div
                   key={item.id}
                   style={{
@@ -632,22 +668,107 @@ export function TradingPage() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.3rem' }}>
                     <strong style={{ fontSize: '0.78rem', color: BLUE }}>{formatTanggalDisplay(item.tanggal)}</strong>
-                    <button
-                      type="button"
-                      className="btn btn--xs btn--ghost"
-                      onClick={() => void handleAnalisaDelete(item.id)}
-                      style={{ color: '#dc2626' }}
-                    >
-                      Hapus
-                    </button>
+                    <div style={{ display: 'flex', gap: '0.35rem' }}>
+                      {isEditing ? (
+                        <>
+                          <button
+                            type="button"
+                            className="btn btn--xs btn--primary"
+                            onClick={() => void handleAnalisaEditSave(item.id)}
+                            disabled={editAnalisaSaving}
+                          >
+                            {editAnalisaSaving ? 'Menyimpan…' : '💾 Simpan'}
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--xs btn--ghost"
+                            onClick={cancelEditAnalisa}
+                            disabled={editAnalisaSaving}
+                          >
+                            Batal
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            type="button"
+                            className="btn btn--xs btn--ghost"
+                            onClick={() => openEditAnalisa(item)}
+                          >
+                            ✏️ Edit
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--xs btn--ghost"
+                            onClick={() => void handleAnalisaDelete(item.id)}
+                            style={{ color: '#dc2626' }}
+                          >
+                            Hapus
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
-                  <p style={{ margin: '0 0 0.4rem', fontSize: '0.85rem' }}>{item.analisa}</p>
-                  <div style={{ display: 'flex', gap: '1rem', fontSize: '0.78rem' }}>
-                    <span>Support: <strong>{item.support || '—'}</strong></span>
-                    <span>Resistance: <strong>{item.resistance || '—'}</strong></span>
-                  </div>
+
+                  {isEditing ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                      <textarea
+                        rows={3}
+                        value={editAnalisaText}
+                        onChange={(e) => setEditAnalisaText(e.target.value)}
+                        style={{ fontSize: '0.85rem' }}
+                      />
+                      <div style={{ display: 'flex', gap: '0.5rem' }}>
+                        <input
+                          value={editSupport}
+                          onChange={(e) => setEditSupport(e.target.value)}
+                          placeholder="Support"
+                          style={{ flex: 1, borderLeft: '3px solid #16a34a' }}
+                        />
+                        <input
+                          value={editResistance}
+                          onChange={(e) => setEditResistance(e.target.value)}
+                          placeholder="Resistance"
+                          style={{ flex: 1, borderLeft: '3px solid #dc2626' }}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <p style={{ margin: '0 0 0.5rem', fontSize: '0.85rem' }}>{item.analisa}</p>
+                      <div style={{ display: 'flex', gap: '0.6rem' }}>
+                        <div
+                          style={{
+                            border: '1px solid #86efac',
+                            borderRadius: '6px',
+                            background: '#f0fdf4',
+                            padding: '0.3rem 0.6rem',
+                          }}
+                        >
+                          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#16a34a' }}>SUPPORT</div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#15803d' }}>
+                            {item.support || '—'}
+                          </div>
+                        </div>
+                        <div
+                          style={{
+                            border: '1px solid #fca5a5',
+                            borderRadius: '6px',
+                            background: '#fef2f2',
+                            padding: '0.3rem 0.6rem',
+                          }}
+                        >
+                          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#dc2626' }}>RESISTANCE</div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#b91c1c' }}>
+                            {item.resistance || '—'}
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>
