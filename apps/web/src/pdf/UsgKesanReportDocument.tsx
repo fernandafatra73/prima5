@@ -47,8 +47,9 @@ const styles = StyleSheet.create({
   infoRow: { flexDirection: 'row', justifyContent: 'space-between' },
   infoRowSpacing: { marginTop: 5 },
   infoCell: { width: '48%', flexDirection: 'row' },
-  infoLabelLeft: { width: 100, fontSize: 9.5, textAlign: 'right', paddingRight: 4 },
-  infoLabelRight: { width: 90, fontSize: 9.5, textAlign: 'right', paddingRight: 4 },
+  infoLabelLeft: { width: 100, fontSize: 9.5 },
+  infoLabelRight: { width: 90, fontSize: 9.5 },
+  infoColon: { width: 6, fontSize: 9.5 },
   bold: { fontWeight: 'bold', fontSize: 9.5 },
 
   kesanSection: { marginTop: 16, flexGrow: 1 },
@@ -98,37 +99,44 @@ export function UsgKesanReportDocument({ data }: { readonly data: UsgKesanReport
           <View style={styles.infoGrid}>
             <View style={styles.infoRow}>
               <View style={styles.infoCell}>
-                <Text style={styles.infoLabelLeft}>Nama Pasien:</Text>
+                <Text style={styles.infoLabelLeft}>Nama Pasien</Text>
+                <Text style={styles.infoColon}>:</Text>
                 <Text style={styles.bold}>{data.namaPasien}</Text>
               </View>
               <View style={styles.infoCell}>
-                <Text style={styles.infoLabelRight}>Umur:</Text>
+                <Text style={styles.infoLabelRight}>Umur</Text>
+                <Text style={styles.infoColon}>:</Text>
                 <Text style={styles.bold}>{data.umur || '-'}</Text>
               </View>
             </View>
             <View style={[styles.infoRow, styles.infoRowSpacing]}>
               <View style={styles.infoCell}>
-                <Text style={styles.infoLabelLeft}>Alamat:</Text>
+                <Text style={styles.infoLabelLeft}>Alamat</Text>
+                <Text style={styles.infoColon}>:</Text>
                 <Text style={styles.bold}>{data.alamat || '-'}</Text>
               </View>
               <View style={styles.infoCell}>
-                <Text style={styles.infoLabelRight}>Pemeriksaan:</Text>
+                <Text style={styles.infoLabelRight}>Pemeriksaan</Text>
+                <Text style={styles.infoColon}>:</Text>
                 <Text style={styles.bold}>{data.jenisPemeriksaan || '-'}</Text>
               </View>
             </View>
             <View style={[styles.infoRow, styles.infoRowSpacing]}>
               <View style={styles.infoCell}>
-                <Text style={styles.infoLabelLeft}>No. Reg:</Text>
+                <Text style={styles.infoLabelLeft}>No. Reg</Text>
+                <Text style={styles.infoColon}>:</Text>
                 <Text style={styles.bold}>{data.regCode || '-'}</Text>
               </View>
               <View style={styles.infoCell}>
-                <Text style={styles.infoLabelRight}>Dokter Pengirim:</Text>
+                <Text style={styles.infoLabelRight}>Dokter Pengirim</Text>
+                <Text style={styles.infoColon}>:</Text>
                 <Text style={styles.bold}>{data.dokterPengirim || '-'}</Text>
               </View>
             </View>
             <View style={[styles.infoRow, styles.infoRowSpacing]}>
               <View style={styles.infoCell}>
-                <Text style={styles.infoLabelLeft}>Tanggal Pemeriksaan:</Text>
+                <Text style={styles.infoLabelLeft}>Tanggal Pemeriksaan</Text>
+                <Text style={styles.infoColon}>:</Text>
                 <Text style={styles.bold}>{data.tanggalLabel || '-'}</Text>
               </View>
             </View>
