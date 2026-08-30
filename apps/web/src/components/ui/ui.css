@@ -2109,44 +2109,27 @@
 }
 
 .win-frame--navy .metric-card {
-  background: #1d4ed8;
-  border-color: #1e3a8a;
+  border-color: #bfdbfe;
 }
 
 .win-frame--navy .metric-card__label {
-  color: #dbeafe;
+  color: #1d4ed8;
 }
 
 .win-frame--navy .metric-card__value {
-  color: #ffffff;
+  color: #1e3a8a;
 }
 
 .win-frame--navy .data-card {
-  background: #1d4ed8;
-  border-color: #1e3a8a;
-}
-
-.win-frame--navy .table-filter-bar {
-  background: rgba(255, 255, 255, 0.08);
-  border-bottom-color: rgba(255, 255, 255, 0.25);
-}
-
-.win-frame--navy .data-table {
-  background: transparent;
+  border-color: #bfdbfe;
 }
 
 .win-frame--navy .data-table th:not([style]) {
-  background: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  color: #1d4ed8;
 }
 
 .win-frame--navy .data-table tbody tr:not([style]) td {
-  color: #ffffff;
-  border-bottom-color: rgba(255, 255, 255, 0.18);
-}
-
-.win-frame--navy .data-table tbody tr:not([style]):hover {
-  background: rgba(255, 255, 255, 0.12);
+  color: #1e3a8a;
 }
 
 /* USG — hero header dan galeri kartu foto pemeriksaan. */
