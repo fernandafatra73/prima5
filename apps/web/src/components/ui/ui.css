@@ -2033,6 +2033,24 @@
   --win-close-hover-color: #b91c1c;
 }
 
+.win-frame--red .data-table {
+  background: #fee2e2;
+}
+
+.win-frame--red .data-table th:not([style]) {
+  background: #fecaca;
+  color: #991b1b;
+}
+
+.win-frame--red .data-table tbody tr:not([style]) td {
+  color: #7f1d1d;
+  border-bottom-color: #fecaca;
+}
+
+.win-frame--red .data-table tbody tr:not([style]):hover {
+  background: #fca5a5;
+}
+
 /* Modul Pendaftaran */
 .win-frame--navy {
   --win-border: #0f2a52;
