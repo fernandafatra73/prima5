@@ -18,6 +18,12 @@ const SOSMED_LINKS: readonly SosmedLink[] = [
   { id: 'telegram-sosmed', label: 'Telegram', url: 'https://telegram.org/', icon: '✈️' },
   { id: 'chatgpt', label: 'ChatGPT', url: 'https://chatgpt.com/', icon: '🤖' },
   { id: 'bloomberg', label: 'Bloomberg', url: 'https://www.bloomberg.com/', icon: '📰' },
+  {
+    id: 'exness',
+    label: 'Exness',
+    url: 'https://my.extrade.global/webtrading/?utm_source=mc&utm_medium=email&partner_id=12058011&utm_campaign=Weekly_Recap_XAUUSD_ACT_Chart_20260828',
+    icon: '💹',
+  },
 ];
 
 const cardStyle: React.CSSProperties = {
