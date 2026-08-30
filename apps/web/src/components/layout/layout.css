@@ -369,6 +369,11 @@
   box-shadow: var(--shadow-card);
 }
 
+.chart-card.dashboard-row__chart {
+  background: linear-gradient(160deg, #fef9c3 0%, #fed7aa 100%);
+  border: 1px solid #fdba74;
+}
+
 .dashboard-row {
   display: flex;
   align-items: flex-start;
@@ -392,14 +397,15 @@
   width: 6cm;
   padding: 0.9rem 1rem;
   border-radius: var(--radius-card);
-  background: var(--color-bg-surface);
+  background: linear-gradient(160deg, #fffbeb 0%, #ffedd5 100%);
+  border: 1px solid #fdba74;
   box-shadow: var(--shadow-card);
 }
 
 .dashboard-music-player__title {
   font-size: 0.85rem;
   font-weight: 700;
-  color: var(--color-text-heading);
+  color: #c2410c;
   margin-bottom: 0.6rem;
 }
 
@@ -435,7 +441,8 @@
   width: 6cm;
   height: 6cm;
   border-radius: var(--radius-card);
-  background: #cfe8fb;
+  background: linear-gradient(160deg, #fef08a 0%, #fb923c 100%);
+  border: 1px solid #fdba74;
   box-shadow: var(--shadow-card);
   overflow: hidden;
   display: flex;
@@ -454,6 +461,10 @@
   font-size: 1rem;
   font-weight: 700;
   color: var(--color-text-heading);
+}
+
+.dashboard-row__chart .chart-card__title {
+  color: #c2410c;
 }
 
 .apexcharts-canvas {
