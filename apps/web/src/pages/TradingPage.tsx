@@ -55,6 +55,7 @@ const TEHNIK_RILIS_MINGGUAN = [
 
 const BLUE = '#1d4ed8';
 const YELLOW = '#eab308';
+const GREEN = '#16a34a';
 
 function formatTanggalDisplay(dateStr: string): string {
   try {
@@ -393,6 +394,24 @@ export function TradingPage() {
             </button>
             <button
               type="button"
+              onClick={() =>
+                document.getElementById('tr-beli-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              style={{
+                padding: '0.35rem 0.9rem',
+                borderRadius: '999px',
+                border: `1px solid ${GREEN}`,
+                background: 'transparent',
+                color: 'var(--color-text)',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+              }}
+            >
+              🛒 Beli
+            </button>
+            <button
+              type="button"
               onClick={() => setShowKalkulator((v) => !v)}
               style={{
                 marginLeft: 'auto',
@@ -554,7 +573,7 @@ export function TradingPage() {
         </div>
       )}
 
-      <div style={cardStyle}>
+      <div id="tr-beli-section" style={cardStyle}>
         <div style={cardTitlebarStyle}>📝 Analisa &amp; Level Sebelum Beli XAU</div>
         <div style={cardBodyStyle}>
           <form onSubmit={(e) => void handleAnalisaSubmit(e)} className="form-grid">
