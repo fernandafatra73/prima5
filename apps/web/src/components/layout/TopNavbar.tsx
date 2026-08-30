@@ -171,7 +171,6 @@ export function TopNavbar({ activeId, onNavigate, role, departemen, onLogout }: 
 
       <div className="app-navbar__actions">
         <div className="app-navbar__user">
-          <span className="app-navbar__user-credit">By: F. Fatria Fatra</span>
           <div className="app-navbar__avatar" aria-hidden>
             FF
           </div>
