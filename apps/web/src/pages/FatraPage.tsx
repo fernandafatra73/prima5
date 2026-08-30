@@ -408,7 +408,7 @@ export function FatraPage() {
             disabled={recordingState !== 'idle'}
             title={recordingState !== 'idle' ? 'Stop rekaman dulu sebelum mematikan kamera' : 'Matikan kamera'}
           >
-            🛑 Stop Kamera
+            🛑 Matikan Kamera
           </button>
         )}
 
