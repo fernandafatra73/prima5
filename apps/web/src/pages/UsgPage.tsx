@@ -8,6 +8,7 @@ import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
 import { UsgReportDocument, type UsgReportData } from '../pdf/UsgReportDocument.tsx';
+import { UsgKertasKecilReportDocument } from '../pdf/UsgKertasKecilReportDocument.tsx';
 import { UsgKesanReportDocument, type UsgKesanReportData } from '../pdf/UsgKesanReportDocument.tsx';
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
 import { pdf } from '@react-pdf/renderer';
@@ -110,6 +111,7 @@ export function UsgPage() {
   const [printChoice, setPrintChoice] = useState<UsgItem | null>(null);
   const [printingKesanId, setPrintingKesanId] = useState<string | null>(null);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
+  const [previewBlobKecil, setPreviewBlobKecil] = useState<Blob | null>(null);
   const [previewFilename, setPreviewFilename] = useState('usg.pdf');
 
   const [radiologOptions, setRadiologOptions] = useState<RadiologOption[]>([]);
@@ -308,8 +310,12 @@ export function UsgPage() {
           day: '2-digit', month: 'long', year: 'numeric',
         }),
       };
-      const blob = await pdf(<UsgReportDocument data={data} />).toBlob();
+      const [blob, blobKecil] = await Promise.all([
+        pdf(<UsgReportDocument data={data} />).toBlob(),
+        pdf(<UsgKertasKecilReportDocument data={data} />).toBlob(),
+      ]);
       setPreviewBlob(blob);
+      setPreviewBlobKecil(blobKecil);
       setPreviewFilename(`USG_${item.namaPasien}.pdf`);
     } finally {
       setPrintingId(null);
@@ -817,8 +823,12 @@ export function UsgPage() {
       <UsgPdfPreviewModal
         open={previewBlob !== null}
         blob={previewBlob}
+        blobKecil={previewBlobKecil}
         filename={previewFilename}
-        onClose={() => setPreviewBlob(null)}
+        onClose={() => {
+          setPreviewBlob(null);
+          setPreviewBlobKecil(null);
+        }}
       />
 
       {printChoice && (
@@ -868,11 +878,12 @@ function UsgPrintChoiceModal({ item, onClose, onChoose }: UsgPrintChoiceModalPro
 interface UsgPdfPreviewModalProps {
   readonly open: boolean;
   readonly blob: Blob | null;
+  readonly blobKecil: Blob | null;
   readonly filename: string;
   readonly onClose: () => void;
 }
 
-function UsgPdfPreviewModal({ open, blob, filename, onClose }: UsgPdfPreviewModalProps) {
+function UsgPdfPreviewModal({ open, blob, blobKecil, filename, onClose }: UsgPdfPreviewModalProps) {
   const [url, setUrl] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -893,6 +904,28 @@ function UsgPdfPreviewModal({ open, blob, filename, onClose }: UsgPdfPreviewModa
     win.print();
   }
 
+  function handlePrintKecil() {
+    if (!blobKecil) return;
+    const objectUrl = URL.createObjectURL(blobKecil);
+    const hiddenFrame = document.createElement('iframe');
+    hiddenFrame.style.position = 'fixed';
+    hiddenFrame.style.right = '0';
+    hiddenFrame.style.bottom = '0';
+    hiddenFrame.style.width = '0';
+    hiddenFrame.style.height = '0';
+    hiddenFrame.style.border = '0';
+    hiddenFrame.src = objectUrl;
+    hiddenFrame.onload = () => {
+      hiddenFrame.contentWindow?.focus();
+      hiddenFrame.contentWindow?.print();
+    };
+    document.body.appendChild(hiddenFrame);
+    setTimeout(() => {
+      document.body.removeChild(hiddenFrame);
+      URL.revokeObjectURL(objectUrl);
+    }, 60_000);
+  }
+
   function handleDownload() {
     if (!blob) return;
     const objectUrl = URL.createObjectURL(blob);
@@ -908,6 +941,9 @@ function UsgPdfPreviewModal({ open, blob, filename, onClose }: UsgPdfPreviewModa
       <div className="pdf-preview__toolbar">
         <button type="button" className="btn btn--primary btn--sm" onClick={handlePrint}>
           Cetak
+        </button>
+        <button type="button" className="btn btn--ghost btn--sm" onClick={handlePrintKecil} disabled={!blobKecil}>
+          Cetak Kertas Kecil
         </button>
         <button type="button" className="btn btn--ghost btn--sm" onClick={handleDownload}>
           Unduh PDF

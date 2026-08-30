@@ -6,87 +6,69 @@ import {
   Text,
   View,
 } from '@react-pdf/renderer';
-
-export interface UsgReportData {
-  readonly logoSrc: string;
-  readonly namaKlinik: string;
-  readonly alamatKlinik: string;
-  readonly teleponKlinik: string;
-  readonly namaPasien: string;
-  readonly umur: string;
-  readonly alamat: string;
-  readonly regCode: string;
-  readonly jenisPemeriksaan: string;
-  readonly tanggalLabel: string;
-  readonly dokterPengirim: string;
-  readonly fotoDataUrl: string;
-  readonly fotoDataUrl2: string;
-  readonly fotoDataUrl3: string;
-  readonly fotoDataUrl4: string;
-  readonly analisa: string;
-  readonly kesan: string;
-  readonly radiologNama: string;
-  readonly tanggalCetak: string;
-}
+import type { UsgReportData } from './UsgReportDocument.tsx';
 
 const BLUE = '#2b4c9b';
 const BLACK = '#1a1a1a';
 
 const styles = StyleSheet.create({
-  page: { padding: 20, fontFamily: 'Helvetica', fontSize: 9.5, color: BLACK },
-  frame: { height: '100%', borderWidth: 1, borderColor: BLACK, padding: 12, flexDirection: 'column' },
+  page: { padding: 14, fontFamily: 'Helvetica', fontSize: 8, color: BLACK },
+  frame: { height: '100%', borderWidth: 1, borderColor: BLACK, padding: 9, flexDirection: 'column' },
   headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
-  logo: { width: 44, height: 44, marginRight: 10 },
+  logo: { width: 34, height: 34, marginRight: 7 },
   headerText: { flex: 1 },
-  clinicName: { fontSize: 15, fontWeight: 'bold', color: BLUE, marginBottom: 2 },
-  clinicAddress: { fontSize: 8, color: BLACK, lineHeight: 1.35 },
-  divider: { height: 2, backgroundColor: BLUE, marginVertical: 6 },
-  titleSection: { textAlign: 'center', marginVertical: 4 },
-  reportTitle: { fontSize: 12, fontWeight: 'bold', color: BLUE, textTransform: 'uppercase' },
+  clinicName: { fontSize: 12, fontWeight: 'bold', color: BLUE, marginBottom: 1 },
+  clinicAddress: { fontSize: 6.5, color: BLACK, lineHeight: 1.3 },
+  divider: { height: 1.5, backgroundColor: BLUE, marginVertical: 4 },
+  titleSection: { textAlign: 'center', marginVertical: 3 },
+  reportTitle: { fontSize: 10, fontWeight: 'bold', color: BLUE, textTransform: 'uppercase' },
 
   infoGrid: {
-    marginVertical: 6,
-    padding: 6, backgroundColor: '#f8fafc', borderWidth: 0.5, borderColor: '#cbd5e1',
+    marginVertical: 4,
+    padding: 5, backgroundColor: '#f8fafc', borderWidth: 0.5, borderColor: '#cbd5e1',
   },
   infoRow: { flexDirection: 'row', justifyContent: 'space-between' },
-  infoRowSpacing: { marginTop: 4 },
+  infoRowSpacing: { marginTop: 3 },
   infoCell: { width: '48%', flexDirection: 'row' },
-  infoLabelLeft: { width: 60, fontSize: 8.5 },
-  infoLabelRight: { width: 80, fontSize: 8.5 },
-  bold: { fontWeight: 'bold', fontSize: 8.5 },
+  infoLabelLeft: { width: 46, fontSize: 6.5 },
+  infoLabelRight: { width: 60, fontSize: 6.5 },
+  bold: { fontWeight: 'bold', fontSize: 6.5 },
 
-  photoStack: { marginVertical: 8 },
-  photoRow: { flexDirection: 'row', justifyContent: 'center', gap: 8 },
-  photoRowSpacing: { marginTop: 8 },
+  photoStack: { marginVertical: 5 },
+  photoRow: { flexDirection: 'row', justifyContent: 'center', gap: 5 },
+  photoRowSpacing: { marginTop: 5 },
   photoContainer: {
-    alignItems: 'center', borderWidth: 0.8, borderColor: BLACK, padding: 8,
+    alignItems: 'center', borderWidth: 0.8, borderColor: BLACK, padding: 5,
   },
-  photo: { maxWidth: 320, maxHeight: 320, objectFit: 'contain' },
-  photoHalf: { maxWidth: 235, maxHeight: 235, objectFit: 'contain' },
-  photoQuarter: { maxWidth: 195, maxHeight: 195, objectFit: 'contain' },
+  photo: { maxWidth: 200, maxHeight: 200, objectFit: 'contain' },
+  photoHalf: { maxWidth: 148, maxHeight: 148, objectFit: 'contain' },
+  photoQuarter: { maxWidth: 122, maxHeight: 122, objectFit: 'contain' },
 
-  section: { marginTop: 8 },
-  sectionLabel: { fontSize: 9.5, fontWeight: 'bold', color: BLUE, marginBottom: 3 },
-  sectionLabelInline: { fontSize: 9.5, fontWeight: 'bold', color: BLUE },
+  section: { marginTop: 5 },
+  sectionLabel: { fontSize: 8, fontWeight: 'bold', color: BLUE, marginBottom: 2 },
+  sectionLabelInline: { fontSize: 8, fontWeight: 'bold', color: BLUE },
   sectionBody: {
-    fontSize: 9.5, lineHeight: 1.5, padding: 6, borderWidth: 0.5, borderColor: '#cbd5e1', minHeight: 30,
+    fontSize: 8, lineHeight: 1.4, padding: 4, borderWidth: 0.5, borderColor: '#cbd5e1', minHeight: 20,
   },
 
-  disclaimer: { fontSize: 6.5, fontStyle: 'italic', color: '#64748b', marginTop: 8 },
+  disclaimer: { fontSize: 5.5, fontStyle: 'italic', color: '#64748b', marginTop: 5 },
 
-  signatureSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 18, paddingHorizontal: 20 },
-  signatureBox: { alignItems: 'center', width: 170 },
-  signatureTitle: { fontSize: 8, marginBottom: 28 },
+  signatureSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10, paddingHorizontal: 10 },
+  signatureBox: { alignItems: 'center', width: 130 },
+  signatureTitle: { fontSize: 6.5, marginBottom: 18 },
   signatureName: {
-    fontSize: 8, fontWeight: 'bold', width: '100%', textAlign: 'center',
+    fontSize: 6.5, fontWeight: 'bold', width: '100%', textAlign: 'center',
   },
   signatureRole: {
-    fontSize: 8, textAlign: 'center', marginTop: 1, borderTopWidth: 0.8, borderColor: BLACK,
+    fontSize: 6.5, textAlign: 'center', marginTop: 1, borderTopWidth: 0.8, borderColor: BLACK,
     paddingTop: 2, width: '100%',
   },
 });
 
-export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
+/** Varian "kertas kecil" dari UsgReportDocument, memakai ukuran kertas yang
+ * sama dengan cetak radiologi (14.85cm x 21cm, A4 dibagi 2) tapi isinya
+ * identik dengan hasil USG ukuran penuh. */
+export function UsgKertasKecilReportDocument({ data }: { readonly data: UsgReportData }) {
   const photos = [data.fotoDataUrl, data.fotoDataUrl2, data.fotoDataUrl3, data.fotoDataUrl4].filter(
     (src): src is string => Boolean(src),
   );
@@ -94,8 +76,9 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
   const photoRows = photos.length > 2 ? [photos.slice(0, 2), photos.slice(2, 4)] : [photos];
 
   return (
-    <Document title={`USG_${data.namaPasien}.pdf`}>
-      <Page size="A4" style={styles.page}>
+    <Document title={`USG_${data.namaPasien}_kertas-kecil.pdf`}>
+      {/* 420.95 pt x 595.28 pt = 14.85cm x 21cm, sama seperti ukuran cetak radiologi. */}
+      <Page size={[420.95, 595.28]} style={styles.page}>
         <View style={styles.frame}>
           <View style={styles.headerRow}>
             {data.logoSrc ? <Image style={styles.logo} src={data.logoSrc} /> : null}
