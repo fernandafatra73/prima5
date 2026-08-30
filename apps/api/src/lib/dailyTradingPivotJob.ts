@@ -13,6 +13,10 @@ function computePivotLevels(high: number, low: number, close: number) {
   const pivot = (high + low + close) / 3;
   const r1 = 2 * pivot - low;
   const s1 = 2 * pivot - high;
+  const r2 = pivot + (high - low);
+  const s2 = pivot - (high - low);
+  const r3 = high + 2 * (pivot - low);
+  const s3 = low - 2 * (high - pivot);
 
   let signal: 'BELI' | 'JUAL' | 'NETRAL' = 'NETRAL';
   let alasan = 'Harga penutupan berada di sekitar pivot, belum ada bias arah yang jelas.';
@@ -30,7 +34,7 @@ function computePivotLevels(high: number, low: number, close: number) {
     alasan = 'Harga penutupan di bawah pivot — bias jangka pendek cenderung bearish (turun).';
   }
 
-  return { pivot, r1, s1, signal, alasan };
+  return { pivot, r1, r2, r3, s1, s2, s3, signal, alasan };
 }
 
 function startOfToday(): Date {
@@ -65,16 +69,22 @@ async function runDailyPivotJob(app: FastifyInstance): Promise<void> {
     return;
   }
 
-  const { pivot, r1, s1, signal, alasan } = computePivotLevels(point.high, point.low, point.close);
+  const { pivot, r1, r2, r3, s1, s2, s3, signal, alasan } = computePivotLevels(
+    point.high,
+    point.low,
+    point.close,
+  );
   const analisa =
     `${AUTO_TAG} Sinyal: ${signal} — ${alasan} ` +
-    `(H=${point.high}, L=${point.low}, C=${point.close} dari data tanggal ${point.date}, Pivot=${pivot.toFixed(2)})`;
+    `(H=${point.high}, L=${point.low}, C=${point.close} dari data tanggal ${point.date}, Pivot=${pivot.toFixed(2)}) ` +
+    `Rencana: BELI di area Support (S1 ${s1.toFixed(2)}, S2 ${s2.toFixed(2)}, S3 ${s3.toFixed(2)}); ` +
+    `JUAL di area Resistance (R1 ${r1.toFixed(2)}, R2 ${r2.toFixed(2)}, R3 ${r3.toFixed(2)}).`;
 
   await prisma.tradingAnalisa.create({
     data: {
       analisa,
-      support: s1.toFixed(2),
-      resistance: r1.toFixed(2),
+      support: `S1 ${s1.toFixed(2)} · S2 ${s2.toFixed(2)} · S3 ${s3.toFixed(2)}`,
+      resistance: `R1 ${r1.toFixed(2)} · R2 ${r2.toFixed(2)} · R3 ${r3.toFixed(2)}`,
     },
   });
   app.log.info({ signal, pivot: pivot.toFixed(2), sumberTanggal: point.date }, 'Job pivot harian XAU/USD tersimpan');

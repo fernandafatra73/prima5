@@ -321,12 +321,15 @@ export function TradingPage() {
 
   function handleGunakanUntukJurnal() {
     if (!pivotResult) return;
+    const { s1, s2, s3, r1, r2, r3, pivot, signal, alasan } = pivotResult;
     const ringkas =
-      `Sinyal: ${pivotResult.signal} — ${pivotResult.alasan} ` +
-      `(H=${highInput}, L=${lowInput}, C=${closeInput}, Harga saat ini=${currentInput}, Pivot=${pivotResult.pivot.toFixed(2)})`;
+      `Sinyal: ${signal} — ${alasan} ` +
+      `(H=${highInput}, L=${lowInput}, C=${closeInput}, Harga saat ini=${currentInput}, Pivot=${pivot.toFixed(2)}) ` +
+      `Rencana: BELI di area Support (S1 ${s1.toFixed(2)}, S2 ${s2.toFixed(2)}, S3 ${s3.toFixed(2)}); ` +
+      `JUAL di area Resistance (R1 ${r1.toFixed(2)}, R2 ${r2.toFixed(2)}, R3 ${r3.toFixed(2)}).`;
     setAnalisaText(ringkas);
-    setSupport(pivotResult.s1.toFixed(2));
-    setResistance(pivotResult.r1.toFixed(2));
+    setSupport(`S1 ${s1.toFixed(2)} · S2 ${s2.toFixed(2)} · S3 ${s3.toFixed(2)}`);
+    setResistance(`R1 ${r1.toFixed(2)} · R2 ${r2.toFixed(2)} · R3 ${r3.toFixed(2)}`);
     document.getElementById('tr-analisa')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
@@ -462,13 +465,49 @@ export function TradingPage() {
               🔍 {showKalkulator ? 'Tutup Analisa' : 'Analisa Grafik (Beli/Jual)'}
             </button>
           </div>
-          <div style={{ height: 480, border: '1px solid var(--color-border)', borderRadius: '8px', overflow: 'hidden' }}>
+          <div
+            style={{
+              position: 'relative',
+              height: 480,
+              border: '1px solid var(--color-border)',
+              borderRadius: '8px',
+              overflow: 'hidden',
+            }}
+          >
             <iframe
               key={interval}
               title="Grafik XAU/USD"
               src={chartSrc(interval)}
               style={{ width: '100%', height: '100%', border: 'none' }}
             />
+            {analisaList.length > 0 && (
+              <div
+                style={{
+                  position: 'absolute',
+                  top: 8,
+                  right: 8,
+                  maxWidth: 230,
+                  padding: '0.6rem 0.7rem',
+                  borderRadius: '8px',
+                  background: 'rgba(15, 23, 42, 0.88)',
+                  color: '#ffffff',
+                  fontSize: '0.72rem',
+                  lineHeight: 1.5,
+                  pointerEvents: 'none',
+                  boxShadow: '0 4px 12px rgba(0,0,0,0.25)',
+                }}
+              >
+                <div style={{ fontWeight: 700, marginBottom: '0.3rem', color: YELLOW }}>
+                  📊 Analisa Terakhir — {formatTanggalDisplay(analisaList[0]!.tanggal)}
+                </div>
+                {analisaList[0]!.support && (
+                  <div style={{ color: '#86efac' }}>Support: {analisaList[0]!.support}</div>
+                )}
+                {analisaList[0]!.resistance && (
+                  <div style={{ color: '#fca5a5' }}>Resistance: {analisaList[0]!.resistance}</div>
+                )}
+              </div>
+            )}
           </div>
         </div>
       </div>
