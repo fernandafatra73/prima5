@@ -81,7 +81,8 @@ const styles = StyleSheet.create({
 
   disclaimer: { fontSize: 6.5, fontStyle: 'italic', color: '#64748b', marginTop: 8 },
 
-  signatureSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 18, paddingHorizontal: 20 },
+  // marginTop dinaikkan 1cm (28.3465pt) dari posisi semula (18).
+  signatureSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: -10.35, paddingHorizontal: 20 },
   signatureBox: { alignItems: 'center', width: 170 },
   signatureTitle: { fontSize: 8, marginBottom: 4 },
   signatureImage: { width: 150, height: 47, objectFit: 'contain', marginBottom: 2 },
