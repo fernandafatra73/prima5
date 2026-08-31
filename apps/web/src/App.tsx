@@ -343,10 +343,48 @@ function pickIndonesianVoice(
   return preferred ?? idVoices[0]!;
 }
 
-/** Ucapkan sambutan login, menunggu daftar voice browser termuat dulu (pada
- * beberapa browser getVoices() kosong sampai event "voiceschanged" terpicu)
- * agar bisa memilih voice Bahasa Indonesia, bukan voice default yang salah
- * melafalkan teks sehingga terdengar tidak jelas. */
+/** Bunyi "ding-dong" khas pengumuman kabin pesawat, dimainkan sebelum
+ * ucapan sambutan supaya terasa seperti announcement layanan penerbangan. */
+function playAnnouncementChime(): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === 'undefined' || !('AudioContext' in window)) {
+      resolve();
+      return;
+    }
+    const ctx = new AudioContext();
+    const notes: ReadonlyArray<readonly [freq: number, offsetMs: number, durationMs: number]> = [
+      [880, 0, 450],
+      [659.25, 480, 600],
+    ];
+    for (const [freq, offsetMs, durationMs] of notes) {
+      const start = ctx.currentTime + offsetMs / 1000;
+      const duration = durationMs / 1000;
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.0001, start);
+      gain.gain.exponentialRampToValueAtTime(0.25, start + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.0001, start + duration);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(start);
+      osc.stop(start + duration);
+    }
+    const totalMs = Math.max(...notes.map(([, offsetMs, durationMs]) => offsetMs + durationMs));
+    setTimeout(() => {
+      void ctx.close();
+      resolve();
+    }, totalMs + 250);
+  });
+}
+
+/** Ucapkan sambutan login ala pengumuman layanan pesawat: bunyi chime
+ * "ding-dong" dulu, baru ucapan dengan tempo sedikit lebih pelan dan nada
+ * datar seperti pramugari/pramugara membacakan pengumuman kabin. Voice
+ * Bahasa Indonesia dipilih setelah daftar voice browser termuat (pada
+ * beberapa browser getVoices() kosong sampai event "voiceschanged"
+ * terpicu), supaya tidak salah lafal dan terdengar tidak jelas. */
 function speakLoginGreeting(onDone: () => void): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
     onDone();
@@ -355,6 +393,8 @@ function speakLoginGreeting(onDone: () => void): void {
   const synth = window.speechSynthesis;
   const utter = new SpeechSynthesisUtterance(LOGIN_GREETING);
   utter.lang = 'id-ID';
+  utter.rate = 0.92;
+  utter.pitch = 0.95;
   utter.onend = onDone;
   utter.onerror = onDone;
 
@@ -368,19 +408,23 @@ function speakLoginGreeting(onDone: () => void): void {
     synth.speak(utter);
   };
 
-  if (synth.getVoices().length > 0) {
-    speakNow();
-    return;
-  }
-  let started = false;
-  const start = () => {
-    if (started) return;
-    started = true;
-    synth.removeEventListener('voiceschanged', start);
-    speakNow();
+  const waitForVoicesThenSpeak = () => {
+    if (synth.getVoices().length > 0) {
+      speakNow();
+      return;
+    }
+    let started = false;
+    const start = () => {
+      if (started) return;
+      started = true;
+      synth.removeEventListener('voiceschanged', start);
+      speakNow();
+    };
+    synth.addEventListener('voiceschanged', start);
+    setTimeout(start, 300);
   };
-  synth.addEventListener('voiceschanged', start);
-  setTimeout(start, 300);
+
+  void playAnnouncementChime().then(waitForVoicesThenSpeak);
 }
 
 /** Ucapan selamat datang (text-to-speech) + auto-play lagu pertama di
