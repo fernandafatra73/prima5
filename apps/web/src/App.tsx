@@ -1,5 +1,5 @@
 import { ListRefreshProvider } from './context/ListRefreshContext.tsx';
-import { MusicPlayerProvider } from './context/MusicPlayerContext.tsx';
+import { MusicPlayerProvider, useMusicPlayer } from './context/MusicPlayerContext.tsx';
 import { AppShell } from './components/layout/AppShell.tsx';
 import { PdfPreviewHost } from './pdf/pdfPreviewHost.tsx';
 import {
@@ -91,7 +91,7 @@ import { AutotextPage } from './pages/AutotextPage.tsx';
 import { ComingSoonPage } from './pages/ComingSoonPage.tsx';
 import { DataTerbesarPage } from './pages/DataTerbesarPage.tsx';
 import { HakAksesPage } from './pages/HakAksesPage.tsx';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 function AccessDenied({ viewId }: { readonly viewId: AppViewId }) {
   return (
@@ -328,18 +328,51 @@ function renderView(
   );
 }
 
+const LOGIN_GREETING =
+  'Selamat anda memasuki area prima husada. Bekerjalah dengan sungguh-sungguh, semoga hari harimu menyenangkan. Buatlah kebahagian di tempat kerja mu, rejeki akan mengikuti selamanya.';
+
+/** Ucapan selamat datang (text-to-speech) + auto-play lagu pertama di
+ * playlist, sekali saja tepat setelah login — bukan setiap kali sesi lama
+ * dipulihkan (refresh halaman). */
+function LoginWelcomeEffect() {
+  const { playlist, playItem } = useMusicPlayer();
+  const spokenRef = useRef(false);
+  const autoPlayedRef = useRef(false);
+
+  useEffect(() => {
+    if (spokenRef.current) return;
+    spokenRef.current = true;
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    const utter = new SpeechSynthesisUtterance(LOGIN_GREETING);
+    utter.lang = 'id-ID';
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(utter);
+  }, []);
+
+  useEffect(() => {
+    if (autoPlayedRef.current || playlist.length === 0) return;
+    autoPlayedRef.current = true;
+    playItem(playlist[0]!);
+  }, [playlist, playItem]);
+
+  return null;
+}
+
 export function App() {
   const { activeView, navigate } = useAppNavigation();
   const [authUser, setAuthUser] = useState<AuthUser | null>(() => loadStoredAuthUser());
+  const [justLoggedIn, setJustLoggedIn] = useState(false);
 
   function handleLogin(user: AuthUser): void {
     storeAuthUser(user);
     setAuthUser(user);
+    setJustLoggedIn(true);
   }
 
   function handleLogout(): void {
     clearStoredAuthUser();
     setAuthUser(null);
+    setJustLoggedIn(false);
   }
 
   if (!authUser) {
@@ -349,6 +382,7 @@ export function App() {
   return (
     <ListRefreshProvider>
       <MusicPlayerProvider>
+        {justLoggedIn && <LoginWelcomeEffect />}
         <PdfPreviewHost>
           <AppShell activeView={activeView} authUser={authUser} onNavigate={navigate} onLogout={handleLogout}>
             {renderView(activeView, authUser.role, authUser.departemen, navigate)}
