@@ -211,7 +211,7 @@ export function ExpertisePage() {
           onClose={closeModal}
         >
           <form onSubmit={(e) => void handleSubmit(e)} className="form-grid">
-            <div className="form-field form-field--full">
+            <div className="form-field form-field--full" style={{ gridColumn: '1 / -1' }}>
               <label htmlFor="expertise-nama-penyakit">Nama Penyakit</label>
               <input
                 id="expertise-nama-penyakit"
@@ -221,7 +221,7 @@ export function ExpertisePage() {
                 placeholder="Nama penyakit..."
               />
             </div>
-            <div className="form-field form-field--full">
+            <div className="form-field">
               <label htmlFor="expertise-pemeriksaan">Pemeriksaan</label>
               <input
                 id="expertise-pemeriksaan"
@@ -231,7 +231,7 @@ export function ExpertisePage() {
                 placeholder="Jenis pemeriksaan..."
               />
             </div>
-            <div className="form-field form-field--full">
+            <div className="form-field">
               <label htmlFor="expertise-klinis">Klinis</label>
               <textarea
                 id="expertise-klinis"
