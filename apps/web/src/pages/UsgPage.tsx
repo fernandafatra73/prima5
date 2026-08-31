@@ -136,6 +136,7 @@ export function UsgPage() {
   const [printingAmplopId, setPrintingAmplopId] = useState<string | null>(null);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [previewBlobKecil, setPreviewBlobKecil] = useState<Blob | null>(null);
+  const [previewBlobNoSignature, setPreviewBlobNoSignature] = useState<Blob | null>(null);
   const [previewFilename, setPreviewFilename] = useState('usg.pdf');
 
   const [radiologOptions, setRadiologOptions] = useState<RadiologOption[]>([]);
@@ -336,12 +337,14 @@ export function UsgPage() {
           day: '2-digit', month: 'long', year: 'numeric',
         }),
       };
-      const [blob, blobKecil] = await Promise.all([
+      const [blob, blobKecil, blobNoSignature] = await Promise.all([
         pdf(<UsgReportDocument data={data} />).toBlob(),
         pdf(<UsgKertasKecilReportDocument data={data} />).toBlob(),
+        pdf(<UsgReportDocument data={{ ...data, signatureSrc: undefined }} />).toBlob(),
       ]);
       setPreviewBlob(blob);
       setPreviewBlobKecil(blobKecil);
+      setPreviewBlobNoSignature(blobNoSignature);
       setPreviewFilename(`USG_${item.namaPasien}.pdf`);
     } finally {
       setPrintingId(null);
@@ -377,6 +380,8 @@ export function UsgPage() {
       };
       const blob = await pdf(<UsgKesanReportDocument data={data} />).toBlob();
       setPreviewBlob(blob);
+      setPreviewBlobKecil(null);
+      setPreviewBlobNoSignature(null);
       setPreviewFilename(`Kesan_USG_${item.namaPasien}.pdf`);
     } finally {
       setPrintingKesanId(null);
@@ -1067,10 +1072,12 @@ export function UsgPage() {
         open={previewBlob !== null}
         blob={previewBlob}
         blobKecil={previewBlobKecil}
+        blobNoSignature={previewBlobNoSignature}
         filename={previewFilename}
         onClose={() => {
           setPreviewBlob(null);
           setPreviewBlobKecil(null);
+          setPreviewBlobNoSignature(null);
         }}
       />
 
@@ -1122,11 +1129,12 @@ interface UsgPdfPreviewModalProps {
   readonly open: boolean;
   readonly blob: Blob | null;
   readonly blobKecil: Blob | null;
+  readonly blobNoSignature: Blob | null;
   readonly filename: string;
   readonly onClose: () => void;
 }
 
-function UsgPdfPreviewModal({ open, blob, blobKecil, filename, onClose }: UsgPdfPreviewModalProps) {
+function UsgPdfPreviewModal({ open, blob, blobKecil, blobNoSignature, filename, onClose }: UsgPdfPreviewModalProps) {
   const [url, setUrl] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
@@ -1147,9 +1155,8 @@ function UsgPdfPreviewModal({ open, blob, blobKecil, filename, onClose }: UsgPdf
     win.print();
   }
 
-  function handlePrintKecil() {
-    if (!blobKecil) return;
-    const objectUrl = URL.createObjectURL(blobKecil);
+  function printBlobSilently(targetBlob: Blob) {
+    const objectUrl = URL.createObjectURL(targetBlob);
     const hiddenFrame = document.createElement('iframe');
     hiddenFrame.style.position = 'fixed';
     hiddenFrame.style.right = '0';
@@ -1167,6 +1174,14 @@ function UsgPdfPreviewModal({ open, blob, blobKecil, filename, onClose }: UsgPdf
       document.body.removeChild(hiddenFrame);
       URL.revokeObjectURL(objectUrl);
     }, 60_000);
+  }
+
+  function handlePrintKecil() {
+    if (blobKecil) printBlobSilently(blobKecil);
+  }
+
+  function handlePrintNoSignature() {
+    if (blobNoSignature) printBlobSilently(blobNoSignature);
   }
 
   function handleDownload() {
@@ -1187,6 +1202,14 @@ function UsgPdfPreviewModal({ open, blob, blobKecil, filename, onClose }: UsgPdf
         </button>
         <button type="button" className="btn btn--ghost btn--sm" onClick={handlePrintKecil} disabled={!blobKecil}>
           Cetak Kertas Kecil
+        </button>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={handlePrintNoSignature}
+          disabled={!blobNoSignature}
+        >
+          Cetak Tanpa TTD
         </button>
         <button type="button" className="btn btn--ghost btn--sm" onClick={handleDownload}>
           Unduh PDF
