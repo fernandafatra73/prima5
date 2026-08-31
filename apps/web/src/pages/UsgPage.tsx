@@ -11,6 +11,7 @@ import { UsgReportDocument, type UsgReportData } from '../pdf/UsgReportDocument.
 import { UsgKertasKecilReportDocument } from '../pdf/UsgKertasKecilReportDocument.tsx';
 import { UsgKesanReportDocument, type UsgKesanReportData } from '../pdf/UsgKesanReportDocument.tsx';
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
+import { loadSignatureDataUrl } from '../pdf/loadSignatureDataUrl.ts';
 import { pdf } from '@react-pdf/renderer';
 import '../components/ui/ui.css';
 
@@ -301,8 +302,9 @@ export function UsgPage() {
     setPrintChoice(null);
     setPrintingId(item.id);
     try {
-      const [logoRes, kopSuratRes] = await Promise.all([
+      const [logoRes, signatureRes, kopSuratRes] = await Promise.all([
         loadLogoDataUrl().catch(() => ''),
+        loadSignatureDataUrl().catch(() => undefined),
         apiGet<{ item: KopSuratData }>('/api/kop-surat').catch(() => null),
       ]);
       const photos = [item.fotoDataUrl, item.fotoDataUrl2 ?? '', item.fotoDataUrl3 ?? '', item.fotoDataUrl4 ?? ''].slice(
@@ -311,6 +313,7 @@ export function UsgPage() {
       );
       const data: UsgReportData = {
         logoSrc: kopSuratRes?.item.logoDataUrl || logoRes,
+        signatureSrc: signatureRes,
         namaKlinik: kopSuratRes?.item.namaKlinik || 'KLINIK PRIMA HUSADA',
         alamatKlinik: kopSuratRes?.item.alamat || '',
         teleponKlinik: kopSuratRes?.item.telepon || '',
@@ -347,12 +350,14 @@ export function UsgPage() {
   async function handlePrintKesan(item: UsgItem) {
     setPrintingKesanId(item.id);
     try {
-      const [logoRes, kopSuratRes] = await Promise.all([
+      const [logoRes, signatureRes, kopSuratRes] = await Promise.all([
         loadLogoDataUrl().catch(() => ''),
+        loadSignatureDataUrl().catch(() => undefined),
         apiGet<{ item: KopSuratData }>('/api/kop-surat').catch(() => null),
       ]);
       const data: UsgKesanReportData = {
         logoSrc: kopSuratRes?.item.logoDataUrl || logoRes,
+        signatureSrc: signatureRes,
         namaKlinik: kopSuratRes?.item.namaKlinik || 'KLINIK PRIMA HUSADA',
         alamatKlinik: kopSuratRes?.item.alamat || '',
         teleponKlinik: kopSuratRes?.item.telepon || '',

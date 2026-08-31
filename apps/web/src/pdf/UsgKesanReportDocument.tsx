@@ -22,6 +22,7 @@ export interface UsgKesanReportData {
   readonly kesan: string;
   readonly radiologNama: string;
   readonly tanggalCetak: string;
+  readonly signatureSrc?: string;
 }
 
 const BLUE = '#2b4c9b';
@@ -69,7 +70,9 @@ const styles = StyleSheet.create({
 
   signatureSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 24, paddingHorizontal: 20 },
   signatureBox: { alignItems: 'center', width: 190 },
-  signatureTitle: { fontSize: 9, marginBottom: 32 },
+  signatureTitle: { fontSize: 9, marginBottom: 4 },
+  signatureImage: { width: 100, height: 32, objectFit: 'contain', marginBottom: 2 },
+  signatureGap: { height: 32, marginBottom: 2 },
   signatureName: {
     fontSize: 9, fontWeight: 'bold', width: '100%', textAlign: 'center',
   },
@@ -157,6 +160,11 @@ export function UsgKesanReportDocument({ data }: { readonly data: UsgKesanReport
           <View style={styles.signatureSection}>
             <View style={styles.signatureBox}>
               <Text style={styles.signatureTitle}>Teman Sejawat</Text>
+              {data.signatureSrc ? (
+                <Image style={styles.signatureImage} src={data.signatureSrc} />
+              ) : (
+                <View style={styles.signatureGap} />
+              )}
               <Text style={styles.signatureName}>{data.radiologNama}</Text>
               <Text style={styles.signatureRole}>Radiolog</Text>
             </View>

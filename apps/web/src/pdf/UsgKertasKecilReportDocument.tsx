@@ -61,7 +61,9 @@ const styles = StyleSheet.create({
 
   signatureSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10, paddingHorizontal: 10 },
   signatureBox: { alignItems: 'center', width: 130 },
-  signatureTitle: { fontSize: 6.5, marginBottom: 18 },
+  signatureTitle: { fontSize: 6.5, marginBottom: 3 },
+  signatureImage: { width: 65, height: 20, objectFit: 'contain', marginBottom: 1 },
+  signatureGap: { height: 20, marginBottom: 1 },
   signatureName: {
     fontSize: 6.5, fontWeight: 'bold', width: '100%', textAlign: 'center',
   },
@@ -175,6 +177,11 @@ export function UsgKertasKecilReportDocument({ data }: { readonly data: UsgRepor
           <View style={styles.signatureSection}>
             <View style={styles.signatureBox}>
               <Text style={styles.signatureTitle}>Teman Sejawat</Text>
+              {data.signatureSrc ? (
+                <Image style={styles.signatureImage} src={data.signatureSrc} />
+              ) : (
+                <View style={styles.signatureGap} />
+              )}
               <Text style={styles.signatureName}>{data.radiologNama}</Text>
               <Text style={styles.signatureRole}>Radiolog</Text>
             </View>
