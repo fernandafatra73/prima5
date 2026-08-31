@@ -1,4 +1,5 @@
 import { useState, type ChangeEvent, type FormEvent } from 'react';
+import { PDFViewer, pdf } from '@react-pdf/renderer';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
@@ -7,7 +8,9 @@ import { TableRowActions } from '../components/ui/TableRowActions.tsx';
 import { useListQueryParams, useListSearch } from '../hooks/useListQueryParams.ts';
 import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
-import { apiDelete, apiPatch, apiPost } from '../lib/api.ts';
+import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
+import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
+import { ExpertiseReportDocument, type ExpertiseReportData } from '../pdf/ExpertiseReportDocument.tsx';
 import '../components/ui/ui.css';
 
 interface ExpertiseItem {
@@ -17,6 +20,26 @@ interface ExpertiseItem {
   readonly namaPenyakit: string | null;
   readonly fotoDataUrl: string | null;
   readonly kesan: string | null;
+}
+
+interface KopSuratData {
+  readonly namaKlinik: string;
+  readonly alamat: string;
+  readonly telepon: string;
+  readonly logoDataUrl: string | null;
+}
+
+function formatTanggalCetak(): string {
+  return new Date().toLocaleDateString('id-ID', { day: '2-digit', month: 'long', year: 'numeric' });
+}
+
+function downloadBlob(blob: Blob, filename: string): void {
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.click();
+  URL.revokeObjectURL(url);
 }
 
 const emptyForm = {
@@ -42,6 +65,12 @@ export function ExpertisePage() {
   const [deleting, setDeleting] = useState<ExpertiseItem | null>(null);
   const [form, setForm] = useState(emptyForm);
   const [submitting, setSubmitting] = useState(false);
+
+  const [previewItem, setPreviewItem] = useState<ExpertiseItem | null>(null);
+  const [kopSurat, setKopSurat] = useState<KopSuratData | null>(null);
+  const [logoSrc, setLogoSrc] = useState('');
+  const [printing, setPrinting] = useState(false);
+  const [zoomedFoto, setZoomedFoto] = useState<{ readonly src: string; readonly label: string } | null>(null);
 
   function openCreate() {
     setForm(emptyForm);
@@ -119,6 +148,44 @@ export function ExpertisePage() {
     }
   }
 
+  function openPreview(item: ExpertiseItem) {
+    setPreviewItem(item);
+    if (!kopSurat) {
+      void apiGet<{ item: KopSuratData }>('/api/kop-surat')
+        .then((res) => setKopSurat(res.item))
+        .catch(() => setKopSurat(null));
+    }
+    if (!logoSrc) {
+      void loadLogoDataUrl().then(setLogoSrc).catch(() => setLogoSrc(''));
+    }
+  }
+
+  function buildReportData(item: ExpertiseItem): ExpertiseReportData {
+    return {
+      logoSrc: kopSurat?.logoDataUrl || logoSrc,
+      namaKlinik: kopSurat?.namaKlinik || 'KLINIK PRIMA HUSADA',
+      alamatKlinik: kopSurat?.alamat || '',
+      teleponKlinik: kopSurat?.telepon || '',
+      namaPenyakit: item.namaPenyakit || '',
+      pemeriksaan: item.pemeriksaan || '',
+      klinis: item.klinis || '',
+      kesan: item.kesan || '',
+      fotoDataUrl: item.fotoDataUrl || '',
+      tanggalCetak: formatTanggalCetak(),
+    };
+  }
+
+  async function handlePrint(item: ExpertiseItem) {
+    setPrinting(true);
+    try {
+      const blob = await pdf(<ExpertiseReportDocument data={buildReportData(item)} />).toBlob();
+      const cleanName = (item.namaPenyakit || 'Expertise').trim().replace(/[/\\?%*:|"<>]/g, '_');
+      downloadBlob(blob, `Expertise_${cleanName}.pdf`);
+    } finally {
+      setPrinting(false);
+    }
+  }
+
   return (
     <>
       <ListPageShell
@@ -168,7 +235,16 @@ export function ExpertisePage() {
                       <img
                         src={item.fotoDataUrl}
                         alt={item.namaPenyakit || 'Foto Expertise'}
-                        style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6 }}
+                        onClick={() =>
+                          setZoomedFoto({ src: item.fotoDataUrl!, label: item.namaPenyakit || 'Foto Expertise' })
+                        }
+                        style={{
+                          width: 48,
+                          height: 48,
+                          objectFit: 'cover',
+                          borderRadius: 6,
+                          cursor: 'zoom-in',
+                        }}
                       />
                     ) : (
                       '—'
@@ -193,8 +269,10 @@ export function ExpertisePage() {
                     <TableRowActions
                       onEdit={() => openEdit(item)}
                       onDelete={() => setDeleting(item)}
+                      onPrint={() => openPreview(item)}
                       editLabel="Ubah data Expertise"
                       deleteLabel="Hapus data Expertise"
+                      printLabel="Cetak / Preview Expertise"
                     />
                   </td>
                 </tr>
@@ -300,6 +378,52 @@ export function ExpertisePage() {
         onClose={() => setDeleting(null)}
         onConfirm={() => void handleDeleteConfirm()}
       />
+
+      {previewItem && (
+        <Modal
+          title={`Preview Expertise — ${previewItem.namaPenyakit || '(tanpa nama penyakit)'}`}
+          open={true}
+          onClose={() => setPreviewItem(null)}
+          size="lg"
+        >
+          <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '0.75rem' }}>
+            <button
+              type="button"
+              className="btn btn--primary btn--sm"
+              onClick={() => void handlePrint(previewItem)}
+              disabled={printing}
+            >
+              {printing ? 'Membuat PDF...' : '🖨️ Cetak PDF'}
+            </button>
+          </div>
+          <div
+            style={{
+              width: '100%',
+              height: '500px',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)',
+              overflow: 'hidden',
+              background: '#525659',
+            }}
+          >
+            <PDFViewer style={{ width: '100%', height: '100%', border: 'none' }}>
+              <ExpertiseReportDocument data={buildReportData(previewItem)} />
+            </PDFViewer>
+          </div>
+        </Modal>
+      )}
+
+      {zoomedFoto && (
+        <Modal title={zoomedFoto.label} open={true} onClose={() => setZoomedFoto(null)} size="lg">
+          <div style={{ display: 'flex', justifyContent: 'center' }}>
+            <img
+              src={zoomedFoto.src}
+              alt={zoomedFoto.label}
+              style={{ width: 240, height: 240, objectFit: 'contain' }}
+            />
+          </div>
+        </Modal>
+      )}
     </>
   );
 }
