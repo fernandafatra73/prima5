@@ -10,7 +10,6 @@ import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
 import { UsgReportDocument, type UsgReportData } from '../pdf/UsgReportDocument.tsx';
 import { UsgKertasKecilReportDocument } from '../pdf/UsgKertasKecilReportDocument.tsx';
 import { UsgKesanReportDocument, type UsgKesanReportData } from '../pdf/UsgKesanReportDocument.tsx';
-import { UsgAmplopReportDocument, type UsgAmplopData } from '../pdf/UsgAmplopReportDocument.tsx';
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
 import { loadSignatureDataUrl } from '../pdf/loadSignatureDataUrl.ts';
 import { pdf } from '@react-pdf/renderer';
@@ -384,6 +383,9 @@ export function UsgPage() {
     }
   }
 
+  /** Amplop kecil (14cm x 6cm) berisi kop klinik + data pasien, dicetak di
+   * atas kertas biasa dengan margin atas 4cm supaya jatuh pas di badan
+   * amplop fisik yang diselipkan ke printer. */
   async function handlePrintAmplop(item: UsgItem) {
     setPrintingAmplopId(item.id);
     try {
@@ -391,16 +393,159 @@ export function UsgPage() {
         loadLogoDataUrl().catch(() => ''),
         apiGet<{ item: KopSuratData }>('/api/kop-surat').catch(() => null),
       ]);
-      const data: UsgAmplopData = {
-        logoSrc: kopSuratRes?.item.logoDataUrl || logoRes,
-        namaKlinik: kopSuratRes?.item.namaKlinik || 'KLINIK PRIMA HUSADA',
-        alamatKlinik: kopSuratRes?.item.alamat || '',
-        teleponKlinik: kopSuratRes?.item.telepon || '',
-      };
-      const blob = await pdf(<UsgAmplopReportDocument data={data} />).toBlob();
-      setPreviewBlob(blob);
-      setPreviewBlobKecil(null);
-      setPreviewFilename(`Amplop_${item.namaPasien}.pdf`);
+      const logoSrc = kopSuratRes?.item.logoDataUrl || logoRes;
+      const namaKlinik = kopSuratRes?.item.namaKlinik || 'KLINIK PRIMA HUSADA';
+      const alamatKlinik = kopSuratRes?.item.alamat || '';
+      const teleponKlinik = kopSuratRes?.item.telepon || '';
+
+      const win = window.open('', '_blank', 'width=850,height=700');
+      if (!win) {
+        alert('Jendela cetak diblokir oleh browser. Harap izinkan pop-up untuk situs ini.');
+        return;
+      }
+
+      win.document.write(`
+        <!DOCTYPE html>
+        <html>
+          <head>
+            <title>Amplop USG - ${item.namaPasien}</title>
+            <style>
+              @page { margin: 4cm 0 0 0; }
+              body {
+                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                color: #0f172a;
+                background: #fff;
+                margin: 0;
+                padding: 0;
+              }
+              .amplop-sheet {
+                width: 14cm;
+                height: 6cm;
+                box-sizing: border-box;
+                overflow: hidden;
+                padding: 10px;
+                margin: 0 auto;
+                display: flex;
+                flex-direction: column;
+                justify-content: center;
+              }
+              .amplop-header {
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                gap: 16px;
+                margin-bottom: 10px;
+              }
+              .amplop-logo {
+                width: 48px;
+                height: 48px;
+                object-fit: contain;
+                flex-shrink: 0;
+              }
+              .amplop-headertext {
+                text-align: center;
+                color: #1d4ed8;
+              }
+              .amplop-kop {
+                font-size: 10.5px;
+                font-weight: 700;
+              }
+              .amplop-clinicname {
+                font-size: 19px;
+                font-weight: 800;
+                line-height: 1.3;
+              }
+              .amplop-address {
+                font-size: 10px;
+                font-weight: 700;
+              }
+              .amplop-table {
+                width: 12cm;
+                height: 3cm;
+                border-collapse: collapse;
+                table-layout: fixed;
+                margin: 0 auto 10px auto;
+              }
+              .amplop-table td {
+                border: 1px solid #000;
+                padding: 3px 5px;
+                font-size: 10px;
+                vertical-align: middle;
+              }
+              .amplop-label {
+                width: 20%;
+                color: #0f172a;
+              }
+              .amplop-colon {
+                width: 3%;
+                text-align: center;
+                color: #0f172a;
+              }
+              .amplop-value {
+                width: 27%;
+                color: #1d4ed8;
+                font-weight: 600;
+                white-space: nowrap;
+                overflow: hidden;
+                text-overflow: ellipsis;
+              }
+              .amplop-footer {
+                text-align: center;
+                font-size: 10.5px;
+                font-weight: 700;
+                font-style: italic;
+                color: #1d4ed8;
+              }
+            </style>
+          </head>
+          <body>
+            <div class="amplop-sheet">
+              <div class="amplop-header">
+                ${logoSrc ? `<img class="amplop-logo" src="${logoSrc}" alt="Logo" />` : ''}
+                <div class="amplop-headertext">
+                  <div class="amplop-kop">KLINIK ROENTGEN DAN USG</div>
+                  <div class="amplop-clinicname">${namaKlinik}</div>
+                  <div class="amplop-address">${alamatKlinik}</div>
+                  <div class="amplop-address">Telp/HP ${teleponKlinik}</div>
+                </div>
+              </div>
+              <table class="amplop-table">
+                <tr>
+                  <td class="amplop-label">Nama Pasien</td>
+                  <td class="amplop-colon">:</td>
+                  <td class="amplop-value">${item.namaPasien}</td>
+                  <td class="amplop-label">Umur</td>
+                  <td class="amplop-colon">:</td>
+                  <td class="amplop-value">${item.umur || '-'}</td>
+                </tr>
+                <tr>
+                  <td class="amplop-label">Alamat</td>
+                  <td class="amplop-colon">:</td>
+                  <td class="amplop-value">${item.alamat || '-'}</td>
+                  <td class="amplop-label">Tanggal</td>
+                  <td class="amplop-colon">:</td>
+                  <td class="amplop-value">${formatTanggalDisplay(item.tanggal)}</td>
+                </tr>
+                <tr>
+                  <td class="amplop-label">Pemeriksaan</td>
+                  <td class="amplop-colon">:</td>
+                  <td class="amplop-value">${item.jenisPemeriksaan || '-'}</td>
+                  <td class="amplop-label">Pengirim</td>
+                  <td class="amplop-colon">:</td>
+                  <td class="amplop-value">${item.dokterPengirim || '-'}</td>
+                </tr>
+              </table>
+              <div class="amplop-footer">HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!</div>
+            </div>
+            <script>
+              window.onload = function() {
+                window.print();
+              };
+            </script>
+          </body>
+        </html>
+      `);
+      win.document.close();
     } finally {
       setPrintingAmplopId(null);
     }
