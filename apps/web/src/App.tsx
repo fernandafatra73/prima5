@@ -331,6 +331,58 @@ function renderView(
 const LOGIN_GREETING =
   'Selamat anda memasuki area prima husada. Bekerjalah dengan sungguh-sungguh, semoga hari harimu menyenangkan. Buatlah kebahagian di tempat kerja mu, rejeki akan mengikuti selamanya.';
 
+/** Cari voice Bahasa Indonesia terbaik yang sudah terpasang di browser/OS.
+ * Voice "Google"/"Natural"/"Online" biasanya lebih jelas & natural daripada
+ * voice bawaan OS yang bersuara robotik. */
+function pickIndonesianVoice(
+  voices: readonly SpeechSynthesisVoice[],
+): SpeechSynthesisVoice | null {
+  const idVoices = voices.filter((v) => v.lang.toLowerCase().startsWith('id'));
+  if (idVoices.length === 0) return null;
+  const preferred = idVoices.find((v) => /google|natural|online|neural/i.test(v.name));
+  return preferred ?? idVoices[0]!;
+}
+
+/** Ucapkan sambutan login, menunggu daftar voice browser termuat dulu (pada
+ * beberapa browser getVoices() kosong sampai event "voiceschanged" terpicu)
+ * agar bisa memilih voice Bahasa Indonesia, bukan voice default yang salah
+ * melafalkan teks sehingga terdengar tidak jelas. */
+function speakLoginGreeting(onDone: () => void): void {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+    onDone();
+    return;
+  }
+  const synth = window.speechSynthesis;
+  const utter = new SpeechSynthesisUtterance(LOGIN_GREETING);
+  utter.lang = 'id-ID';
+  utter.onend = onDone;
+  utter.onerror = onDone;
+
+  const speakNow = () => {
+    const voice = pickIndonesianVoice(synth.getVoices());
+    if (voice) {
+      utter.voice = voice;
+      utter.lang = voice.lang;
+    }
+    synth.cancel();
+    synth.speak(utter);
+  };
+
+  if (synth.getVoices().length > 0) {
+    speakNow();
+    return;
+  }
+  let started = false;
+  const start = () => {
+    if (started) return;
+    started = true;
+    synth.removeEventListener('voiceschanged', start);
+    speakNow();
+  };
+  synth.addEventListener('voiceschanged', start);
+  setTimeout(start, 300);
+}
+
 /** Ucapan selamat datang (text-to-speech) + auto-play lagu pertama di
  * playlist, sekali saja tepat setelah login — bukan setiap kali sesi lama
  * dipulihkan (refresh halaman). */
@@ -345,16 +397,7 @@ function LoginWelcomeEffect() {
   useEffect(() => {
     if (spokenRef.current) return;
     spokenRef.current = true;
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
-      setGreetingDone(true);
-      return;
-    }
-    const utter = new SpeechSynthesisUtterance(LOGIN_GREETING);
-    utter.lang = 'id-ID';
-    utter.onend = () => setGreetingDone(true);
-    utter.onerror = () => setGreetingDone(true);
-    window.speechSynthesis.cancel();
-    window.speechSynthesis.speak(utter);
+    speakLoginGreeting(() => setGreetingDone(true));
   }, []);
 
   useEffect(() => {
