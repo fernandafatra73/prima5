@@ -10,6 +10,7 @@ import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
 import { UsgReportDocument, type UsgReportData } from '../pdf/UsgReportDocument.tsx';
 import { UsgKertasKecilReportDocument } from '../pdf/UsgKertasKecilReportDocument.tsx';
 import { UsgKesanReportDocument, type UsgKesanReportData } from '../pdf/UsgKesanReportDocument.tsx';
+import { UsgAmplopReportDocument, type UsgAmplopData } from '../pdf/UsgAmplopReportDocument.tsx';
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
 import { loadSignatureDataUrl } from '../pdf/loadSignatureDataUrl.ts';
 import { pdf } from '@react-pdf/renderer';
@@ -133,6 +134,7 @@ export function UsgPage() {
   const [printingId, setPrintingId] = useState<string | null>(null);
   const [printChoice, setPrintChoice] = useState<UsgItem | null>(null);
   const [printingKesanId, setPrintingKesanId] = useState<string | null>(null);
+  const [printingAmplopId, setPrintingAmplopId] = useState<string | null>(null);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [previewBlobKecil, setPreviewBlobKecil] = useState<Blob | null>(null);
   const [previewFilename, setPreviewFilename] = useState('usg.pdf');
@@ -379,6 +381,28 @@ export function UsgPage() {
       setPreviewFilename(`Kesan_USG_${item.namaPasien}.pdf`);
     } finally {
       setPrintingKesanId(null);
+    }
+  }
+
+  async function handlePrintAmplop(item: UsgItem) {
+    setPrintingAmplopId(item.id);
+    try {
+      const [logoRes, kopSuratRes] = await Promise.all([
+        loadLogoDataUrl().catch(() => ''),
+        apiGet<{ item: KopSuratData }>('/api/kop-surat').catch(() => null),
+      ]);
+      const data: UsgAmplopData = {
+        logoSrc: kopSuratRes?.item.logoDataUrl || logoRes,
+        namaKlinik: kopSuratRes?.item.namaKlinik || 'KLINIK PRIMA HUSADA',
+        alamatKlinik: kopSuratRes?.item.alamat || '',
+        teleponKlinik: kopSuratRes?.item.telepon || '',
+      };
+      const blob = await pdf(<UsgAmplopReportDocument data={data} />).toBlob();
+      setPreviewBlob(blob);
+      setPreviewBlobKecil(null);
+      setPreviewFilename(`Amplop_${item.namaPasien}.pdf`);
+    } finally {
+      setPrintingAmplopId(null);
     }
   }
 
@@ -860,6 +884,15 @@ export function UsgPage() {
                     disabled={printingKesanId === item.id}
                   >
                     <IconPrint className="icon-btn__svg" /> {printingKesanId === item.id ? '...' : 'Kesan'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn--sm btn--ghost"
+                    style={{ border: '1px solid var(--color-border)' }}
+                    onClick={() => void handlePrintAmplop(item)}
+                    disabled={printingAmplopId === item.id}
+                  >
+                    <IconPrint className="icon-btn__svg" /> {printingAmplopId === item.id ? '...' : 'Amplop'}
                   </button>
                   <button
                     type="button"
