@@ -1,102 +1,63 @@
-import { useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useState, type ChangeEvent, type FormEvent } from 'react';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
 import { ModalFormFooter } from '../components/ui/ModalFormFooter.tsx';
 import { TableRowActions } from '../components/ui/TableRowActions.tsx';
+import { useListQueryParams, useListSearch } from '../hooks/useListQueryParams.ts';
+import { useMutationReload } from '../hooks/useMutationReload.ts';
+import { usePaginatedList } from '../hooks/usePaginatedList.ts';
+import { apiDelete, apiPatch, apiPost } from '../lib/api.ts';
 import '../components/ui/ui.css';
 
 interface ExpertiseItem {
   readonly id: string;
-  readonly nama: string;
-  readonly umur: string;
-  readonly alamat: string;
-  readonly tanggal: string;
-  readonly pemeriksaan: string;
-  readonly klinis: string;
-  readonly kesan: string;
+  readonly pemeriksaan: string | null;
+  readonly klinis: string | null;
+  readonly namaPenyakit: string | null;
+  readonly fotoDataUrl: string | null;
+  readonly kesan: string | null;
 }
 
-const STORAGE_KEY = 'expertise_items_v1';
-
 const emptyForm = {
-  nama: '',
-  umur: '',
-  alamat: '',
-  tanggal: new Date().toISOString().split('T')[0]!,
   pemeriksaan: '',
   klinis: '',
+  namaPenyakit: '',
+  fotoDataUrl: '',
   kesan: '',
 };
 
-function loadItems(): readonly ExpertiseItem[] {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return [];
-    const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as ExpertiseItem[]) : [];
-  } catch {
-    return [];
-  }
-}
-
-function saveItems(items: readonly ExpertiseItem[]): void {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-}
-
-function formatTanggalDisplay(dateStr: string): string {
-  if (!dateStr) return '-';
-  try {
-    const d = new Date(dateStr);
-    if (isNaN(d.getTime())) return dateStr;
-    const day = String(d.getDate()).padStart(2, '0');
-    const month = String(d.getMonth() + 1).padStart(2, '0');
-    const year = d.getFullYear();
-    return `${day}-${month}-${year}`;
-  } catch {
-    return dateStr;
-  }
-}
-
-/** Data Expertise disimpan sepenuhnya di localStorage browser — bukan data
- * pasien/pemeriksaan sungguhan, tidak terhubung ke API/database manapun. */
+/** Katalog referensi Expertise (per jenis pemeriksaan/penyakit) — bukan data
+ * per pasien. Tersimpan di database sendiri (bukan localStorage) supaya bisa
+ * dibuka dari komputer manapun yang login ke aplikasi ini. */
 export function ExpertisePage() {
-  const [items, setItems] = useState<readonly ExpertiseItem[]>([]);
-  const [search, setSearch] = useState('');
+  const { search, setSearch } = useListSearch();
+  const queryParams = useListQueryParams({}, search);
+  const { items, pagination, setPage, loading, error, setError, reload: reloadList } =
+    usePaginatedList<ExpertiseItem>('/api/expertise', queryParams);
+  const reload = useMutationReload(reloadList);
+
   const [createOpen, setCreateOpen] = useState(false);
   const [editing, setEditing] = useState<ExpertiseItem | null>(null);
   const [deleting, setDeleting] = useState<ExpertiseItem | null>(null);
   const [form, setForm] = useState(emptyForm);
-
-  useEffect(() => {
-    setItems(loadItems());
-  }, []);
-
-  const filtered = useMemo(() => {
-    const q = search.trim().toLowerCase();
-    if (!q) return items;
-    return items.filter((item) =>
-      [item.nama, item.alamat, item.pemeriksaan, item.klinis, item.kesan].some((field) =>
-        field.toLowerCase().includes(q),
-      ),
-    );
-  }, [items, search]);
+  const [submitting, setSubmitting] = useState(false);
 
   function openCreate() {
     setForm(emptyForm);
+    setError(null);
     setCreateOpen(true);
   }
 
   function openEdit(item: ExpertiseItem) {
     setForm({
-      nama: item.nama,
-      umur: item.umur,
-      alamat: item.alamat,
-      tanggal: item.tanggal,
-      pemeriksaan: item.pemeriksaan,
-      klinis: item.klinis,
-      kesan: item.kesan,
+      pemeriksaan: item.pemeriksaan ?? '',
+      klinis: item.klinis ?? '',
+      namaPenyakit: item.namaPenyakit ?? '',
+      fotoDataUrl: item.fotoDataUrl ?? '',
+      kesan: item.kesan ?? '',
     });
+    setError(null);
     setEditing(item);
   }
 
@@ -105,63 +66,75 @@ export function ExpertisePage() {
     setEditing(null);
   }
 
-  function handleSubmit(e: FormEvent) {
-    e.preventDefault();
-    if (!form.nama.trim()) return;
-
-    const next = editing
-      ? items.map((item) =>
-          item.id === editing.id
-            ? {
-                ...item,
-                nama: form.nama.trim(),
-                umur: form.umur.trim(),
-                alamat: form.alamat.trim(),
-                tanggal: form.tanggal,
-                pemeriksaan: form.pemeriksaan.trim(),
-                klinis: form.klinis.trim(),
-                kesan: form.kesan.trim(),
-              }
-            : item,
-        )
-      : [
-          ...items,
-          {
-            id: crypto.randomUUID(),
-            nama: form.nama.trim(),
-            umur: form.umur.trim(),
-            alamat: form.alamat.trim(),
-            tanggal: form.tanggal,
-            pemeriksaan: form.pemeriksaan.trim(),
-            klinis: form.klinis.trim(),
-            kesan: form.kesan.trim(),
-          },
-        ];
-
-    setItems(next);
-    saveItems(next);
-    closeModal();
+  function handleFotoFileChange(e: ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setForm((f) => ({ ...f, fotoDataUrl: reader.result as string }));
+      }
+    };
+    reader.readAsDataURL(file);
   }
 
-  function handleDeleteConfirm() {
+  async function handleSubmit(e: FormEvent) {
+    e.preventDefault();
+    setSubmitting(true);
+    setError(null);
+    try {
+      const body = {
+        pemeriksaan: form.pemeriksaan.trim() || undefined,
+        klinis: form.klinis.trim() || undefined,
+        namaPenyakit: form.namaPenyakit.trim() || undefined,
+        fotoDataUrl: form.fotoDataUrl || undefined,
+        kesan: form.kesan.trim() || undefined,
+      };
+      if (editing) {
+        await apiPatch(`/api/expertise/${editing.id}`, body);
+      } else {
+        await apiPost('/api/expertise', body);
+      }
+      closeModal();
+      await reload({ resetPage: !editing });
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menyimpan Expertise');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function handleDeleteConfirm() {
     if (!deleting) return;
-    const next = items.filter((item) => item.id !== deleting.id);
-    setItems(next);
-    saveItems(next);
-    setDeleting(null);
+    setSubmitting(true);
+    setError(null);
+    try {
+      await apiDelete(`/api/expertise/${deleting.id}`);
+      setDeleting(null);
+      await reload();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menghapus Expertise');
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
     <>
       <ListPageShell
         title="Expertise"
-        subtitle="Catatan hasil bacaan Expertise — data lokal di perangkat ini, tidak terhubung ke database manapun."
+        subtitle="Katalog referensi hasil bacaan Expertise per jenis pemeriksaan/penyakit."
         metrics={[
-          { label: 'Total Data', value: String(items.length), tone: 'blue', iconKind: 'document' },
+          { label: 'Total Data', value: String(pagination.total), tone: 'blue', iconKind: 'document' },
         ]}
-        searchPlaceholder="Cari nama, alamat, pemeriksaan, klinis, kesan..."
+        searchPlaceholder="Cari pemeriksaan, nama penyakit, klinis, kesan..."
         searchValue={search}
         onSearchChange={setSearch}
+        onRefresh={() => void reload()}
+        error={error}
+        loading={loading}
+        pagination={pagination}
+        onPageChange={setPage}
         action={
           <button type="button" className="btn btn--primary" onClick={openCreate}>
             + Tambah Expertise
@@ -172,30 +145,38 @@ export function ExpertisePage() {
           <thead>
             <tr>
               <th>No</th>
-              <th>Nama</th>
-              <th>Umur</th>
-              <th>Tanggal</th>
+              <th>Foto</th>
+              <th>Nama Penyakit</th>
               <th>Pemeriksaan</th>
               <th>Kesan</th>
               <th>Aksi</th>
             </tr>
           </thead>
           <tbody>
-            {filtered.length === 0 ? (
+            {items.length === 0 ? (
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>
+                <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>
                   Belum ada data Expertise.
                 </td>
               </tr>
             ) : (
-              filtered.map((item, idx) => (
+              items.map((item, idx) => (
                 <tr key={item.id}>
-                  <td>{idx + 1}</td>
+                  <td>{(pagination.page - 1) * pagination.limit + idx + 1}</td>
                   <td>
-                    <strong>{item.nama}</strong>
+                    {item.fotoDataUrl ? (
+                      <img
+                        src={item.fotoDataUrl}
+                        alt={item.namaPenyakit || 'Foto Expertise'}
+                        style={{ width: 48, height: 48, objectFit: 'cover', borderRadius: 6 }}
+                      />
+                    ) : (
+                      '—'
+                    )}
                   </td>
-                  <td>{item.umur || '-'}</td>
-                  <td>{formatTanggalDisplay(item.tanggal)}</td>
+                  <td>
+                    <strong>{item.namaPenyakit || '-'}</strong>
+                  </td>
                   <td>{item.pemeriksaan || '-'}</td>
                   <td
                     style={{
@@ -204,7 +185,7 @@ export function ExpertisePage() {
                       textOverflow: 'ellipsis',
                       whiteSpace: 'nowrap',
                     }}
-                    title={item.kesan}
+                    title={item.kesan ?? ''}
                   >
                     {item.kesan || '-'}
                   </td>
@@ -229,45 +210,15 @@ export function ExpertisePage() {
           title={editing ? 'Ubah Expertise' : 'Tambah Expertise'}
           onClose={closeModal}
         >
-          <form onSubmit={handleSubmit} className="form-grid">
+          <form onSubmit={(e) => void handleSubmit(e)} className="form-grid">
             <div className="form-field form-field--full">
-              <label htmlFor="expertise-nama">Nama *</label>
+              <label htmlFor="expertise-nama-penyakit">Nama Penyakit</label>
               <input
-                id="expertise-nama"
+                id="expertise-nama-penyakit"
                 type="text"
-                required
-                value={form.nama}
-                onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))}
-                placeholder="Nama pasien..."
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="expertise-umur">Umur</label>
-              <input
-                id="expertise-umur"
-                type="text"
-                value={form.umur}
-                onChange={(e) => setForm((f) => ({ ...f, umur: e.target.value }))}
-                placeholder="Contoh: 35 tahun"
-              />
-            </div>
-            <div className="form-field">
-              <label htmlFor="expertise-tanggal">Tanggal</label>
-              <input
-                id="expertise-tanggal"
-                type="date"
-                value={form.tanggal}
-                onChange={(e) => setForm((f) => ({ ...f, tanggal: e.target.value }))}
-              />
-            </div>
-            <div className="form-field form-field--full">
-              <label htmlFor="expertise-alamat">Alamat</label>
-              <input
-                id="expertise-alamat"
-                type="text"
-                value={form.alamat}
-                onChange={(e) => setForm((f) => ({ ...f, alamat: e.target.value }))}
-                placeholder="Alamat pasien..."
+                value={form.namaPenyakit}
+                onChange={(e) => setForm((f) => ({ ...f, namaPenyakit: e.target.value }))}
+                placeholder="Nama penyakit..."
               />
             </div>
             <div className="form-field form-field--full">
@@ -300,9 +251,42 @@ export function ExpertisePage() {
                 placeholder="Kesan hasil bacaan..."
               />
             </div>
+            <div className="form-field form-field--full" style={{ textAlign: 'center' }}>
+              <label
+                htmlFor="expertise-foto"
+                style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--color-text-muted)' }}
+              >
+                Foto
+              </label>
+              {!form.fotoDataUrl ? (
+                <label
+                  htmlFor="expertise-foto"
+                  className="aifoto-upload aifoto-photo-box"
+                  style={{ cursor: 'pointer', height: 180, width: 180, margin: '0.4rem auto 0' }}
+                >
+                  <span className="aifoto-upload__icon">📤</span>
+                  <p className="aifoto-upload__hint">Klik untuk unggah</p>
+                </label>
+              ) : (
+                <div
+                  className="aifoto-photo-box aifoto-photo-box--filled"
+                  style={{ height: 180, width: 180, margin: '0.4rem auto 0' }}
+                >
+                  <img src={form.fotoDataUrl} alt="Preview foto Expertise" />
+                </div>
+              )}
+              <input
+                id="expertise-foto"
+                type="file"
+                accept="image/*"
+                onChange={handleFotoFileChange}
+                style={form.fotoDataUrl ? { display: 'block', margin: '0.4rem auto 0' } : { display: 'none' }}
+              />
+            </div>
             <ModalFormFooter
               onCancel={closeModal}
               submitLabel={editing ? 'Simpan Perubahan' : 'Simpan'}
+              loading={submitting}
             />
           </form>
         </Modal>
@@ -311,9 +295,10 @@ export function ExpertisePage() {
       <ConfirmModal
         open={deleting !== null}
         title="Hapus Expertise"
-        message={`Yakin hapus data Expertise "${deleting?.nama ?? ''}"?`}
+        message={`Yakin hapus data Expertise "${deleting?.namaPenyakit ?? ''}"?`}
+        loading={submitting}
         onClose={() => setDeleting(null)}
-        onConfirm={handleDeleteConfirm}
+        onConfirm={() => void handleDeleteConfirm()}
       />
     </>
   );

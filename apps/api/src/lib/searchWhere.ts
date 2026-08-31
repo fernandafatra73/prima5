@@ -58,6 +58,19 @@ export function petugasLabListWhere(q?: string): Prisma.PetugasLabWhereInput {
   };
 }
 
+export function expertiseListWhere(q?: string): Prisma.ExpertiseWhereInput {
+  const term = searchTerm(q);
+  if (!term) return {};
+  return {
+    OR: [
+      { namaPenyakit: { contains: term } },
+      { pemeriksaan: { contains: term } },
+      { klinis: { contains: term } },
+      { kesan: { contains: term } },
+    ],
+  };
+}
+
 export function radiograferListWhere(q?: string): Prisma.RadiograferWhereInput {
   const term = searchTerm(q);
   if (!term) return {};

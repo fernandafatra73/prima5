@@ -17,6 +17,7 @@ import {
   karyawanKlinikListWhere,
   kesanListWhere,
   logoPerusahaanListWhere,
+  expertiseListWhere,
   pasienAntreanWhere,
   pasienDuplikatListWhere,
   pasienListWhere,
@@ -507,6 +508,73 @@ export async function registerCrudRoutes(app: FastifyInstance) {
 
   app.delete<{ Params: { id: string } }>('/api/radiografer/:id', async (req) => {
     await prisma.radiografer.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
+  app.get<{ Querystring: ListQuery }>('/api/expertise', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const where = expertiseListWhere(req.query.q);
+    const [total, items] = await Promise.all([
+      prisma.expertise.count({ where }),
+      prisma.expertise.findMany({
+        where,
+        orderBy: { createdAt: 'desc' },
+        skip,
+        take: limit,
+      }),
+    ]);
+    return { items, pagination: buildPaginationMeta(total, page, limit) };
+  });
+
+  app.post<{
+    Body: {
+      pemeriksaan?: string;
+      klinis?: string;
+      namaPenyakit?: string;
+      fotoDataUrl?: string;
+      kesan?: string;
+    };
+  }>('/api/expertise', async (req, reply) => {
+    const item = await prisma.expertise.create({
+      data: {
+        pemeriksaan: req.body.pemeriksaan?.trim() || null,
+        klinis: req.body.klinis?.trim() || null,
+        namaPenyakit: req.body.namaPenyakit?.trim() || null,
+        fotoDataUrl: req.body.fotoDataUrl || null,
+        kesan: req.body.kesan?.trim() || null,
+      },
+    });
+    return reply.status(201).send({ item });
+  });
+
+  app.patch<{
+    Params: { id: string };
+    Body: {
+      pemeriksaan?: string;
+      klinis?: string;
+      namaPenyakit?: string;
+      fotoDataUrl?: string;
+      kesan?: string;
+    };
+  }>('/api/expertise/:id', async (req, reply) => {
+    const existing = await prisma.expertise.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Expertise tidak ditemukan' });
+    const item = await prisma.expertise.update({
+      where: { id: req.params.id },
+      data: {
+        pemeriksaan: req.body.pemeriksaan !== undefined ? req.body.pemeriksaan.trim() || null : existing.pemeriksaan,
+        klinis: req.body.klinis !== undefined ? req.body.klinis.trim() || null : existing.klinis,
+        namaPenyakit:
+          req.body.namaPenyakit !== undefined ? req.body.namaPenyakit.trim() || null : existing.namaPenyakit,
+        fotoDataUrl: req.body.fotoDataUrl !== undefined ? req.body.fotoDataUrl || null : existing.fotoDataUrl,
+        kesan: req.body.kesan !== undefined ? req.body.kesan.trim() || null : existing.kesan,
+      },
+    });
+    return { item };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/expertise/:id', async (req) => {
+    await prisma.expertise.delete({ where: { id: req.params.id } });
     return { ok: true };
   });
 

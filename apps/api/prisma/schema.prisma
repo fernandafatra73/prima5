@@ -497,6 +497,20 @@ model Usg {
   updatedAt        DateTime @updatedAt
 }
 
+/// Catatan hasil bacaan Expertise — dibuat manual (bukan hasil AI, bukan
+/// bagian dari alur Usg/Radiologi), muncul sebagai menu tersendiri di navbar
+/// (di sebelah Sosmed).
+model Expertise {
+  id           String   @id @default(cuid())
+  pemeriksaan  String?
+  klinis       String?
+  namaPenyakit String?
+  fotoDataUrl  String?
+  kesan        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 /// Arsip foto (anatomi) yang dianalisa oleh AI vision untuk membuat draft
 /// kemungkinan nama penyakit & kesan. `isDraftAi` tetap true sampai
 /// radiolog/dokter meninjau ulang dan menyimpan perubahan secara manual —
