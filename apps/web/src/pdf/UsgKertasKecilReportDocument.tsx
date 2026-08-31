@@ -62,8 +62,8 @@ const styles = StyleSheet.create({
   signatureSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 10, paddingHorizontal: 10 },
   signatureBox: { alignItems: 'center', width: 130 },
   signatureTitle: { fontSize: 6.5, marginBottom: 3 },
-  signatureImage: { width: 81, height: 25, objectFit: 'contain', marginBottom: 1 },
-  signatureGap: { height: 25, marginBottom: 1 },
+  signatureImage: { width: 108, height: 33, objectFit: 'contain', marginBottom: 1 },
+  signatureGap: { height: 33, marginBottom: 1 },
   signatureName: {
     fontSize: 6.5, fontWeight: 'bold', width: '100%', textAlign: 'center',
   },
