@@ -259,7 +259,7 @@ export function getNavLabel(id: AppViewId): string {
   return item?.label ?? id;
 }
 
-export type WindowFrameColor = 'default' | 'blue' | 'red' | 'navy';
+export type WindowFrameColor = 'default' | 'blue' | 'red' | 'navy' | 'skyyellow';
 
 const RADIOLOGI_NAV_IDS: ReadonlySet<string> = new Set(
   MAIN_NAV_CATEGORIES.find((c) => c.id === 'radiologi')?.items.map((item) => item.id) ?? [],
@@ -272,8 +272,10 @@ const PENDAFTARAN_NAV_IDS: ReadonlySet<string> = new Set(
 );
 
 /** Warna jendela (WindowFrame) berdasarkan modul: Radiologi biru, Laboratorium
- * merah, Pendaftaran biru tua (navy). */
+ * merah, Pendaftaran biru tua (navy) — kecuali Pendaftaran Umum yang punya
+ * warna sendiri (biru muda + kuning). */
 export function getViewFrameColor(id: AppViewId): WindowFrameColor {
+  if (id === 'pendaftaran-umum') return 'skyyellow';
   if (RADIOLOGI_NAV_IDS.has(id)) return 'blue';
   if (LABORATORIUM_NAV_IDS.has(id)) return 'red';
   if (PENDAFTARAN_NAV_IDS.has(id)) return 'navy';
