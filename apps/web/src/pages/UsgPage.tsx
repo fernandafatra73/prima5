@@ -408,7 +408,7 @@ export function UsgPage() {
         <!DOCTYPE html>
         <html>
           <head>
-            <title>Amplop USG - ${item.namaPasien}</title>
+            <title> </title>
             <style>
               @page { margin: 4cm 0 0 0; }
               body {
