@@ -338,22 +338,30 @@ function LoginWelcomeEffect() {
   const { playlist, playItem } = useMusicPlayer();
   const spokenRef = useRef(false);
   const autoPlayedRef = useRef(false);
+  // Lagu baru diputar setelah ucapan selesai, supaya musik tidak menimpa
+  // suara TTS dan membuatnya tidak jelas.
+  const [greetingDone, setGreetingDone] = useState(false);
 
   useEffect(() => {
     if (spokenRef.current) return;
     spokenRef.current = true;
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      setGreetingDone(true);
+      return;
+    }
     const utter = new SpeechSynthesisUtterance(LOGIN_GREETING);
     utter.lang = 'id-ID';
+    utter.onend = () => setGreetingDone(true);
+    utter.onerror = () => setGreetingDone(true);
     window.speechSynthesis.cancel();
     window.speechSynthesis.speak(utter);
   }, []);
 
   useEffect(() => {
-    if (autoPlayedRef.current || playlist.length === 0) return;
+    if (autoPlayedRef.current || !greetingDone || playlist.length === 0) return;
     autoPlayedRef.current = true;
     playItem(playlist[0]!);
-  }, [playlist, playItem]);
+  }, [greetingDone, playlist, playItem]);
 
   return null;
 }
