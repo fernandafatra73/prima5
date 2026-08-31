@@ -2094,6 +2094,7 @@
   --win-btn-hover: rgba(234, 179, 8, 0.28);
   --win-close-hover-bg: #eab308;
   --win-close-hover-color: #78350f;
+  --win-body-bg: #f0f9ff;
 }
 
 .win-frame--maximized {
