@@ -309,7 +309,7 @@ export function ExpertisePage() {
                 placeholder="Jenis pemeriksaan..."
               />
             </div>
-            <div className="form-field" style={{ gridColumn: '2 / 3' }}>
+            <div className="form-field">
               <label htmlFor="expertise-klinis">Klinis</label>
               <textarea
                 id="expertise-klinis"
