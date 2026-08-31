@@ -71,6 +71,7 @@ export function ExpertisePage() {
   const [logoSrc, setLogoSrc] = useState('');
   const [printing, setPrinting] = useState(false);
   const [zoomedFoto, setZoomedFoto] = useState<{ readonly src: string; readonly label: string } | null>(null);
+  const [copiedId, setCopiedId] = useState<string | null>(null);
 
   function openCreate() {
     setForm(emptyForm);
@@ -146,6 +147,19 @@ export function ExpertisePage() {
     } finally {
       setSubmitting(false);
     }
+  }
+
+  function handleCopyText(item: ExpertiseItem) {
+    const text = [
+      'Expertise',
+      `Nama Penyakit: ${item.namaPenyakit || '-'}`,
+      `Pemeriksaan: ${item.pemeriksaan || '-'}`,
+      `Klinis: ${item.klinis || '-'}`,
+      `Kesan: ${item.kesan || '-'}`,
+    ].join('\n');
+    void navigator.clipboard.writeText(text);
+    setCopiedId(item.id);
+    setTimeout(() => setCopiedId((cur) => (cur === item.id ? null : cur)), 2000);
   }
 
   function openPreview(item: ExpertiseItem) {
@@ -266,6 +280,15 @@ export function ExpertisePage() {
                     {item.kesan || '-'}
                   </td>
                   <td>
+                    <button
+                      type="button"
+                      className="icon-btn"
+                      onClick={() => handleCopyText(item)}
+                      aria-label="Salin teks Expertise"
+                      title={copiedId === item.id ? 'Tersalin!' : 'Salin teks Expertise'}
+                    >
+                      {copiedId === item.id ? '✓' : '📋'}
+                    </button>
                     <TableRowActions
                       onEdit={() => openEdit(item)}
                       onDelete={() => setDeleting(item)}
