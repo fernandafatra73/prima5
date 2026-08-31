@@ -12,7 +12,12 @@ const BLUE = '#2b4c9b';
 const BLACK = '#1a1a1a';
 
 const styles = StyleSheet.create({
-  page: { padding: 14, fontFamily: 'Helvetica', fontSize: 8, color: BLACK },
+  // paddingBottom lebih besar dari sisi lain: jarak aman supaya garis bingkai
+  // bawah tidak ikut terpotong saat dicetak/dipotong printer.
+  page: {
+    paddingTop: 14, paddingLeft: 14, paddingRight: 14, paddingBottom: 24,
+    fontFamily: 'Helvetica', fontSize: 8, color: BLACK,
+  },
   frame: { height: '100%', borderWidth: 1, borderColor: BLACK, padding: 9, flexDirection: 'column' },
   headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   logo: { width: 34, height: 34, marginRight: 7 },

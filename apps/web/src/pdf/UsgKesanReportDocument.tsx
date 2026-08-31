@@ -28,7 +28,12 @@ const BLUE = '#2b4c9b';
 const BLACK = '#1a1a1a';
 
 const styles = StyleSheet.create({
-  page: { padding: 24, fontFamily: 'Helvetica', fontSize: 10.5, color: BLACK },
+  // paddingBottom lebih besar dari sisi lain: jarak aman supaya garis bingkai
+  // bawah tidak ikut terpotong saat dicetak/dipotong printer.
+  page: {
+    paddingTop: 24, paddingLeft: 24, paddingRight: 24, paddingBottom: 36,
+    fontFamily: 'Helvetica', fontSize: 10.5, color: BLACK,
+  },
   frame: { height: '100%', borderWidth: 1, borderColor: BLACK, padding: 16, flexDirection: 'column' },
   headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4 },
   logo: { width: 48, height: 48, marginRight: 12 },
