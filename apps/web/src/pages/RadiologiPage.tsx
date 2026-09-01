@@ -17,6 +17,7 @@ import { KaryawanPage } from './KaryawanPage.tsx';
 import { AdvantagePage } from './AdvantagePage.tsx';
 import { BhpRadiologiPage } from './BhpRadiologiPage.tsx';
 import { AnalisaFotoRontgenPage } from './AnalisaFotoRontgenPage.tsx';
+import { PemakaianFilmPage } from './PemakaianFilmPage.tsx';
 
 const RADIOLOGI_TABS = [
   { id: 'pasien', label: 'Registrasi Radiologi' },
@@ -37,6 +38,7 @@ const RADIOLOGI_TABS = [
   { id: 'advantage', label: 'Advantage' },
   { id: 'bhp-radiologi', label: 'BHP' },
   { id: 'analisa-foto-rontgen', label: 'Analisa Foto Rontgen' },
+  { id: 'pemakaian-film', label: 'Pemakaian Film' },
 ] as const;
 
 type RadiologiTabId = (typeof RADIOLOGI_TABS)[number]['id'];
@@ -79,6 +81,8 @@ function renderTabContent(tabId: RadiologiTabId) {
       return <BhpRadiologiPage />;
     case 'analisa-foto-rontgen':
       return <AnalisaFotoRontgenPage />;
+    case 'pemakaian-film':
+      return <PemakaianFilmPage />;
     default: {
       const exhaustiveCheck: never = tabId;
       return exhaustiveCheck;

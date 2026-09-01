@@ -1,5 +1,9 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
-import { Decimal, PrismaClientKnownRequestError } from '../generated/prisma/internal/prismaNamespace.js';
+import {
+  Decimal,
+  PrismaClientKnownRequestError,
+  type TransactionClient,
+} from '../generated/prisma/internal/prismaNamespace.js';
 import { prisma } from '../lib/prisma.js';
 import { calcTotalSharing, sumHarga } from '../lib/pasienFinance.js';
 import { hashPassword } from '../lib/password.js';
@@ -1186,6 +1190,178 @@ export async function registerCrudRoutes(app: FastifyInstance) {
 
   app.delete<{ Params: { id: string } }>('/api/bhp-radiologi/:id', async (req) => {
     await prisma.bhpRadiologi.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
+  // ─── Pemakaian Film Rontgen (log harian, stok otomatis berkurang) ─────────
+
+  function serializePemakaianFilm(item: {
+    id: string;
+    tanggal: Date;
+    pemakaianHarian: number;
+    stok: number;
+    tanggalPembelian: Date | null;
+    jumlahPembelian: number;
+    hargaPembelian: unknown;
+  }): {
+    id: string;
+    tanggal: string;
+    pemakaianHarian: number;
+    stok: number;
+    tanggalPembelian: string | null;
+    jumlahPembelian: number;
+    hargaPembelian: string | null;
+  } {
+    return {
+      id: item.id,
+      tanggal: item.tanggal.toISOString(),
+      pemakaianHarian: item.pemakaianHarian,
+      stok: item.stok,
+      tanggalPembelian: item.tanggalPembelian ? item.tanggalPembelian.toISOString() : null,
+      jumlahPembelian: item.jumlahPembelian,
+      hargaPembelian: serializeDecimal(item.hargaPembelian as never),
+    };
+  }
+
+  /** Menghitung ulang saldo `stok` berjalan seluruh baris Pemakaian Film,
+   * diurutkan dari tanggal paling awal, setelah baris manapun ditambah,
+   * diubah, atau dihapus — supaya stok selalu konsisten dengan urutan tanggal
+   * meski data lama diedit. */
+  async function recomputePemakaianFilmStok(tx: TransactionClient): Promise<void> {
+    const records = await tx.pemakaianFilm.findMany({
+      orderBy: [{ tanggal: 'asc' }, { createdAt: 'asc' }],
+      select: { id: true, pemakaianHarian: true, jumlahPembelian: true, stok: true },
+    });
+    let running = 0;
+    for (const r of records) {
+      running = running - r.pemakaianHarian + r.jumlahPembelian;
+      if (running !== r.stok) {
+        await tx.pemakaianFilm.update({ where: { id: r.id }, data: { stok: running } });
+      }
+    }
+  }
+
+  app.get<{ Querystring: ListQuery & { startDate?: string; endDate?: string } }>(
+    '/api/pemakaian-film',
+    async (req) => {
+      const { page, limit, skip } = parsePagination(req.query);
+      const { startDate, endDate } = req.query;
+      const where = {
+        ...(startDate || endDate
+          ? {
+              tanggal: {
+                ...(startDate ? { gte: new Date(startDate) } : {}),
+                ...(endDate ? { lte: new Date(endDate) } : {}),
+              },
+            }
+          : {}),
+      };
+      const [total, items] = await Promise.all([
+        prisma.pemakaianFilm.count({ where }),
+        prisma.pemakaianFilm.findMany({
+          where,
+          orderBy: { tanggal: 'desc' },
+          skip,
+          take: limit,
+        }),
+      ]);
+      return {
+        items: items.map(serializePemakaianFilm),
+        pagination: buildPaginationMeta(total, page, limit),
+      };
+    },
+  );
+
+  app.post<{
+    Body: {
+      tanggal?: string;
+      pemakaianHarian?: number;
+      tanggalPembelian?: string;
+      jumlahPembelian?: number;
+      hargaPembelian?: number;
+    };
+  }>('/api/pemakaian-film', async (req, reply) => {
+    const b = req.body;
+    try {
+      const item = await prisma.$transaction(async (tx) => {
+        const created = await tx.pemakaianFilm.create({
+          data: {
+            tanggal: b.tanggal ? new Date(b.tanggal) : new Date(),
+            pemakaianHarian: Number(b.pemakaianHarian) || 0,
+            tanggalPembelian: b.tanggalPembelian ? new Date(b.tanggalPembelian) : null,
+            jumlahPembelian: Number(b.jumlahPembelian) || 0,
+            hargaPembelian: b.hargaPembelian ? new Decimal(b.hargaPembelian) : new Decimal(0),
+          },
+        });
+        await recomputePemakaianFilmStok(tx);
+        return tx.pemakaianFilm.findUniqueOrThrow({ where: { id: created.id } });
+      });
+      return reply.status(201).send({ item: serializePemakaianFilm(item) });
+    } catch (err) {
+      return badRequest(
+        reply,
+        err instanceof Error ? err.message : 'Gagal menyimpan data pemakaian film',
+      );
+    }
+  });
+
+  app.patch<{
+    Params: { id: string };
+    Body: {
+      tanggal?: string;
+      pemakaianHarian?: number;
+      tanggalPembelian?: string | null;
+      jumlahPembelian?: number;
+      hargaPembelian?: number;
+    };
+  }>('/api/pemakaian-film/:id', async (req, reply) => {
+    const existing = await prisma.pemakaianFilm.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Data pemakaian film tidak ditemukan' });
+    try {
+      const item = await prisma.$transaction(async (tx) => {
+        await tx.pemakaianFilm.update({
+          where: { id: req.params.id },
+          data: {
+            tanggal: req.body.tanggal ? new Date(req.body.tanggal) : existing.tanggal,
+            pemakaianHarian:
+              req.body.pemakaianHarian !== undefined
+                ? Number(req.body.pemakaianHarian)
+                : existing.pemakaianHarian,
+            tanggalPembelian:
+              req.body.tanggalPembelian !== undefined
+                ? req.body.tanggalPembelian
+                  ? new Date(req.body.tanggalPembelian)
+                  : null
+                : existing.tanggalPembelian,
+            jumlahPembelian:
+              req.body.jumlahPembelian !== undefined
+                ? Number(req.body.jumlahPembelian)
+                : existing.jumlahPembelian,
+            hargaPembelian:
+              req.body.hargaPembelian !== undefined
+                ? new Decimal(req.body.hargaPembelian)
+                : existing.hargaPembelian,
+          },
+        });
+        await recomputePemakaianFilmStok(tx);
+        return tx.pemakaianFilm.findUniqueOrThrow({ where: { id: req.params.id } });
+      });
+      return { item: serializePemakaianFilm(item) };
+    } catch (err) {
+      return badRequest(
+        reply,
+        err instanceof Error ? err.message : 'Gagal mengubah data pemakaian film',
+      );
+    }
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/pemakaian-film/:id', async (req, reply) => {
+    const existing = await prisma.pemakaianFilm.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Data pemakaian film tidak ditemukan' });
+    await prisma.$transaction(async (tx) => {
+      await tx.pemakaianFilm.delete({ where: { id: req.params.id } });
+      await recomputePemakaianFilmStok(tx);
+    });
     return { ok: true };
   });
 

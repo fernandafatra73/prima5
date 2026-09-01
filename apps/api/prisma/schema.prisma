@@ -257,6 +257,22 @@ model BhpRadiologi {
   updatedAt    DateTime @updatedAt
 }
 
+/// Log harian pemakaian film rontgen. `stok` adalah saldo berjalan yang
+/// dihitung ulang otomatis (bukan diisi manual) setiap kali ada baris
+/// ditambah/diubah/dihapus: stok = akumulasi (jumlahPembelian - pemakaianHarian)
+/// diurutkan dari tanggal paling awal ke terbaru.
+model PemakaianFilm {
+  id               String    @id @default(cuid())
+  tanggal          DateTime  @default(now())
+  pemakaianHarian  Int       @default(0)
+  stok             Int       @default(0)
+  tanggalPembelian DateTime?
+  jumlahPembelian  Int       @default(0)
+  hargaPembelian   Decimal   @default(0)
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+}
+
 model LaporanPajakOverride {
   id              String   @id @default(cuid())
   year            Int
