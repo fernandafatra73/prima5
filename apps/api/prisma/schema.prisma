@@ -778,6 +778,7 @@ model PendaftaranUmum {
   noRegistrasi   String                @unique
   namaPasien     String
   umur           String?
+  jenisKelamin   String?
   alamat         String?
   telpon         String?
   tanggalMasuk   DateTime              @default(now())

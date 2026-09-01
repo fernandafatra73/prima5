@@ -32,6 +32,7 @@ interface PendaftaranUmumItem {
   readonly noRegistrasi: string;
   readonly namaPasien: string;
   readonly umur: string | null;
+  readonly jenisKelamin: string | null;
   readonly alamat: string | null;
   readonly telpon: string | null;
   readonly tanggalMasuk: string;
@@ -48,13 +49,49 @@ function parseAntrianNumber(noRegistrasi: string): number | null {
   return match ? Number(match[1]) : null;
 }
 
-/** Umumkan nomor antrian berikutnya lewat speaker (Web Speech API, suara Indonesia). */
-function announceAntrian(nomor: number) {
+/** Ucapkan teks lewat speaker dengan suara lembut (pelan & lirih), diulang 2x. */
+function speakSoftAntrian(text: string) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  const utter = new SpeechSynthesisUtterance(`Nomor antrian ${angkaKeKata(nomor)}. Silakan masuk.`);
-  utter.lang = 'id-ID';
   window.speechSynthesis.cancel();
-  window.speechSynthesis.speak(utter);
+  for (let i = 0; i < 2; i += 1) {
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = 'id-ID';
+    utter.rate = 0.85;
+    utter.pitch = 0.9;
+    utter.volume = 0.75;
+    window.speechSynthesis.speak(utter);
+  }
+}
+
+/** Tentukan sapaan (Ananda/Tuan/Nyonya/Saudari) dari umur & jenis kelamin.
+ * Anak (di bawah 17 tahun, atau umur dalam bulan/hari) disapa "Ananda".
+ * Perempuan dewasa di bawah 25 tahun disapa "Saudari", selain itu "Nyonya".
+ * Tanpa data jenis kelamin, sapaan dikosongkan (hanya sebut nama). */
+function resolveSapaan(umur: string | null, jenisKelamin: string | null): string {
+  const raw = (umur ?? '').toLowerCase();
+  const match = /(\d+)/.exec(raw);
+  const angka = match ? Number(match[1]) : null;
+  const isBulanAtauHari = /(bulan|bln|hari|hr)\b/.test(raw);
+  const umurTahun = isBulanAtauHari ? 0 : angka;
+
+  if (umurTahun !== null && umurTahun < 17) return 'Ananda';
+  if (jenisKelamin === 'Perempuan') return umurTahun !== null && umurTahun < 25 ? 'Saudari' : 'Nyonya';
+  if (jenisKelamin === 'Laki-laki') return 'Tuan';
+  return '';
+}
+
+/** Umumkan nomor antrian pasien lewat speaker beserta sapaan & namanya. */
+function announceAntrianDenganNama(
+  nomor: number,
+  nama: string,
+  umur: string | null,
+  jenisKelamin: string | null,
+) {
+  const sapaan = resolveSapaan(umur, jenisKelamin);
+  const sebutan = sapaan ? `${sapaan} ${nama}` : nama;
+  speakSoftAntrian(
+    `Nomor antrian ${angkaKeKata(nomor)}, atas nama ${sebutan}. Silakan masuk ke ruangan radiologi.`,
+  );
 }
 
 function formatWhatsAppNumber(phone: string | null): string | null {
@@ -146,6 +183,7 @@ export function PendaftaranUmumPage() {
     noRegistrasi: '',
     namaPasien: '',
     umur: '',
+    jenisKelamin: '',
     alamat: '',
     telpon: '',
     tanggalMasuk: '',
@@ -181,6 +219,7 @@ export function PendaftaranUmumPage() {
       noRegistrasi: '',
       namaPasien: '',
       umur: '',
+      jenisKelamin: '',
       alamat: '',
       telpon: '',
       tanggalMasuk: new Date().toISOString().split('T')[0],
@@ -199,6 +238,7 @@ export function PendaftaranUmumPage() {
       noRegistrasi: item.noRegistrasi,
       namaPasien: item.namaPasien,
       umur: item.umur || '',
+      jenisKelamin: item.jenisKelamin || '',
       alamat: item.alamat || '',
       telpon: item.telpon || '',
       tanggalMasuk: item.tanggalMasuk.split('T')[0],
@@ -345,6 +385,7 @@ export function PendaftaranUmumPage() {
         noRegistrasi: formData.noRegistrasi || undefined,
         namaPasien: formData.namaPasien,
         umur: formData.umur || undefined,
+        jenisKelamin: formData.jenisKelamin || undefined,
         alamat: formData.alamat || undefined,
         telpon: formData.telpon || undefined,
         tanggalMasuk: formData.tanggalMasuk,
@@ -372,6 +413,7 @@ export function PendaftaranUmumPage() {
         noRegistrasi: formData.noRegistrasi,
         namaPasien: formData.namaPasien,
         umur: formData.umur || undefined,
+        jenisKelamin: formData.jenisKelamin || undefined,
         alamat: formData.alamat || undefined,
         telpon: formData.telpon || undefined,
         tanggalMasuk: formData.tanggalMasuk,
@@ -422,7 +464,7 @@ export function PendaftaranUmumPage() {
       );
       const next = res.items.find((p) => p.noRegistrasi === expectedNextCode && p.status === 'MENUNGGU');
       if (next) {
-        announceAntrian(nextAntrian);
+        announceAntrianDenganNama(nextAntrian, next.namaPasien, next.umur, next.jenisKelamin);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menandai selesai');
@@ -530,9 +572,7 @@ export function PendaftaranUmumPage() {
               <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Umur</th>
               <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Alamat</th>
               <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Telpon</th>
-              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Tanggal Masuk</th>
               <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Dokter Pengirim</th>
-              <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Klinis</th>
               <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Status</th>
               <th style={{ background: '#1e3a8a', color: '#ffffff' }}>Aksi</th>
             </tr>
@@ -540,7 +580,7 @@ export function PendaftaranUmumPage() {
           <tbody>
             {items.length === 0 ? (
               <tr style={{ background: '#1d4ed8' }}>
-                <td colSpan={11} style={{ textAlign: 'center', padding: '2rem', color: '#ffffff' }}>
+                <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: '#ffffff' }}>
                   Belum ada data pendaftaran umum.
                 </td>
               </tr>
@@ -551,12 +591,37 @@ export function PendaftaranUmumPage() {
                 <tr
                   key={item.id}
                   style={{
-                    background: idx % 2 === 1 ? '#1e40af' : '#1d4ed8',
-                    borderBottom: '1px solid rgba(255, 255, 255, 0.15)',
-                    color: '#ffffff',
+                    background: (idx + 1) % 2 === 0 ? '#dbeafe' : '#fef9c3',
+                    borderBottom: '1px solid rgba(30, 58, 138, 0.12)',
+                    color: '#1e293b',
                   }}
                 >
-                  <td style={{ fontWeight: 700, color: '#ffffff' }}>{antrian ?? '—'}</td>
+                  <td style={{ fontWeight: 700, color: '#1e293b' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <span>{antrian ?? '—'}</span>
+                      {antrian !== null && (
+                        <button
+                          type="button"
+                          onClick={() =>
+                            announceAntrianDenganNama(antrian, item.namaPasien, item.umur, item.jenisKelamin)
+                          }
+                          title={`Umumkan: Nomor antrian ${antrian} atas nama ${item.namaPasien}`}
+                          style={{
+                            background: 'rgba(30, 58, 138, 0.1)',
+                            border: '1px solid rgba(30, 58, 138, 0.3)',
+                            borderRadius: '4px',
+                            color: '#1e3a8a',
+                            cursor: 'pointer',
+                            padding: '0.15rem 0.4rem',
+                            fontSize: '0.8rem',
+                            lineHeight: 1,
+                          }}
+                        >
+                          🔊
+                        </button>
+                      )}
+                    </div>
+                  </td>
                   <td>{item.noRegistrasi}</td>
                   <td><strong>{item.namaPasien}</strong></td>
                   <td>{item.umur || '-'}</td>
@@ -614,9 +679,7 @@ export function PendaftaranUmumPage() {
                       '-'
                     )}
                   </td>
-                  <td>{new Date(item.tanggalMasuk).toLocaleDateString('id-ID')}</td>
                   <td>{item.dokterPengirim || '-'}</td>
-                  <td>{item.klinis || '-'}</td>
                   <td>
                     <span
                       style={{
@@ -763,6 +826,20 @@ export function PendaftaranUmumPage() {
                       onChange={handleChange}
                       placeholder="mis. 32 tahun / 24 bln"
                     />
+                  </div>
+
+                  <div className="legacy-form-row">
+                    <label htmlFor="jenisKelamin">Jenis Kelamin</label>
+                    <select
+                      id="jenisKelamin"
+                      name="jenisKelamin"
+                      value={formData.jenisKelamin}
+                      onChange={handleChange}
+                    >
+                      <option value="">— Pilih —</option>
+                      <option value="Laki-laki">Laki-laki</option>
+                      <option value="Perempuan">Perempuan</option>
+                    </select>
                   </div>
 
                   <div className="legacy-form-row">

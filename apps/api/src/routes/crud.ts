@@ -2089,6 +2089,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       noRegistrasi?: string;
       namaPasien: string;
       umur?: string;
+      jenisKelamin?: string;
       alamat?: string;
       telpon?: string;
       tanggalMasuk: string;
@@ -2108,6 +2109,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
           noRegistrasi,
           namaPasien: req.body.namaPasien.trim(),
           umur: req.body.umur?.trim() || null,
+          jenisKelamin: req.body.jenisKelamin?.trim() || null,
           alamat: req.body.alamat?.trim() || null,
           telpon: req.body.telpon?.trim() || null,
           tanggalMasuk: new Date(req.body.tanggalMasuk),
@@ -2135,6 +2137,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       noRegistrasi?: string;
       namaPasien?: string;
       umur?: string;
+      jenisKelamin?: string;
       alamat?: string;
       telpon?: string;
       tanggalMasuk?: string;
@@ -2155,6 +2158,8 @@ export async function registerCrudRoutes(app: FastifyInstance) {
           noRegistrasi: req.body.noRegistrasi?.trim() ?? existing.noRegistrasi,
           namaPasien: req.body.namaPasien?.trim() ?? existing.namaPasien,
           umur: req.body.umur !== undefined ? req.body.umur?.trim() || null : existing.umur,
+          jenisKelamin:
+            req.body.jenisKelamin !== undefined ? req.body.jenisKelamin?.trim() || null : existing.jenisKelamin,
           alamat: req.body.alamat !== undefined ? req.body.alamat?.trim() || null : existing.alamat,
           telpon: req.body.telpon !== undefined ? req.body.telpon?.trim() || null : existing.telpon,
           tanggalMasuk: req.body.tanggalMasuk ? new Date(req.body.tanggalMasuk) : existing.tanggalMasuk,
