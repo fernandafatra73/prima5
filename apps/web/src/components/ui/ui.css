@@ -863,7 +863,22 @@
 }
 
 .pdf-preview__versions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
   margin-bottom: 0.75rem;
+}
+
+.pdf-preview__versions .filter-tab {
+  padding: 0.35rem 0.75rem;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-button);
+  background: var(--color-bg-surface);
+}
+
+.pdf-preview__versions .filter-tab--active {
+  border-color: var(--color-primary);
+  background: var(--color-primary-soft);
 }
 
 .pdf-preview__toolbar {
