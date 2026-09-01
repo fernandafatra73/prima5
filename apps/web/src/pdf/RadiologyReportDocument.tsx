@@ -36,6 +36,8 @@ const styles = StyleSheet.create({
   },
   frame: {
     height: '100%',
+    borderWidth: 1,
+    borderColor: BLACK,
     padding: 10,
     flexDirection: 'column',
   },
