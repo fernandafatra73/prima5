@@ -43,7 +43,15 @@
   border-bottom: 1px solid var(--navbar-border);
   box-shadow: 0 2px 10px rgba(194, 90, 11, 0.2);
 
-  --navbar-bg: linear-gradient(135deg, #2563eb 0%, #f97316 100%);
+  --navbar-bg: linear-gradient(
+    90deg,
+    #2563eb 0%,
+    #2563eb 80%,
+    #f97316 80%,
+    #f97316 90%,
+    #facc15 90%,
+    #facc15 100%
+  );
   --navbar-icon-fg: #ea580c;
   --navbar-border: #f97316;
   --navbar-fg: #ffffff;
