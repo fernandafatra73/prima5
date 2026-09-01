@@ -1,12 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal } from './Modal.tsx';
 
-type PdfVersion = 'with-signature' | 'without-signature';
+type PdfVersion = 'with-signature' | 'without-signature' | 'with-signature-no-frame' | 'without-signature-no-frame';
 
 interface PdfPreviewModalProps {
   readonly open: boolean;
   readonly withSignature: Blob | null;
   readonly withoutSignature: Blob | null;
+  readonly withSignatureNoFrame: Blob | null;
+  readonly withoutSignatureNoFrame: Blob | null;
   readonly filename: string;
   readonly onClose: () => void;
 }
@@ -15,6 +17,8 @@ export function PdfPreviewModal({
   open,
   withSignature,
   withoutSignature,
+  withSignatureNoFrame,
+  withoutSignatureNoFrame,
   filename,
   onClose,
 }: PdfPreviewModalProps) {
@@ -22,8 +26,13 @@ export function PdfPreviewModal({
   const [url, setUrl] = useState<string | null>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
-  const activeBlob =
-    version === 'with-signature' ? withSignature : withoutSignature;
+  const blobByVersion: Record<PdfVersion, Blob | null> = {
+    'with-signature': withSignature,
+    'without-signature': withoutSignature,
+    'with-signature-no-frame': withSignatureNoFrame,
+    'without-signature-no-frame': withoutSignatureNoFrame,
+  };
+  const activeBlob = blobByVersion[version];
 
   useEffect(() => {
     if (!open) {
@@ -50,7 +59,13 @@ export function PdfPreviewModal({
 
   function handleDownload() {
     if (!activeBlob) return;
-    const suffix = version === 'without-signature' ? '-tanpa-ttd' : '';
+    const suffixByVersion: Record<PdfVersion, string> = {
+      'with-signature': '',
+      'without-signature': '-tanpa-ttd',
+      'with-signature-no-frame': '-tanpa-kerangka',
+      'without-signature-no-frame': '-tanpa-ttd-tanpa-kerangka',
+    };
+    const suffix = suffixByVersion[version];
     const base = filename.replace(/\.pdf$/i, '');
     const objectUrl = URL.createObjectURL(activeBlob);
     const anchor = document.createElement('a');
@@ -81,6 +96,24 @@ export function PdfPreviewModal({
             onClick={() => setVersion('without-signature')}
           >
             Tanpa tanda tangan
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={version === 'with-signature-no-frame'}
+            className={`filter-tab${version === 'with-signature-no-frame' ? ' filter-tab--active' : ''}`}
+            onClick={() => setVersion('with-signature-no-frame')}
+          >
+            Dengan TTD tanpa kerangka
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={version === 'without-signature-no-frame'}
+            className={`filter-tab${version === 'without-signature-no-frame' ? ' filter-tab--active' : ''}`}
+            onClick={() => setVersion('without-signature-no-frame')}
+          >
+            Tanpa TTD tanpa kerangka
           </button>
         </div>
         <div className="pdf-preview__toolbar">

@@ -8,12 +8,14 @@ import {
 
 export type PrintRadiologyReportInput = Omit<
   RadiologyReportData,
-  'logoSrc' | 'signatureSrc' | 'includeSignature'
+  'logoSrc' | 'signatureSrc' | 'includeSignature' | 'includeFrame'
 >;
 
 export interface RadiologyPdfPreview {
   readonly withSignature: Blob;
   readonly withoutSignature: Blob;
+  readonly withSignatureNoFrame: Blob;
+  readonly withoutSignatureNoFrame: Blob;
   readonly filename: string;
 }
 
@@ -32,6 +34,7 @@ async function buildReportBlob(
   input: PrintRadiologyReportInput,
   logoSrc: string,
   includeSignature: boolean,
+  includeFrame: boolean,
   signatureSrc?: string,
 ): Promise<Blob> {
   return pdf(
@@ -40,6 +43,7 @@ async function buildReportBlob(
         ...input,
         logoSrc,
         includeSignature,
+        includeFrame,
         signatureSrc: includeSignature ? signatureSrc : undefined,
       }}
     />,
@@ -57,9 +61,11 @@ export async function generateRadiologyReportVersions(
     signatureSrc = undefined;
   }
 
-  const [withSignature, withoutSignature] = await Promise.all([
-    buildReportBlob(input, logoSrc, true, signatureSrc),
-    buildReportBlob(input, logoSrc, false),
+  const [withSignature, withoutSignature, withSignatureNoFrame, withoutSignatureNoFrame] = await Promise.all([
+    buildReportBlob(input, logoSrc, true, true, signatureSrc),
+    buildReportBlob(input, logoSrc, false, true),
+    buildReportBlob(input, logoSrc, true, false, signatureSrc),
+    buildReportBlob(input, logoSrc, false, false),
   ]);
 
   const cleanName = input.nama.trim().replace(/[/\\?%*:|"<>]/g, '_') || 'pasien';
@@ -67,6 +73,8 @@ export async function generateRadiologyReportVersions(
   return {
     withSignature,
     withoutSignature,
+    withSignatureNoFrame,
+    withoutSignatureNoFrame,
     filename: `${cleanName}.pdf`,
   };
 }

@@ -12,6 +12,7 @@ export interface RadiologyReportData {
   readonly logoSrc: string;
   readonly signatureSrc?: string;
   readonly includeSignature: boolean;
+  readonly includeFrame?: boolean;
   readonly regCode: string;
   readonly nama: string;
   readonly umurLabel: string;
@@ -36,10 +37,12 @@ const styles = StyleSheet.create({
   },
   frame: {
     height: '100%',
-    borderWidth: 1,
-    borderColor: BLACK,
     padding: 10,
     flexDirection: 'column',
+  },
+  frameBorder: {
+    borderWidth: 1,
+    borderColor: BLACK,
   },
   headerRow: {
     flexDirection: 'row',
@@ -282,12 +285,13 @@ function PatientRow({
 
 export function RadiologyReportDocument({ data }: { readonly data: RadiologyReportData }) {
   const dokter = truncatePdfCell(data.dokterPengirim, 36);
+  const includeFrame = data.includeFrame ?? true;
 
   return (
     <Document>
       {/* 420.95 pt x 595.28 pt = 14.85cm x 21cm (A4 dibagi 2, 28.3465 pt/cm) */}
       <Page size={[420.95, 595.28]} style={styles.page}>
-        <View style={styles.frame}>
+        <View style={includeFrame ? [styles.frame, styles.frameBorder] : styles.frame}>
           <View style={styles.headerRow}>
             <Image style={styles.logo} src={data.logoSrc} />
             <View style={styles.headerText}>
