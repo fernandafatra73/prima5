@@ -87,10 +87,12 @@ const styles = StyleSheet.create({
   },
   recipientBox: {
     width: 185,
-    borderWidth: 1,
-    borderColor: BLACK,
     paddingVertical: 6,
     paddingHorizontal: 8,
+  },
+  recipientBoxBorder: {
+    borderWidth: 1,
+    borderColor: BLACK,
   },
   recipientLine: {
     fontSize: 8.5,
@@ -102,15 +104,19 @@ const styles = StyleSheet.create({
     color: BLUE,
   },
   patientTable: {
+    marginBottom: 8,
+  },
+  patientTableBorder: {
     borderWidth: 1,
     borderColor: BLACK,
-    marginBottom: 8,
   },
   patientRow: {
     flexDirection: 'row',
+    minHeight: 22,
+  },
+  patientRowBorder: {
     borderBottomWidth: 1,
     borderBottomColor: BLACK,
-    minHeight: 22,
   },
   patientRowLast: {
     flexDirection: 'row',
@@ -125,17 +131,21 @@ const styles = StyleSheet.create({
   colColon: {
     width: 14,
     paddingVertical: 4,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  colColonBorder: {
     borderLeftWidth: 1,
     borderRightWidth: 1,
     borderColor: BLACK,
-    alignItems: 'center',
-    justifyContent: 'center',
   },
   colValueLeft: {
     flex: 1,
     paddingVertical: 4,
     paddingHorizontal: 6,
     justifyContent: 'center',
+  },
+  colValueLeftBorder: {
     borderRightWidth: 1,
     borderColor: BLACK,
   },
@@ -252,28 +262,40 @@ function PatientRow({
   rightLabel,
   rightValue,
   last = false,
+  includeFrame,
 }: {
   readonly leftLabel: string;
   readonly leftValue: string;
   readonly rightLabel: string;
   readonly rightValue: string;
   readonly last?: boolean;
+  readonly includeFrame: boolean;
 }) {
+  const rowStyle = last
+    ? styles.patientRowLast
+    : includeFrame
+      ? [styles.patientRow, styles.patientRowBorder]
+      : styles.patientRow;
+  const colColonStyle = includeFrame ? [styles.colColon, styles.colColonBorder] : styles.colColon;
+  const colValueLeftStyle = includeFrame
+    ? [styles.colValueLeft, styles.colValueLeftBorder]
+    : styles.colValueLeft;
+
   return (
-    <View style={last ? styles.patientRowLast : styles.patientRow}>
+    <View style={rowStyle}>
       <View style={styles.colLabelLeft}>
         <Text style={[styles.cellText, styles.label]}>{leftLabel}</Text>
       </View>
-      <View style={styles.colColon}>
+      <View style={colColonStyle}>
         <Text style={styles.colonText}>:</Text>
       </View>
-      <View style={styles.colValueLeft}>
+      <View style={colValueLeftStyle}>
         <Text style={[styles.cellText, styles.value]}>{truncatePdfCell(leftValue)}</Text>
       </View>
       <View style={styles.colLabelRight}>
         <Text style={[styles.cellText, styles.label]}>{rightLabel}</Text>
       </View>
-      <View style={styles.colColon}>
+      <View style={colColonStyle}>
         <Text style={styles.colonText}>:</Text>
       </View>
       <View style={styles.colValueRight}>
@@ -306,7 +328,7 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
           <View style={styles.divider} />
 
           <View style={styles.topRow}>
-            <View style={styles.recipientBox}>
+            <View style={includeFrame ? [styles.recipientBox, styles.recipientBoxBorder] : styles.recipientBox}>
               <Text style={styles.recipientLine}>Kepada Yang terhormat</Text>
               <Text style={styles.recipientLine}>
                 <Text>TS : </Text>
@@ -316,18 +338,20 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
             </View>
           </View>
 
-          <View style={styles.patientTable}>
+          <View style={includeFrame ? [styles.patientTable, styles.patientTableBorder] : styles.patientTable}>
             <PatientRow
               leftLabel="Nama Pasien"
               leftValue={data.nama}
               rightLabel="Umur"
               rightValue={data.umurLabel}
+              includeFrame={includeFrame}
             />
             <PatientRow
               leftLabel="Alamat"
               leftValue={data.alamat}
               rightLabel="Tanggal"
               rightValue={data.tanggal}
+              includeFrame={includeFrame}
             />
             <PatientRow
               leftLabel="Pemeriksaan"
@@ -335,6 +359,7 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
               rightLabel="No."
               rightValue={data.regCode}
               last
+              includeFrame={includeFrame}
             />
           </View>
 
