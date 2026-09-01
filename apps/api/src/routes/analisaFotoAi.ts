@@ -37,6 +37,33 @@ const KESAN_RESPONSE_SCHEMA = {
   required: ['namaPenyakit', 'kesan'],
 };
 
+/** Error 503/UNAVAILABLE dari Gemini biasanya cuma lonjakan permintaan
+ * sesaat — layak dicoba ulang beberapa kali sebelum menyerah. */
+function isRetryableGeminiError(err: unknown): boolean {
+  const message = err instanceof Error ? err.message : String(err);
+  return /"code"\s*:\s*503|UNAVAILABLE|high demand/i.test(message);
+}
+
+function delay(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function generateContentWithRetry(
+  client: GoogleGenAI,
+  params: Parameters<GoogleGenAI['models']['generateContent']>[0],
+  maxAttempts = 3,
+): ReturnType<GoogleGenAI['models']['generateContent']> {
+  for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+    try {
+      return await client.models.generateContent(params);
+    } catch (err) {
+      if (attempt >= maxAttempts || !isRetryableGeminiError(err)) throw err;
+      await delay(attempt * 1000);
+    }
+  }
+  throw new Error('unreachable');
+}
+
 const AI_FOTO_SYSTEM_PROMPT = `Anda adalah asisten AI yang membantu radiolog/dokter di sebuah klinik membaca foto medis (foto anatomi, luka, kondisi kulit, atau foto rontgen) untuk membuat DRAFT AWAL, bukan diagnosis final.
 
 Aturan:
@@ -163,7 +190,7 @@ export async function registerAnalisaFotoAiRoutes(app: FastifyInstance): Promise
 
     try {
       const client = new GoogleGenAI({ apiKey });
-      const response = await client.models.generateContent({
+      const response = await generateContentWithRetry(client, {
         model: 'gemini-flash-latest',
         contents: [
           {
@@ -211,6 +238,11 @@ export async function registerAnalisaFotoAiRoutes(app: FastifyInstance): Promise
       };
     } catch (err) {
       req.log.error(err, 'Gagal memanggil AI vision untuk analisa foto');
+      if (isRetryableGeminiError(err)) {
+        return reply.status(503).send({
+          error: 'Layanan AI sedang sibuk (lonjakan permintaan). Coba lagi dalam beberapa saat.',
+        });
+      }
       return reply.status(502).send({
         error: err instanceof Error ? `Gagal menghubungi layanan AI: ${err.message}` : 'Gagal menghubungi layanan AI',
       });
