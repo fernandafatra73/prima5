@@ -184,6 +184,9 @@ export function PasienPage() {
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
   const [kwitansiItem, setKwitansiItem] = useState<PasienRow | null>(null);
   const [kesanItem, setKesanItem] = useState<PasienRow | null>(null);
+  const [kesanEditText, setKesanEditText] = useState('');
+  const [kesanSaving, setKesanSaving] = useState(false);
+  const [kesanError, setKesanError] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [quickEditOpen, setQuickEditOpen] = useState(false);
   const [quickEditId, setQuickEditId] = useState<string | null>(null);
@@ -536,6 +539,27 @@ export function PasienPage() {
       setEditOpen(true);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Gagal memuat detail pasien');
+    }
+  }
+
+  function openKesan(p: PasienRow) {
+    setKesanError(null);
+    setKesanEditText(p.kesan ?? '');
+    setKesanItem(p);
+  }
+
+  async function submitKesan() {
+    if (!kesanItem) return;
+    setKesanSaving(true);
+    setKesanError(null);
+    try {
+      await apiPatch(`/api/pasien/${kesanItem.id}`, { kesan: kesanEditText });
+      setKesanItem(null);
+      await reload();
+    } catch (err: unknown) {
+      setKesanError(err instanceof Error ? err.message : 'Gagal menyimpan kesan');
+    } finally {
+      setKesanSaving(false);
     }
   }
 
@@ -1410,8 +1434,8 @@ export function PasienPage() {
                       <button
                         type="button"
                         className="btn btn--xs btn--ghost"
-                        onClick={() => setKesanItem(p)}
-                        title="Lihat Kesan Radiologi"
+                        onClick={() => openKesan(p)}
+                        title="Lihat & Edit Kesan Radiologi"
                         style={{ border: '1px solid var(--color-border)' }}
                       >
                         📝 Kesan
@@ -1891,19 +1915,30 @@ export function PasienPage() {
         size="md"
       >
         {kesanItem && (
-          <div className="form-field">
-            <label>Kesan & Saran Radiologi</label>
-            <div
-              style={{
-                padding: '0.75rem',
-                border: '1px solid var(--color-border)',
-                borderRadius: 'var(--radius-card)',
-                minHeight: '80px',
-                whiteSpace: 'pre-wrap',
-                fontSize: '0.9rem',
-              }}
-            >
-              {kesanItem.kesan || 'Belum diisi'}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {kesanError && <div className="alert alert--error">{kesanError}</div>}
+            <div className="form-field">
+              <label htmlFor="kesan-item-textarea">Kesan & Saran Radiologi</label>
+              <textarea
+                id="kesan-item-textarea"
+                value={kesanEditText}
+                onChange={(e) => setKesanEditText(clampClinicalInput(e.target.value))}
+                placeholder="Isi kesan radiologi..."
+                rows={6}
+              />
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem' }}>
+              <button type="button" className="btn btn--ghost" onClick={() => setKesanItem(null)}>
+                Batal
+              </button>
+              <button
+                type="button"
+                className="btn btn--primary"
+                onClick={() => void submitKesan()}
+                disabled={kesanSaving}
+              >
+                {kesanSaving ? 'Menyimpan…' : '💾 Simpan'}
+              </button>
             </div>
           </div>
         )}
