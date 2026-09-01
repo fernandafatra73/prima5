@@ -587,16 +587,16 @@ export function PendaftaranUmumPage() {
       <div style={{ overflowX: 'auto' }}>
         <table className="data-table">
           <thead>
-            <tr style={{ background: '#2563eb' }}>
-              <th style={{ background: '#2563eb', color: '#ffffff' }}>No. Antrian</th>
-              <th style={{ background: '#2563eb', color: '#ffffff' }}>No Registrasi</th>
-              <th style={{ background: '#2563eb', color: '#ffffff' }}>Nama Pasien</th>
-              <th style={{ background: '#2563eb', color: '#ffffff' }}>Umur</th>
-              <th style={{ background: '#2563eb', color: '#ffffff' }}>Alamat</th>
-              <th style={{ background: '#2563eb', color: '#ffffff' }}>Telpon</th>
-              <th style={{ background: '#2563eb', color: '#ffffff' }}>Dokter Pengirim</th>
-              <th style={{ background: '#2563eb', color: '#ffffff' }}>Status</th>
-              <th style={{ background: '#2563eb', color: '#ffffff' }}>Aksi</th>
+            <tr style={{ background: '#93c5fd' }}>
+              <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>No. Antrian</th>
+              <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>No Registrasi</th>
+              <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Nama Pasien</th>
+              <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Umur</th>
+              <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Alamat</th>
+              <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Telpon</th>
+              <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Dokter Pengirim</th>
+              <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Status</th>
+              <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Aksi</th>
             </tr>
           </thead>
           <tbody>
