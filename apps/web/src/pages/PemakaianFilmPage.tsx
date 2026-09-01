@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
@@ -30,8 +30,24 @@ const emptyForm = {
 };
 
 /** Ambang batas stok film — di bawah/sama dengan ini tombol peringatan
- * "Film harus di beli" muncul di samping tombol Tambah. */
+ * "Film harus di beli" muncul di samping tombol Tambah, dan suara
+ * peringatan diucapkan. */
 const STOK_MINIMUM = 50;
+
+/** Ucapkan peringatan stok film menipis lewat speaker (sama seperti pola
+ * panggilan antrian di PendaftaranUmumPage). */
+function speakFilmWarning(): void {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  const text =
+    'Mohon perhatian. Stok film di bawah 50 persen. Segera kontak pembelian film dan langsung segera pesan. Terima kasih atas perhatiannya.';
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(text);
+  utter.lang = 'id-ID';
+  utter.rate = 0.95;
+  utter.pitch = 1;
+  utter.volume = 1;
+  window.speechSynthesis.speak(utter);
+}
 
 export function PemakaianFilmPage() {
   const [startDate, setStartDate] = useState('');
@@ -59,6 +75,17 @@ export function PemakaianFilmPage() {
   // tanpa filter tanggal merepresentasikan stok terkini yang sebenarnya.
   const stokTerkini = items.length > 0 && pagination.page === 1 && !startDate && !endDate ? items[0]!.stok : null;
   const stokMenipis = stokTerkini !== null && stokTerkini <= STOK_MINIMUM;
+
+  // Ucapkan peringatan hanya saat status berpindah dari aman ke menipis
+  // (bukan setiap render), supaya tidak terus-menerus bersuara saat sudah
+  // dalam status menipis.
+  const stokMenipisSebelumnyaRef = useRef(false);
+  useEffect(() => {
+    if (stokMenipis && !stokMenipisSebelumnyaRef.current) {
+      speakFilmWarning();
+    }
+    stokMenipisSebelumnyaRef.current = stokMenipis;
+  }, [stokMenipis]);
 
   const totalPemakaian = useMemo(
     () => items.reduce((sum, item) => sum + item.pemakaianHarian, 0),
