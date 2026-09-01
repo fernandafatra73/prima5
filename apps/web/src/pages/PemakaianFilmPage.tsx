@@ -29,6 +29,10 @@ const emptyForm = {
   hargaPembelian: '0',
 };
 
+/** Ambang batas stok film — di bawah/sama dengan ini tombol peringatan
+ * "Film harus di beli" muncul di samping tombol Tambah. */
+const STOK_MINIMUM = 50;
+
 export function PemakaianFilmPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -54,6 +58,7 @@ export function PemakaianFilmPage() {
   // Data diurutkan tanggal terbaru dulu, jadi baris pertama pada halaman 1
   // tanpa filter tanggal merepresentasikan stok terkini yang sebenarnya.
   const stokTerkini = items.length > 0 && pagination.page === 1 && !startDate && !endDate ? items[0]!.stok : null;
+  const stokMenipis = stokTerkini !== null && stokTerkini <= STOK_MINIMUM;
 
   const totalPemakaian = useMemo(
     () => items.reduce((sum, item) => sum + item.pemakaianHarian, 0),
@@ -176,9 +181,21 @@ export function PemakaianFilmPage() {
         pagination={pagination}
         onPageChange={setPage}
         action={
-          <button type="button" className="btn btn--primary" onClick={openCreate}>
-            + Tambah Pemakaian Film
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            {stokMenipis && (
+              <button
+                type="button"
+                className="btn btn--danger"
+                onClick={openCreate}
+                title={`Stok tinggal ${stokTerkini} lembar`}
+              >
+                ⚠️ Film harus di beli
+              </button>
+            )}
+            <button type="button" className="btn btn--primary" onClick={openCreate}>
+              + Tambah Pemakaian Film
+            </button>
+          </div>
         }
       >
         <div style={{ overflowX: 'auto' }}>
