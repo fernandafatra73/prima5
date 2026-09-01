@@ -34,11 +34,12 @@ const BLUE = '#2b4c9b';
 const BLACK = '#1a1a1a';
 
 const styles = StyleSheet.create({
-  // Atas-bawah dibuat sama (1.8cm) supaya kerangka tercetak center secara
-  // vertikal dan tidak terpotong saat dicetak (1cm terbukti masih
-  // terpotong di printer fisik untuk dokumen sejenis).
+  // Margin dibuat sama semua sisi (0.5cm) supaya kerangka tercetak center.
+  // Catatan: 1cm sempat terbukti memotong garis kerangka di printer fisik
+  // untuk dokumen sejenis, jadi 0.5cm berisiko lebih besar — cek hasil
+  // cetak fisiknya.
   page: {
-    paddingTop: '1.8cm', paddingLeft: 20, paddingRight: 20, paddingBottom: '1.8cm',
+    paddingTop: '0.5cm', paddingLeft: '0.5cm', paddingRight: '0.5cm', paddingBottom: '0.5cm',
     fontFamily: 'Helvetica', fontSize: 9.5, color: BLACK,
   },
   frame: { height: '100%', borderWidth: 1, borderColor: BLACK, padding: 12, flexDirection: 'column' },

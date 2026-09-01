@@ -50,14 +50,14 @@ const RED = '#dc2626';
 
 const styles = StyleSheet.create({
   page: {
-    // Margin cetak: atas-bawah dan kiri-kanan dibuat sama supaya konten
-    // tercetak center baik secara vertikal maupun horizontal. Bawah tidak
-    // dibuat 1cm karena terbukti memotong garis kerangka saat dicetak —
-    // 1.8cm adalah nilai teruji yang aman.
-    paddingTop: '1.8cm',
-    paddingBottom: '1.8cm',
-    paddingLeft: '1cm',
-    paddingRight: '1cm',
+    // Margin cetak: atas-bawah-kiri-kanan dibuat sama (0.5cm) supaya konten
+    // tercetak center. Catatan: 1cm sempat terbukti memotong garis kerangka
+    // di printer fisik, jadi 0.5cm berisiko lebih besar memotong kerangka —
+    // cek hasil cetak fisiknya.
+    paddingTop: '0.5cm',
+    paddingBottom: '0.5cm',
+    paddingLeft: '0.5cm',
+    paddingRight: '0.5cm',
     fontFamily: 'Helvetica',
     fontSize: 9,
     color: BLACK,
