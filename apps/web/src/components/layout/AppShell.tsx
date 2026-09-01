@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
-import type { AppViewId } from '../../config/navigation.ts';
+import { getViewFrameColor, type AppViewId } from '../../config/navigation.ts';
 import type { AuthUser } from '../../lib/auth.ts';
 import { useListRefresh } from '../../context/ListRefreshContext.tsx';
 import { useMusicPlayer } from '../../context/MusicPlayerContext.tsx';
 import { apiGet } from '../../lib/api.ts';
 import { AutoTextBar } from './AutoTextBar.tsx';
 import { TopNavbar } from './TopNavbar.tsx';
+import { ReagenReminderBar } from './ReagenReminderBar.tsx';
 import './layout.css';
 
 const CLINIC_MARQUEE_TEXT = 'Klinik Prima Husada — Jl. Siliwangi Ruko Palapa No 2 Parung Kuda. Telp 0857-1932-5557';
@@ -56,6 +57,7 @@ export function AppShell({ activeView, authUser, onNavigate, onLogout, children 
         departemen={authUser.departemen}
         onLogout={onLogout}
       />
+      {getViewFrameColor(activeView) === 'red' && <ReagenReminderBar />}
       <main className="app-content">{children}</main>
       <AutoTextBar text={playingLirik ?? marqueeText} />
     </div>
