@@ -80,6 +80,27 @@ function resolveSapaan(umur: string | null, jenisKelamin: string | null): string
   return '';
 }
 
+/** Singkatan sapaan yang lazim ditulis di depan nama pasien (mis. "Ny. Siti"),
+ * supaya dibaca lengkap ("Nyonya Siti") bukan dieja huruf per huruf. Sdri/Sdra
+ * dicek lebih dulu supaya tidak tertukar dengan pola lain. */
+const SAPAAN_ABBR: ReadonlyArray<readonly [RegExp, string]> = [
+  [/^sdri\.?\s+/i, 'Saudari'],
+  [/^sdra\.?\s+/i, 'Saudara'],
+  [/^ny\.?\s+/i, 'Nyonya'],
+  [/^tn\.?\s+/i, 'Tuan'],
+  [/^an\.?\s+/i, 'Ananda'],
+];
+
+/** Pisahkan sapaan singkatan di depan nama, jika ada (mis. "Ny. Siti" -> {sapaan: "Nyonya", nama: "Siti"}). */
+function pisahSapaanDariNama(nama: string): { sapaan: string | null; nama: string } {
+  for (const [pattern, label] of SAPAAN_ABBR) {
+    if (pattern.test(nama)) {
+      return { sapaan: label, nama: nama.replace(pattern, '') };
+    }
+  }
+  return { sapaan: null, nama };
+}
+
 /** Umumkan nomor antrian pasien lewat speaker beserta sapaan & namanya. */
 function announceAntrianDenganNama(
   nomor: number,
@@ -87,8 +108,9 @@ function announceAntrianDenganNama(
   umur: string | null,
   jenisKelamin: string | null,
 ) {
-  const sapaan = resolveSapaan(umur, jenisKelamin);
-  const sebutan = sapaan ? `${sapaan} ${nama}` : nama;
+  const { sapaan: sapaanDariNama, nama: namaBersih } = pisahSapaanDariNama(nama);
+  const sapaan = sapaanDariNama ?? resolveSapaan(umur, jenisKelamin);
+  const sebutan = sapaan ? `${sapaan} ${namaBersih}` : namaBersih;
   speakSoftAntrian(
     `Nomor antrian ${angkaKeKata(nomor)}, atas nama ${sebutan}. Silakan masuk ke ruangan radiologi.`,
   );
