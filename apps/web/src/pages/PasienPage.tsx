@@ -183,6 +183,7 @@ export function PasienPage() {
   const [printingId, setPrintingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
   const [kwitansiItem, setKwitansiItem] = useState<PasienRow | null>(null);
+  const [kesanItem, setKesanItem] = useState<PasienRow | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [quickEditOpen, setQuickEditOpen] = useState(false);
   const [quickEditId, setQuickEditId] = useState<string | null>(null);
@@ -1343,7 +1344,6 @@ export function PasienPage() {
               <th>Umur</th>
               <th>Pengirim</th>
               <th>Pemeriksaan</th>
-              <th>Kesan</th>
               <th>Hasil</th>
               <th>Bayar</th>
               <th>Aksi</th>
@@ -1352,7 +1352,7 @@ export function PasienPage() {
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={8}>Belum ada pasien.</td>
+                <td colSpan={7}>Belum ada pasien.</td>
               </tr>
             ) : (
               items.map((p) => (
@@ -1382,7 +1382,6 @@ export function PasienPage() {
                       ) : null;
                     })()}
                   </td>
-                  <td style={{ maxWidth: 220, whiteSpace: 'pre-wrap' }}>{p.kesan || '-'}</td>
                   <td>
                     <span
                       className={`badge ${p.hasilStatus === 'SELESAI' ? 'badge--ok' : 'badge--pending'}`}
@@ -1407,6 +1406,15 @@ export function PasienPage() {
                         style={{ border: '1px solid var(--color-border)' }}
                       >
                         Edit²
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--xs btn--ghost"
+                        onClick={() => setKesanItem(p)}
+                        title="Lihat Kesan Radiologi"
+                        style={{ border: '1px solid var(--color-border)' }}
+                      >
+                        📝 Kesan
                       </button>
                       <TableRowActions
                         onPrint={() => void handlePrint(p.id)}
@@ -1875,6 +1883,31 @@ export function PasienPage() {
           </div>
         </Modal>
       )}
+
+      <Modal
+        open={kesanItem !== null}
+        title={kesanItem ? `Kesan Radiologi — ${kesanItem.nama} (${kesanItem.regCode})` : 'Kesan Radiologi'}
+        onClose={() => setKesanItem(null)}
+        size="md"
+      >
+        {kesanItem && (
+          <div className="form-field">
+            <label>Kesan & Saran Radiologi</label>
+            <div
+              style={{
+                padding: '0.75rem',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-card)',
+                minHeight: '80px',
+                whiteSpace: 'pre-wrap',
+                fontSize: '0.9rem',
+              }}
+            >
+              {kesanItem.kesan || 'Belum diisi'}
+            </div>
+          </div>
+        )}
+      </Modal>
 
       <Modal
         open={quickEditOpen}
