@@ -76,6 +76,10 @@ export function SosmedPage({ onNavigate }: SosmedPageProps) {
           <span style={{ fontSize: '2rem' }}>🎬</span>
           <span>Video Modul</span>
         </button>
+        <button type="button" onClick={() => onNavigate('daftar-akun')} style={cardStyle}>
+          <span style={{ fontSize: '2rem' }}>🔐</span>
+          <span>Daftar Akun</span>
+        </button>
         {SOSMED_LINKS.map((link) => (
           <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" style={cardStyle}>
             <span style={{ fontSize: '2rem' }}>{link.icon}</span>

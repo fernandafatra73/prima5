@@ -157,6 +157,18 @@ export function suratKeteranganRujukanListWhere(q?: string): Prisma.SuratKeteran
   };
 }
 
+export function daftarAkunListWhere(q?: string): Prisma.DaftarAkunWhereInput {
+  const term = searchTerm(q);
+  if (!term) return {};
+  return {
+    OR: [
+      { namaAkun: { contains: term } },
+      { gmail: { contains: term } },
+      { nomorHp: { contains: term } },
+    ],
+  };
+}
+
 export function daftarTelponListWhere(q?: string): Prisma.DaftarTelponWhereInput {
   const term = searchTerm(q);
   if (!term) return {};

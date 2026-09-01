@@ -26,6 +26,7 @@ import {
   pasienDuplikatListWhere,
   pasienListWhere,
   pendaftaranUmumListWhere,
+  daftarAkunListWhere,
   daftarTelponListWhere,
   petugasLabListWhere,
   radiograferListWhere,
@@ -3395,6 +3396,36 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     });
   });
 
+  // ─── Pengaturan Pengingat Stock Opname Reagen (Laboratorium) ───────────────
+
+  const DEFAULT_REAGEN_REMINDER_PESAN =
+    'Perhatian, sudah tanggal 20. Segera hitung stock opname laboratorium, dan lakukan pembelian jika stok kurang.';
+
+  app.get('/api/reagen-reminder-setting', async () => {
+    const item = await prisma.reagenReminderSetting.findUnique({ where: { id: 'default' } });
+    if (!item) {
+      return { item: { tanggal: 20, pesan: DEFAULT_REAGEN_REMINDER_PESAN } };
+    }
+    return { item: { tanggal: item.tanggal, pesan: item.pesan } };
+  });
+
+  app.put<{
+    Body: { tanggal?: number; pesan?: string };
+  }>('/api/reagen-reminder-setting', async (req, reply) => {
+    const b = req.body;
+    const tanggalNum = Number(b.tanggal);
+    const data = {
+      tanggal: Number.isInteger(tanggalNum) && tanggalNum >= 1 && tanggalNum <= 31 ? tanggalNum : 20,
+      pesan: b.pesan?.trim() || DEFAULT_REAGEN_REMINDER_PESAN,
+    };
+    const item = await prisma.reagenReminderSetting.upsert({
+      where: { id: 'default' },
+      create: { id: 'default', ...data },
+      update: data,
+    });
+    return reply.status(200).send({ item: { tanggal: item.tanggal, pesan: item.pesan } });
+  });
+
   app.get<{ Querystring: ListQuery }>('/api/tanda-tangan-elektronik', async (req) => {
     const { page, limit, skip } = parsePagination(req.query);
     const where = tandaTanganElektronikListWhere(req.query.q);
@@ -3658,6 +3689,83 @@ export async function registerCrudRoutes(app: FastifyInstance) {
 
   app.delete<{ Params: { id: string } }>('/api/daftar-telpon/:id', async (req) => {
     await prisma.daftarTelpon.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
+  // ─── Daftar Akun (kredensial akun sosmed/email dsb, dari halaman Sosmed) ──
+
+  app.get<{ Querystring: ListQuery }>('/api/daftar-akun', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const where = daftarAkunListWhere(req.query.q);
+    const [total, items] = await Promise.all([
+      prisma.daftarAkun.count({ where }),
+      prisma.daftarAkun.findMany({
+        where,
+        orderBy: { namaAkun: 'asc' },
+        skip,
+        take: limit,
+      }),
+    ]);
+    return { items, pagination: buildPaginationMeta(total, page, limit) };
+  });
+
+  app.post<{
+    Body: {
+      namaAkun: string;
+      gmail?: string;
+      password?: string;
+      nomorHp?: string;
+      otentikator?: string;
+      passwordGmail?: string;
+    };
+  }>('/api/daftar-akun', async (req, reply) => {
+    if (!req.body.namaAkun?.trim()) return badRequest(reply, 'Nama akun wajib diisi');
+    const item = await prisma.daftarAkun.create({
+      data: {
+        namaAkun: req.body.namaAkun.trim(),
+        gmail: req.body.gmail?.trim() || null,
+        password: req.body.password?.trim() || null,
+        nomorHp: req.body.nomorHp?.trim() || null,
+        otentikator: req.body.otentikator?.trim() || null,
+        passwordGmail: req.body.passwordGmail?.trim() || null,
+      },
+    });
+    return reply.status(201).send({ item });
+  });
+
+  app.patch<{
+    Params: { id: string };
+    Body: {
+      namaAkun?: string;
+      gmail?: string;
+      password?: string;
+      nomorHp?: string;
+      otentikator?: string;
+      passwordGmail?: string;
+    };
+  }>('/api/daftar-akun/:id', async (req, reply) => {
+    const existing = await prisma.daftarAkun.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Data tidak ditemukan' });
+    const item = await prisma.daftarAkun.update({
+      where: { id: req.params.id },
+      data: {
+        namaAkun: req.body.namaAkun?.trim() ?? existing.namaAkun,
+        gmail: req.body.gmail !== undefined ? req.body.gmail?.trim() || null : existing.gmail,
+        password: req.body.password !== undefined ? req.body.password?.trim() || null : existing.password,
+        nomorHp: req.body.nomorHp !== undefined ? req.body.nomorHp?.trim() || null : existing.nomorHp,
+        otentikator:
+          req.body.otentikator !== undefined ? req.body.otentikator?.trim() || null : existing.otentikator,
+        passwordGmail:
+          req.body.passwordGmail !== undefined
+            ? req.body.passwordGmail?.trim() || null
+            : existing.passwordGmail,
+      },
+    });
+    return { item };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/daftar-akun/:id', async (req) => {
+    await prisma.daftarAkun.delete({ where: { id: req.params.id } });
     return { ok: true };
   });
 

@@ -181,6 +181,30 @@ model DaftarTelpon {
   updatedAt     DateTime @updatedAt
 }
 
+/// Pengaturan pengingat suara stock opname reagen laboratorium — tanggal
+/// pemicu & isi teks suara diubah lewat tombol pengaturan di halaman
+/// Laboratorium (bukan nilai tetap di kode). Singleton, id selalu "default".
+model ReagenReminderSetting {
+  id        String   @id @default("default")
+  tanggal   Int      @default(20)
+  pesan     String   @default("Perhatian, sudah tanggal 20. Segera hitung stock opname laboratorium, dan lakukan pembelian jika stok kurang.")
+  updatedAt DateTime @updatedAt
+}
+
+/// Daftar akun/kredensial (mis. akun sosial media, email, dsb) yang dikelola
+/// pemilik klinik — diakses lewat tombol "Daftar Akun" di halaman Sosmed.
+model DaftarAkun {
+  id            String   @id @default(cuid())
+  namaAkun      String
+  gmail         String?
+  password      String?
+  nomorHp       String?
+  otentikator   String?
+  passwordGmail String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
 /// Tanggal merah selain hari Minggu & 5 hari libur nasional tanggal tetap
 /// (yang sudah dihitung langsung di kode) — mis. Idul Fitri, Idul Adha, cuti
 /// bersama, dsb. Diinput manual oleh admin sesuai kalender resmi tahun berjalan.
