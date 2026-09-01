@@ -34,10 +34,11 @@ const BLUE = '#2b4c9b';
 const BLACK = '#1a1a1a';
 
 const styles = StyleSheet.create({
-  // paddingBottom lebih besar dari sisi lain: jarak aman supaya garis bingkai
-  // bawah tidak ikut terpotong saat dicetak/dipotong printer.
+  // Atas-bawah dibuat sama (1.8cm) supaya kerangka tercetak center secara
+  // vertikal dan tidak terpotong saat dicetak (1cm terbukti masih
+  // terpotong di printer fisik untuk dokumen sejenis).
   page: {
-    paddingTop: 20, paddingLeft: 20, paddingRight: 20, paddingBottom: 32,
+    paddingTop: '1.8cm', paddingLeft: 20, paddingRight: 20, paddingBottom: '1.8cm',
     fontFamily: 'Helvetica', fontSize: 9.5, color: BLACK,
   },
   frame: { height: '100%', borderWidth: 1, borderColor: BLACK, padding: 12, flexDirection: 'column' },
