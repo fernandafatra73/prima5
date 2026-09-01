@@ -306,6 +306,14 @@ export function RadiologDuplikatPage() {
                       >
                         Edit²
                       </button>
+                      <button
+                        type="button"
+                        className="btn btn--secondary btn--sm"
+                        onClick={() => setKesanItem(p)}
+                        title="Lihat Kesan Radiologi"
+                      >
+                        📝 Kesan
+                      </button>
                       <TableRowActions
                         onEdit={() => setDetailItem(p)}
                         editLabel="Lihat detail & kesan radiologi"
@@ -321,14 +329,6 @@ export function RadiologDuplikatPage() {
                         title="Pratinjau & Cetak Kwitansi"
                       >
                         🧾 Kwitansi
-                      </button>
-                      <button
-                        type="button"
-                        className="btn btn--secondary btn--sm"
-                        onClick={() => setKesanItem(p)}
-                        title="Lihat Kesan Radiologi"
-                      >
-                        📝 Kesan
                       </button>
                     </div>
                   </td>
