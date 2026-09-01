@@ -50,12 +50,10 @@ const RED = '#dc2626';
 
 const styles = StyleSheet.create({
   page: {
-    // Margin cetak aman: printer fisik sering tidak bisa mencetak sampai
-    // tepi kertas, terutama di sisi bawah (mekanisme feed/fuser). Atas dan
-    // bawah dibuat sama (1.8cm) supaya konten center secara vertikal,
-    // begitu juga kiri-kanan (1cm) supaya center secara horizontal.
-    paddingTop: '1.8cm',
-    paddingBottom: '1.8cm',
+    // Margin cetak: atas-bawah dan kiri-kanan dibuat sama (1cm) supaya
+    // konten tercetak center baik secara vertikal maupun horizontal.
+    paddingTop: '1cm',
+    paddingBottom: '1cm',
     paddingLeft: '1cm',
     paddingRight: '1cm',
     fontFamily: 'Helvetica',
