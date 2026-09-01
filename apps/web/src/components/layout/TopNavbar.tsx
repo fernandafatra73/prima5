@@ -82,7 +82,7 @@ export function TopNavbar({ activeId, onNavigate, role, departemen, onLogout }: 
         <div className="app-navbar__brand-text">
           <span className="app-navbar__title">Klinik Prima Husada</span>
           <span className="app-navbar__subtitle">Sistem Informasi Klinik Prima Husada</span>
-          <span className="app-navbar__credit">By: Fatra Al-Khawizmi</span>
+          <span className="app-navbar__credit">By: Fatra Al-Khawarizmi</span>
         </div>
       </div>
 
