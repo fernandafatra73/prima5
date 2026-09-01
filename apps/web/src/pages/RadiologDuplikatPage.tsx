@@ -65,6 +65,7 @@ export function RadiologDuplikatPage() {
   const [deleting, setDeleting] = useState(false);
   const [logoSrc, setLogoSrc] = useState('');
   const [kwitansiItem, setKwitansiItem] = useState<PasienDuplikatItem | null>(null);
+  const [kesanItem, setKesanItem] = useState<PasienDuplikatItem | null>(null);
   const [quickEditItem, setQuickEditItem] = useState<PasienDuplikatItem | null>(null);
   const [quickEditNama, setQuickEditNama] = useState('');
   const [quickEditKesan, setQuickEditKesan] = useState('');
@@ -321,6 +322,14 @@ export function RadiologDuplikatPage() {
                       >
                         🧾 Kwitansi
                       </button>
+                      <button
+                        type="button"
+                        className="btn btn--secondary btn--sm"
+                        onClick={() => setKesanItem(p)}
+                        title="Lihat Kesan Radiologi"
+                      >
+                        📝 Kesan
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -408,6 +417,31 @@ export function RadiologDuplikatPage() {
               >
                 {detailItem.kesan || 'Belum diisi'}
               </div>
+            </div>
+          </div>
+        )}
+      </Modal>
+
+      <Modal
+        open={kesanItem !== null}
+        title={kesanItem ? `Kesan Radiologi — ${kesanItem.nama} (${kesanItem.regCode})` : 'Kesan Radiologi'}
+        onClose={() => setKesanItem(null)}
+        size="md"
+      >
+        {kesanItem && (
+          <div className="form-field">
+            <label>Kesan & Saran Radiologi</label>
+            <div
+              style={{
+                padding: '0.75rem',
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-card)',
+                minHeight: '80px',
+                whiteSpace: 'pre-wrap',
+                fontSize: '0.9rem',
+              }}
+            >
+              {kesanItem.kesan || 'Belum diisi'}
             </div>
           </div>
         )}
