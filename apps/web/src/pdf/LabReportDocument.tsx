@@ -51,9 +51,10 @@ const RED = '#dc2626';
 const styles = StyleSheet.create({
   page: {
     // Margin cetak aman: printer fisik sering tidak bisa mencetak sampai
-    // tepi kertas, terutama di sisi bawah (mekanisme feed/fuser). 12pt
-    // sebelumnya terlalu mepet dan berisiko memotong tanda tangan Analis.
-    paddingTop: '1.2cm',
+    // tepi kertas, terutama di sisi bawah (mekanisme feed/fuser). Atas dan
+    // bawah dibuat sama (1.8cm) supaya konten center secara vertikal,
+    // begitu juga kiri-kanan (1cm) supaya center secara horizontal.
+    paddingTop: '1.8cm',
     paddingBottom: '1.8cm',
     paddingLeft: '1cm',
     paddingRight: '1cm',
