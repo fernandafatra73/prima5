@@ -3731,6 +3731,84 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // ─── Trading Harga Beli (target beli, peringatan suara "Beli" saat tersentuh) ─
+
+  function serializeTradingHargaBeli(item: {
+    id: string;
+    hargaBeli: unknown;
+    keterangan: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): {
+    id: string;
+    hargaBeli: string | null;
+    keterangan: string | null;
+    createdAt: string;
+    updatedAt: string;
+  } {
+    return {
+      id: item.id,
+      hargaBeli: serializeDecimal(item.hargaBeli as never),
+      keterangan: item.keterangan,
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+    };
+  }
+
+  app.get<{ Querystring: ListQuery }>('/api/trading-harga-beli', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const [total, items] = await Promise.all([
+      prisma.tradingHargaBeli.count(),
+      prisma.tradingHargaBeli.findMany({ orderBy: { createdAt: 'desc' }, skip, take: limit }),
+    ]);
+    return { items: items.map(serializeTradingHargaBeli), pagination: buildPaginationMeta(total, page, limit) };
+  });
+
+  app.post<{ Body: { hargaBeli: number | string; keterangan?: string } }>(
+    '/api/trading-harga-beli',
+    async (req, reply) => {
+      const b = req.body;
+      if (b.hargaBeli === undefined || b.hargaBeli === null || b.hargaBeli === '') {
+        return badRequest(reply, 'hargaBeli wajib diisi');
+      }
+      const hargaBeli = parseDecimalInput(b.hargaBeli);
+      if (!hargaBeli) return badRequest(reply, 'hargaBeli harus berupa angka');
+      const item = await prisma.tradingHargaBeli.create({
+        data: { hargaBeli, keterangan: b.keterangan?.trim() || null },
+      });
+      return reply.status(201).send({ item: serializeTradingHargaBeli(item) });
+    },
+  );
+
+  app.patch<{
+    Params: { id: string };
+    Body: { hargaBeli?: number | string; keterangan?: string };
+  }>('/api/trading-harga-beli/:id', async (req, reply) => {
+    const existing = await prisma.tradingHargaBeli.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Target harga beli tidak ditemukan' });
+
+    let hargaBeli = existing.hargaBeli;
+    if (req.body.hargaBeli !== undefined) {
+      const parsed = parseDecimalInput(req.body.hargaBeli);
+      if (!parsed) return badRequest(reply, 'hargaBeli harus berupa angka');
+      hargaBeli = parsed;
+    }
+
+    const item = await prisma.tradingHargaBeli.update({
+      where: { id: req.params.id },
+      data: {
+        hargaBeli,
+        keterangan: req.body.keterangan !== undefined ? req.body.keterangan?.trim() || null : existing.keterangan,
+      },
+    });
+    return { item: serializeTradingHargaBeli(item) };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/trading-harga-beli/:id', async (req) => {
+    await prisma.tradingHargaBeli.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
   app.get('/api/kop-surat', async () => {
     const item = await prisma.kopSurat.findUnique({ where: { id: 'default' } });
     if (!item) {

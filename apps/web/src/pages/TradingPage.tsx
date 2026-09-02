@@ -32,6 +32,13 @@ interface TradingMinPlusItem {
   readonly createdAt: string;
 }
 
+interface TradingHargaBeliItem {
+  readonly id: string;
+  readonly hargaBeli: string;
+  readonly keterangan: string | null;
+  readonly createdAt: string;
+}
+
 /** Ekstrak Sinyal/High/Low/Close/Pivot dari teks "[Analisa Otomatis Harian]"
  * yang dibuat job pivot harian — dipakai supaya data ini bisa disimpan
  * sebagai tabel (Export Excel), bukan cuma teks bebas. Entri manual yang
@@ -207,6 +214,20 @@ function speakMinPlusAlert(): void {
   window.speechSynthesis.speak(utter);
 }
 
+const HARGA_BELI_ALERT_TEXT = 'Perhatian. Harga sudah menyentuh harga pembelian. Silakan lakukan pembelian sekarang.';
+
+/** Ucapkan peringatan begitu harga live turun menyentuh target harga beli. */
+function speakHargaBeliAlert(): void {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(HARGA_BELI_ALERT_TEXT);
+  utter.lang = 'id-ID';
+  utter.rate = 0.95;
+  utter.pitch = 1;
+  utter.volume = 1;
+  window.speechSynthesis.speak(utter);
+}
+
 function chartSrc(interval: string): string {
   const config = {
     autosize: true,
@@ -330,6 +351,15 @@ export function TradingPage() {
   const [editMinPlusKeterangan, setEditMinPlusKeterangan] = useState('');
   const [editMinPlusSaving, setEditMinPlusSaving] = useState(false);
 
+  const [hargaBeliList, setHargaBeliList] = useState<TradingHargaBeliItem[]>([]);
+  const [hargaBeliInput, setHargaBeliInput] = useState('');
+  const [hargaBeliKeterangan, setHargaBeliKeterangan] = useState('');
+  const [hargaBeliSubmitting, setHargaBeliSubmitting] = useState(false);
+  const [editingHargaBeliId, setEditingHargaBeliId] = useState<string | null>(null);
+  const [editHargaBeliInput, setEditHargaBeliInput] = useState('');
+  const [editHargaBeliKeterangan, setEditHargaBeliKeterangan] = useState('');
+  const [editHargaBeliSaving, setEditHargaBeliSaving] = useState(false);
+
   const [showKalkulator, setShowKalkulator] = useState(false);
   const [highInput, setHighInput] = useState('');
   const [lowInput, setLowInput] = useState('');
@@ -400,6 +430,15 @@ export function TradingPage() {
     }
   }
 
+  async function loadHargaBeliTarget() {
+    try {
+      const res = await apiGet<{ items: TradingHargaBeliItem[] }>('/api/trading-harga-beli?limit=50');
+      setHargaBeliList(res.items);
+    } catch {
+      setHargaBeliList([]);
+    }
+  }
+
   useEffect(() => {
     void loadJadwal();
     void loadAnalisa();
@@ -407,6 +446,7 @@ export function TradingPage() {
     void loadHargaBinance();
     void loadLevel();
     void loadMinPlus();
+    void loadHargaBeliTarget();
     const timer = setInterval(() => {
       void loadHargaXau();
       void loadHargaBinance();
@@ -557,6 +597,73 @@ export function TradingPage() {
       setError(err instanceof Error ? err.message : 'Gagal menyimpan perubahan acuan MinPlus');
     } finally {
       setEditMinPlusSaving(false);
+    }
+  }
+
+  // Target aktif = entri Harga Beli paling baru. "Tersentuh" berarti harga
+  // live sudah turun sampai ke (atau di bawah) target ini — sama seperti
+  // logika Support pada fitur Resisten & Support di atas.
+  const activeHargaBeli = hargaBeliList[0] ?? null;
+  const isHargaBeliTersentuh =
+    activeHargaBeli !== null && hargaSaatIni !== null && hargaSaatIni <= Number(activeHargaBeli.hargaBeli);
+
+  const hargaBeliTersentuhSebelumnyaRef = useRef(false);
+  useEffect(() => {
+    if (isHargaBeliTersentuh && !hargaBeliTersentuhSebelumnyaRef.current) {
+      speakHargaBeliAlert();
+    }
+    hargaBeliTersentuhSebelumnyaRef.current = isHargaBeliTersentuh;
+  }, [isHargaBeliTersentuh]);
+
+  async function handleHargaBeliSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!hargaBeliInput.trim()) return;
+    setHargaBeliSubmitting(true);
+    setError(null);
+    try {
+      await apiPost('/api/trading-harga-beli', {
+        hargaBeli: hargaBeliInput.trim(),
+        keterangan: hargaBeliKeterangan.trim() || undefined,
+      });
+      setHargaBeliInput('');
+      setHargaBeliKeterangan('');
+      await loadHargaBeliTarget();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menyimpan target harga beli');
+    } finally {
+      setHargaBeliSubmitting(false);
+    }
+  }
+
+  async function handleHargaBeliDelete(id: string) {
+    await apiDelete(`/api/trading-harga-beli/${id}`);
+    await loadHargaBeliTarget();
+  }
+
+  function openEditHargaBeli(item: TradingHargaBeliItem) {
+    setEditingHargaBeliId(item.id);
+    setEditHargaBeliInput(item.hargaBeli);
+    setEditHargaBeliKeterangan(item.keterangan ?? '');
+  }
+
+  function cancelEditHargaBeli() {
+    setEditingHargaBeliId(null);
+  }
+
+  async function handleHargaBeliEditSave(id: string) {
+    setEditHargaBeliSaving(true);
+    setError(null);
+    try {
+      await apiPatch(`/api/trading-harga-beli/${id}`, {
+        hargaBeli: editHargaBeliInput.trim(),
+        keterangan: editHargaBeliKeterangan.trim() || undefined,
+      });
+      setEditingHargaBeliId(null);
+      await loadHargaBeliTarget();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menyimpan perubahan target harga beli');
+    } finally {
+      setEditHargaBeliSaving(false);
     }
   }
 
@@ -821,6 +928,24 @@ export function TradingPage() {
               }}
             >
               ⚖️ MinPlus{isMinPlusTriggering ? '!' : ''}
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                document.getElementById('tr-harga-beli-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              style={{
+                padding: '0.35rem 0.9rem',
+                borderRadius: '999px',
+                border: `1px solid ${GREEN}`,
+                background: isHargaBeliTersentuh ? GREEN : 'transparent',
+                color: isHargaBeliTersentuh ? '#ffffff' : 'var(--color-text)',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+              }}
+            >
+              💰 {isHargaBeliTersentuh ? 'Harga Beli Tersentuh!' : 'Harga Pembelian'}
             </button>
             <button
               type="button"
@@ -1646,6 +1771,183 @@ export function TradingPage() {
                           <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#7c3aed' }}>HARGA ACUAN</div>
                           <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#6d28d9' }}>
                             ${Number(item.hargaAcuan).toFixed(2)}
+                          </div>
+                        </div>
+                        {item.keterangan && (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                            {item.keterangan}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div id="tr-harga-beli-section" style={cardStyle}>
+        <div
+          style={{
+            ...cardTitlebarStyle,
+            background: isHargaBeliTersentuh ? `linear-gradient(90deg, ${GREEN}, #4ade80)` : cardTitlebarStyle.background,
+          }}
+        >
+          💰 Target Harga Pembelian (Peringatan "Beli" Saat Tersentuh)
+        </div>
+        <div style={cardBodyStyle}>
+          <p style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+            Simpan target harga pembelian di sini. Begitu harga XAU/USD live turun menyentuh (atau di bawah)
+            target ini, suara "Beli" akan diucapkan.
+          </p>
+
+          {activeHargaBeli && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                marginBottom: '1rem',
+                background: isHargaBeliTersentuh ? '#dcfce7' : '#f8fafc',
+                border: `1px solid ${isHargaBeliTersentuh ? GREEN : 'var(--color-border)'}`,
+              }}
+            >
+              <span style={{ fontWeight: 800, color: isHargaBeliTersentuh ? '#15803d' : 'var(--color-text)' }}>
+                {isHargaBeliTersentuh ? '🚨 HARGA SUDAH MENYENTUH TARGET BELI!' : '⏳ Menunggu harga turun ke target'}
+              </span>
+              <span style={{ fontSize: '0.8rem' }}>
+                Target beli: ${Number(activeHargaBeli.hargaBeli).toFixed(2)}
+                {hargaSaatIni !== null &&
+                  ` · Harga saat ini: $${hargaSaatIni.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
+            </div>
+          )}
+
+          <form onSubmit={(e) => void handleHargaBeliSubmit(e)} className="form-grid">
+            <div className="form-field">
+              <label htmlFor="tr-hargabeli-input" style={{ color: BLUE, fontWeight: 700 }}>Target Harga Beli</label>
+              <input
+                id="tr-hargabeli-input"
+                value={hargaBeliInput}
+                onChange={(e) => setHargaBeliInput(e.target.value)}
+                placeholder="Contoh: 2390.00"
+                style={{ borderLeft: `3px solid ${GREEN}` }}
+                required
+              />
+            </div>
+            <div className="form-field form-field--full">
+              <label htmlFor="tr-hargabeli-ket" style={{ color: BLUE, fontWeight: 700 }}>Keterangan (Opsional)</label>
+              <input
+                id="tr-hargabeli-ket"
+                value={hargaBeliKeterangan}
+                onChange={(e) => setHargaBeliKeterangan(e.target.value)}
+                placeholder="Catatan tambahan..."
+              />
+            </div>
+            <div className="form-grid--full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button type="submit" className="btn btn--primary" disabled={hargaBeliSubmitting}>
+                {hargaBeliSubmitting ? 'Menyimpan…' : '+ Tambah Target'}
+              </button>
+            </div>
+          </form>
+
+          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {hargaBeliList.length === 0 ? (
+              <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>Belum ada target harga beli tersimpan.</p>
+            ) : (
+              hargaBeliList.map((item, idx) => {
+                const isEditingHargaBeli = editingHargaBeliId === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: '0.75rem',
+                      border: '1px solid var(--color-border)',
+                      borderLeft: `4px solid ${idx === 0 ? GREEN : 'var(--color-border)'}`,
+                      borderRadius: '6px',
+                      background: '#f8fafc',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                      <strong style={{ fontSize: '0.78rem', color: BLUE }}>
+                        {formatTanggalJamDisplay(item.createdAt)}
+                        {idx === 0 && ' · (Aktif dipantau)'}
+                      </strong>
+                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                        {isEditingHargaBeli ? (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--primary"
+                              onClick={() => void handleHargaBeliEditSave(item.id)}
+                              disabled={editHargaBeliSaving}
+                            >
+                              {editHargaBeliSaving ? 'Menyimpan…' : '💾 Simpan'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--ghost"
+                              onClick={cancelEditHargaBeli}
+                              disabled={editHargaBeliSaving}
+                            >
+                              Batal
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--ghost"
+                              onClick={() => openEditHargaBeli(item)}
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--ghost"
+                              onClick={() => void handleHargaBeliDelete(item.id)}
+                              style={{ color: '#dc2626' }}
+                            >
+                              Hapus
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {isEditingHargaBeli ? (
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <input
+                          value={editHargaBeliInput}
+                          onChange={(e) => setEditHargaBeliInput(e.target.value)}
+                          placeholder="Target Harga Beli"
+                          style={{ flex: 1, borderLeft: `3px solid ${GREEN}` }}
+                        />
+                        <input
+                          value={editHargaBeliKeterangan}
+                          onChange={(e) => setEditHargaBeliKeterangan(e.target.value)}
+                          placeholder="Keterangan"
+                          style={{ flex: 2 }}
+                        />
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div
+                          style={{
+                            border: '1px solid #86efac',
+                            borderRadius: '6px',
+                            background: '#f0fdf4',
+                            padding: '0.3rem 0.6rem',
+                          }}
+                        >
+                          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#15803d' }}>TARGET BELI</div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#15803d' }}>
+                            ${Number(item.hargaBeli).toFixed(2)}
                           </div>
                         </div>
                         {item.keterangan && (

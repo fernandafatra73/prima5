@@ -207,6 +207,18 @@ model TradingMinPlus {
   updatedAt  DateTime @updatedAt
 }
 
+/// Target harga pembelian (beli) XAU/USD yang dipantau otomatis terhadap
+/// harga live — begitu harga live turun menyentuh target ini, peringatan
+/// suara "Beli" diucapkan di frontend (lihat TradingPage). Entri terbaru
+/// (createdAt terbesar) adalah target aktif yang dipantau.
+model TradingHargaBeli {
+  id         String   @id @default(cuid())
+  hargaBeli  Decimal
+  keterangan String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 /// Teks berjalan (marquee) pada band bawah aplikasi. Satu baris singleton,
 /// diisi lewat menu Pengaturan > Autote1.
 model AutoText {
