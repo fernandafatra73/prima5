@@ -3554,6 +3554,105 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // ─── Trading Level (Resisten/Support dipantau otomatis vs harga live) ─────
+
+  function serializeTradingLevel(item: {
+    id: string;
+    resistance: unknown;
+    support: unknown;
+    keterangan: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): {
+    id: string;
+    resistance: string | null;
+    support: string | null;
+    keterangan: string | null;
+    createdAt: string;
+    updatedAt: string;
+  } {
+    return {
+      id: item.id,
+      resistance: serializeDecimal(item.resistance as never),
+      support: serializeDecimal(item.support as never),
+      keterangan: item.keterangan,
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+    };
+  }
+
+  function parseDecimalInput(value: number | string): InstanceType<typeof Decimal> | null {
+    const num = typeof value === 'number' ? value : Number(value);
+    if (!Number.isFinite(num)) return null;
+    return new Decimal(value);
+  }
+
+  app.get<{ Querystring: ListQuery }>('/api/trading-level', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const [total, items] = await Promise.all([
+      prisma.tradingLevel.count(),
+      prisma.tradingLevel.findMany({ orderBy: { createdAt: 'desc' }, skip, take: limit }),
+    ]);
+    return { items: items.map(serializeTradingLevel), pagination: buildPaginationMeta(total, page, limit) };
+  });
+
+  app.post<{ Body: { resistance: number | string; support: number | string; keterangan?: string } }>(
+    '/api/trading-level',
+    async (req, reply) => {
+      const b = req.body;
+      if (b.resistance === undefined || b.resistance === null || b.resistance === '') {
+        return badRequest(reply, 'resistance wajib diisi');
+      }
+      if (b.support === undefined || b.support === null || b.support === '') {
+        return badRequest(reply, 'support wajib diisi');
+      }
+      const resistance = parseDecimalInput(b.resistance);
+      const support = parseDecimalInput(b.support);
+      if (!resistance) return badRequest(reply, 'resistance harus berupa angka');
+      if (!support) return badRequest(reply, 'support harus berupa angka');
+      const item = await prisma.tradingLevel.create({
+        data: { resistance, support, keterangan: b.keterangan?.trim() || null },
+      });
+      return reply.status(201).send({ item: serializeTradingLevel(item) });
+    },
+  );
+
+  app.patch<{
+    Params: { id: string };
+    Body: { resistance?: number | string; support?: number | string; keterangan?: string };
+  }>('/api/trading-level/:id', async (req, reply) => {
+    const existing = await prisma.tradingLevel.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Level tidak ditemukan' });
+
+    let resistance = existing.resistance;
+    if (req.body.resistance !== undefined) {
+      const parsed = parseDecimalInput(req.body.resistance);
+      if (!parsed) return badRequest(reply, 'resistance harus berupa angka');
+      resistance = parsed;
+    }
+    let support = existing.support;
+    if (req.body.support !== undefined) {
+      const parsed = parseDecimalInput(req.body.support);
+      if (!parsed) return badRequest(reply, 'support harus berupa angka');
+      support = parsed;
+    }
+
+    const item = await prisma.tradingLevel.update({
+      where: { id: req.params.id },
+      data: {
+        resistance,
+        support,
+        keterangan: req.body.keterangan !== undefined ? req.body.keterangan?.trim() || null : existing.keterangan,
+      },
+    });
+    return { item: serializeTradingLevel(item) };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/trading-level/:id', async (req) => {
+    await prisma.tradingLevel.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
   app.get('/api/kop-surat', async () => {
     const item = await prisma.kopSurat.findUnique({ where: { id: 'default' } });
     if (!item) {

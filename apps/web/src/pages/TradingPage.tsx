@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
 
@@ -15,6 +15,14 @@ interface AnalisaItem {
   readonly analisa: string;
   readonly support: string | null;
   readonly resistance: string | null;
+}
+
+interface TradingLevelItem {
+  readonly id: string;
+  readonly resistance: string;
+  readonly support: string;
+  readonly keterangan: string | null;
+  readonly createdAt: string;
 }
 
 /** Ekstrak Sinyal/High/Low/Close/Pivot dari teks "[Analisa Otomatis Harian]"
@@ -154,6 +162,30 @@ function computePivot(high: number, low: number, close: number, current: number)
   return { pivot, r1, r2, r3, s1, s2, s3, signal, alasan };
 }
 
+const LEVEL_ALERT_TEXT =
+  'May day, may day. Leo dan Kenzo, sudah menyentuh resisten atau support, dan harus berhati-hati, harus analisa ulang.';
+
+/** Ucapkan peringatan harga menyentuh resisten/support 3 kali berturut-turut
+ * (sama seperti pola peringatan stok film di PemakaianFilmPage, tapi
+ * diulang via callback onend karena harus dibunyikan 3 kali). */
+function speakLevelAlert(): void {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  let sisaPengulangan = 3;
+  const ucapkan = () => {
+    if (sisaPengulangan <= 0) return;
+    sisaPengulangan -= 1;
+    const utter = new SpeechSynthesisUtterance(LEVEL_ALERT_TEXT);
+    utter.lang = 'id-ID';
+    utter.rate = 0.95;
+    utter.pitch = 1;
+    utter.volume = 1;
+    utter.onend = ucapkan;
+    window.speechSynthesis.speak(utter);
+  };
+  ucapkan();
+}
+
 function chartSrc(interval: string): string {
   const config = {
     autosize: true,
@@ -257,6 +289,17 @@ export function TradingPage() {
   const [editTanggalJam, setEditTanggalJam] = useState('');
   const [editAnalisaSaving, setEditAnalisaSaving] = useState(false);
 
+  const [levelList, setLevelList] = useState<TradingLevelItem[]>([]);
+  const [levelResistance, setLevelResistance] = useState('');
+  const [levelSupport, setLevelSupport] = useState('');
+  const [levelKeterangan, setLevelKeterangan] = useState('');
+  const [levelSubmitting, setLevelSubmitting] = useState(false);
+  const [editingLevelId, setEditingLevelId] = useState<string | null>(null);
+  const [editLevelResistance, setEditLevelResistance] = useState('');
+  const [editLevelSupport, setEditLevelSupport] = useState('');
+  const [editLevelKeterangan, setEditLevelKeterangan] = useState('');
+  const [editLevelSaving, setEditLevelSaving] = useState(false);
+
   const [showKalkulator, setShowKalkulator] = useState(false);
   const [highInput, setHighInput] = useState('');
   const [lowInput, setLowInput] = useState('');
@@ -309,17 +352,103 @@ export function TradingPage() {
     }
   }
 
+  async function loadLevel() {
+    try {
+      const res = await apiGet<{ items: TradingLevelItem[] }>('/api/trading-level?limit=50');
+      setLevelList(res.items);
+    } catch {
+      setLevelList([]);
+    }
+  }
+
   useEffect(() => {
     void loadJadwal();
     void loadAnalisa();
     void loadHargaXau();
     void loadHargaBinance();
+    void loadLevel();
     const timer = setInterval(() => {
       void loadHargaXau();
       void loadHargaBinance();
     }, 30_000);
     return () => clearInterval(timer);
   }, []);
+
+  // Level teraktif = entri Resistance/Support paling baru — dibandingkan
+  // terhadap harga XAU/USD live yang sudah di-poll tiap 30 detik di atas.
+  const activeLevel = levelList[0] ?? null;
+  const hargaSaatIni = hargaXau?.price ?? null;
+  const isTouchingResistance =
+    activeLevel !== null && hargaSaatIni !== null && hargaSaatIni >= Number(activeLevel.resistance);
+  const isTouchingSupport =
+    activeLevel !== null && hargaSaatIni !== null && hargaSaatIni <= Number(activeLevel.support);
+  const isTouchingLevel = isTouchingResistance || isTouchingSupport;
+
+  // Bunyikan peringatan hanya saat status berpindah dari aman ke tersentuh
+  // (bukan tiap poll 30 detik), sama seperti pola peringatan stok film.
+  const levelTouchSebelumnyaRef = useRef(false);
+  useEffect(() => {
+    if (isTouchingLevel && !levelTouchSebelumnyaRef.current) {
+      speakLevelAlert();
+    }
+    levelTouchSebelumnyaRef.current = isTouchingLevel;
+  }, [isTouchingLevel]);
+
+  async function handleLevelSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!levelSupport.trim() || !levelResistance.trim()) return;
+    setLevelSubmitting(true);
+    setError(null);
+    try {
+      await apiPost('/api/trading-level', {
+        resistance: levelResistance.trim(),
+        support: levelSupport.trim(),
+        keterangan: levelKeterangan.trim() || undefined,
+      });
+      setLevelResistance('');
+      setLevelSupport('');
+      setLevelKeterangan('');
+      await loadLevel();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menyimpan level');
+    } finally {
+      setLevelSubmitting(false);
+    }
+  }
+
+  async function handleLevelDelete(id: string) {
+    await apiDelete(`/api/trading-level/${id}`);
+    await loadLevel();
+  }
+
+  function openEditLevel(item: TradingLevelItem) {
+    setEditingLevelId(item.id);
+    setEditLevelResistance(item.resistance);
+    setEditLevelSupport(item.support);
+    setEditLevelKeterangan(item.keterangan ?? '');
+  }
+
+  function cancelEditLevel() {
+    setEditingLevelId(null);
+  }
+
+  async function handleLevelEditSave(id: string) {
+    setEditLevelSaving(true);
+    setError(null);
+    try {
+      await apiPatch(`/api/trading-level/${id}`, {
+        resistance: editLevelResistance.trim(),
+        support: editLevelSupport.trim(),
+        keterangan: editLevelKeterangan.trim() || undefined,
+      });
+      setEditingLevelId(null);
+      await loadLevel();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menyimpan perubahan level');
+    } finally {
+      setEditLevelSaving(false);
+    }
+  }
 
   async function handleJadwalSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -564,6 +693,24 @@ export function TradingPage() {
               }}
             >
               🛒 Beli
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                document.getElementById('tr-level-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              style={{
+                padding: '0.35rem 0.9rem',
+                borderRadius: '999px',
+                border: '1px solid #dc2626',
+                background: isTouchingLevel ? '#dc2626' : 'transparent',
+                color: isTouchingLevel ? '#ffffff' : 'var(--color-text)',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+              }}
+            >
+              🎯 {isTouchingLevel ? 'Resisten/Support Tersentuh!' : 'Resisten & Support'}
             </button>
             {hargaXau && (
               <div
@@ -992,6 +1139,217 @@ export function TradingPage() {
                     </>
                   )}
                 </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div id="tr-level-section" style={cardStyle}>
+        <div
+          style={{
+            ...cardTitlebarStyle,
+            background: isTouchingLevel ? 'linear-gradient(90deg, #dc2626, #f87171)' : cardTitlebarStyle.background,
+          }}
+        >
+          🎯 Update Resisten &amp; Support (Peringatan Otomatis)
+        </div>
+        <div style={cardBodyStyle}>
+          <p style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+            Simpan level Support &amp; Resistance terbaru di sini. Begitu harga XAU/USD live (dipantau tiap 30
+            detik di atas) menyentuh salah satu level, suara peringatan akan diucapkan 3 kali berturut-turut.
+          </p>
+
+          {activeLevel && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                marginBottom: '1rem',
+                background: isTouchingLevel ? '#fee2e2' : '#f0fdf4',
+                border: `1px solid ${isTouchingLevel ? '#dc2626' : '#16a34a'}`,
+              }}
+            >
+              <span style={{ fontWeight: 800, color: isTouchingLevel ? '#dc2626' : '#16a34a' }}>
+                {isTouchingLevel
+                  ? isTouchingResistance
+                    ? '🚨 HARGA MENYENTUH RESISTANCE!'
+                    : '🚨 HARGA MENYENTUH SUPPORT!'
+                  : '✅ Harga masih di antara Support & Resistance'}
+              </span>
+              <span style={{ fontSize: '0.8rem' }}>
+                Level aktif: Support {activeLevel.support} · Resistance {activeLevel.resistance}
+                {hargaSaatIni !== null &&
+                  ` · Harga saat ini $${hargaSaatIni.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+              </span>
+            </div>
+          )}
+
+          <form onSubmit={(e) => void handleLevelSubmit(e)} className="form-grid">
+            <div className="form-field">
+              <label htmlFor="tr-level-support" style={{ color: BLUE, fontWeight: 700 }}>Support</label>
+              <input
+                id="tr-level-support"
+                value={levelSupport}
+                onChange={(e) => setLevelSupport(e.target.value)}
+                placeholder="Contoh: 2380.50"
+                style={{ borderLeft: '3px solid #16a34a' }}
+                required
+              />
+            </div>
+            <div className="form-field">
+              <label htmlFor="tr-level-resistance" style={{ color: BLUE, fontWeight: 700 }}>Resistance</label>
+              <input
+                id="tr-level-resistance"
+                value={levelResistance}
+                onChange={(e) => setLevelResistance(e.target.value)}
+                placeholder="Contoh: 2410.00"
+                style={{ borderLeft: '3px solid #dc2626' }}
+                required
+              />
+            </div>
+            <div className="form-field form-field--full">
+              <label htmlFor="tr-level-ket" style={{ color: BLUE, fontWeight: 700 }}>Keterangan (Opsional)</label>
+              <input
+                id="tr-level-ket"
+                value={levelKeterangan}
+                onChange={(e) => setLevelKeterangan(e.target.value)}
+                placeholder="Catatan tambahan..."
+              />
+            </div>
+            <div className="form-grid--full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button type="submit" className="btn btn--primary" disabled={levelSubmitting}>
+                {levelSubmitting ? 'Menyimpan…' : '+ Simpan Level'}
+              </button>
+            </div>
+          </form>
+
+          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {levelList.length === 0 ? (
+              <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>
+                Belum ada level resistance/support tersimpan.
+              </p>
+            ) : (
+              levelList.map((item, idx) => {
+                const isEditingLevel = editingLevelId === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: '0.75rem',
+                      border: '1px solid var(--color-border)',
+                      borderLeft: `4px solid ${idx === 0 ? '#dc2626' : 'var(--color-border)'}`,
+                      borderRadius: '6px',
+                      background: '#f8fafc',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                      <strong style={{ fontSize: '0.78rem', color: BLUE }}>
+                        {formatTanggalJamDisplay(item.createdAt)}
+                        {idx === 0 && ' · (Aktif dipantau)'}
+                      </strong>
+                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                        {isEditingLevel ? (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--primary"
+                              onClick={() => void handleLevelEditSave(item.id)}
+                              disabled={editLevelSaving}
+                            >
+                              {editLevelSaving ? 'Menyimpan…' : '💾 Simpan'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--ghost"
+                              onClick={cancelEditLevel}
+                              disabled={editLevelSaving}
+                            >
+                              Batal
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--ghost"
+                              onClick={() => openEditLevel(item)}
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--ghost"
+                              onClick={() => void handleLevelDelete(item.id)}
+                              style={{ color: '#dc2626' }}
+                            >
+                              Hapus
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {isEditingLevel ? (
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <input
+                          value={editLevelSupport}
+                          onChange={(e) => setEditLevelSupport(e.target.value)}
+                          placeholder="Support"
+                          style={{ flex: 1, borderLeft: '3px solid #16a34a' }}
+                        />
+                        <input
+                          value={editLevelResistance}
+                          onChange={(e) => setEditLevelResistance(e.target.value)}
+                          placeholder="Resistance"
+                          style={{ flex: 1, borderLeft: '3px solid #dc2626' }}
+                        />
+                        <input
+                          value={editLevelKeterangan}
+                          onChange={(e) => setEditLevelKeterangan(e.target.value)}
+                          placeholder="Keterangan"
+                          style={{ flex: 2 }}
+                        />
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div
+                          style={{
+                            border: '1px solid #86efac',
+                            borderRadius: '6px',
+                            background: '#f0fdf4',
+                            padding: '0.3rem 0.6rem',
+                          }}
+                        >
+                          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#16a34a' }}>SUPPORT</div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#15803d' }}>{item.support}</div>
+                        </div>
+                        <div
+                          style={{
+                            border: '1px solid #fca5a5',
+                            borderRadius: '6px',
+                            background: '#fef2f2',
+                            padding: '0.3rem 0.6rem',
+                          }}
+                        >
+                          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#dc2626' }}>RESISTANCE</div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#b91c1c' }}>
+                            {item.resistance}
+                          </div>
+                        </div>
+                        {item.keterangan && (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                            {item.keterangan}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
                 );
               })
             )}

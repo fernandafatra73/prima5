@@ -182,6 +182,19 @@ model TradingAnalisa {
   updatedAt   DateTime @updatedAt
 }
 
+/// Level Resistance/Support yang dipantau otomatis terhadap harga XAU/USD
+/// live di halaman Trading — begitu harga menyentuh salah satu level,
+/// peringatan suara diucapkan berulang di frontend (lihat TradingPage).
+/// Entri terbaru (createdAt terbesar) adalah level aktif yang dipantau.
+model TradingLevel {
+  id         String   @id @default(cuid())
+  resistance Decimal
+  support    Decimal
+  keterangan String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 /// Teks berjalan (marquee) pada band bawah aplikasi. Satu baris singleton,
 /// diisi lewat menu Pengaturan > Autote1.
 model AutoText {
