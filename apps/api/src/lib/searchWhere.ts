@@ -169,6 +169,23 @@ export function daftarAkunListWhere(q?: string): Prisma.DaftarAkunWhereInput {
   };
 }
 
+export function absensiAdminKlinikListWhere(q?: string): Prisma.AbsensiAdminKlinikWhereInput {
+  const term = searchTerm(q);
+  if (!term) return {};
+  return { namaKaryawan: { contains: term } };
+}
+
+export function suratPeringatanAdminKlinikListWhere(q?: string): Prisma.SuratPeringatanAdminKlinikWhereInput {
+  const term = searchTerm(q);
+  if (!term) return {};
+  return {
+    OR: [
+      { namaKaryawan: { contains: term } },
+      { nomorSurat: { contains: term } },
+    ],
+  };
+}
+
 export function daftarTelponListWhere(q?: string): Prisma.DaftarTelponWhereInput {
   const term = searchTerm(q);
   if (!term) return {};

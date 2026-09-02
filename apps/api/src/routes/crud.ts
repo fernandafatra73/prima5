@@ -5,6 +5,7 @@ import {
   type TransactionClient,
 } from '../generated/prisma/internal/prismaNamespace.js';
 import { prisma } from '../lib/prisma.js';
+import { calcPersentaseKehadiran, countHariKerja } from '../lib/absensiRekap.js';
 import { calcTotalSharing, sumHarga } from '../lib/pasienFinance.js';
 import { hashPassword } from '../lib/password.js';
 import { nextPendaftaranUmumCode, nextRegCode } from '../lib/regCode.js';
@@ -12,6 +13,7 @@ import { buildPaginationMeta, parsePagination } from '../lib/pagination.js';
 import { fetchXauSpotPrice } from '../lib/xausGoldPrice.js';
 import { fetchBinancePaxgPrice } from '../lib/binancePaxgPrice.js';
 import {
+  absensiAdminKlinikListWhere,
   adminKlinikListWhere,
   aiRadiologiGrupListWhere,
   dokterListWhere,
@@ -35,6 +37,7 @@ import {
   staffListWhere,
   suratKeteranganRujukanListWhere,
   suratKeteranganSehatListWhere,
+  suratPeringatanAdminKlinikListWhere,
   tandaTanganElektronikListWhere,
   usgListWhere,
 } from '../lib/searchWhere.js';
@@ -629,6 +632,208 @@ export async function registerCrudRoutes(app: FastifyInstance) {
 
   app.delete<{ Params: { id: string } }>('/api/admin-klinik/:id', async (req) => {
     await prisma.adminKlinik.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
+  // ─── Absensi Admin Klinik (tab "Absensi" di halaman Pendaftaran) ──────────
+
+  function todayDateStr(): string {
+    return new Date().toISOString().slice(0, 10);
+  }
+
+  app.get<{ Querystring: ListQuery & { tanggal?: string; tahun?: string } }>(
+    '/api/absensi-admin-klinik',
+    async (req) => {
+      const { page, limit, skip } = parsePagination(req.query);
+      const where = {
+        ...absensiAdminKlinikListWhere(req.query.q),
+        ...(req.query.tanggal
+          ? { tanggal: req.query.tanggal }
+          : req.query.tahun
+            ? { tanggal: { startsWith: `${req.query.tahun}-` } }
+            : {}),
+      };
+      const [total, items] = await Promise.all([
+        prisma.absensiAdminKlinik.count({ where }),
+        prisma.absensiAdminKlinik.findMany({
+          where,
+          orderBy: [{ tanggal: 'desc' }, { namaKaryawan: 'asc' }],
+          skip,
+          take: limit,
+        }),
+      ]);
+      return { items, pagination: buildPaginationMeta(total, page, limit) };
+    },
+  );
+
+  // Rekap persentase kehadiran per staff Admin Klinik untuk satu tahun —
+  // hari kerja dihitung dari 1 Januari s.d. hari ini (atau 31 Desember untuk
+  // tahun yang sudah lewat), hari Minggu dikecualikan.
+  app.get<{ Querystring: { tahun?: string } }>('/api/absensi-admin-klinik/rekap', async (req, reply) => {
+    const tahun = parseInt(req.query.tahun || String(new Date().getFullYear()), 10);
+    if (!Number.isFinite(tahun)) return badRequest(reply, 'tahun tidak valid');
+
+    const hariKerja = countHariKerja(tahun);
+
+    const [adminKlinikList, absensiRows] = await Promise.all([
+      prisma.adminKlinik.findMany({ orderBy: { nama: 'asc' } }),
+      prisma.absensiAdminKlinik.findMany({ where: { tanggal: { startsWith: `${tahun}-` } } }),
+    ]);
+
+    const hadirCountByAdmin = new Map<string, number>();
+    for (const row of absensiRows) {
+      hadirCountByAdmin.set(row.adminKlinikId, (hadirCountByAdmin.get(row.adminKlinikId) ?? 0) + 1);
+    }
+
+    const items = adminKlinikList.map((admin) => {
+      const hariHadir = hadirCountByAdmin.get(admin.id) ?? 0;
+      const persentase = calcPersentaseKehadiran(hariHadir, hariKerja);
+      return { adminKlinikId: admin.id, nama: admin.nama, hariKerja, hariHadir, persentase };
+    });
+
+    return { tahun, hariKerja, items };
+  });
+
+  app.post<{ Body: { adminKlinikId: string; jamDatang?: string; jamPulang?: string } }>(
+    '/api/absensi-admin-klinik',
+    async (req, reply) => {
+      if (!req.body.adminKlinikId) return badRequest(reply, 'adminKlinikId wajib diisi');
+      const admin = await prisma.adminKlinik.findUnique({ where: { id: req.body.adminKlinikId } });
+      if (!admin) return badRequest(reply, 'Admin klinik tidak ditemukan');
+      try {
+        const item = await prisma.absensiAdminKlinik.create({
+          data: {
+            adminKlinikId: admin.id,
+            namaKaryawan: admin.nama,
+            tanggal: todayDateStr(),
+            jamDatang: req.body.jamDatang?.trim() || null,
+            jamPulang: req.body.jamPulang?.trim() || null,
+          },
+        });
+        return reply.status(201).send({ item });
+      } catch (err: unknown) {
+        if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
+          return badRequest(reply, 'Absensi untuk karyawan ini hari ini sudah tercatat');
+        }
+        throw err;
+      }
+    },
+  );
+
+  app.patch<{ Params: { id: string }; Body: { jamDatang?: string; jamPulang?: string } }>(
+    '/api/absensi-admin-klinik/:id',
+    async (req, reply) => {
+      const existing = await prisma.absensiAdminKlinik.findUnique({ where: { id: req.params.id } });
+      if (!existing) return reply.status(404).send({ error: 'Data absensi tidak ditemukan' });
+      const item = await prisma.absensiAdminKlinik.update({
+        where: { id: req.params.id },
+        data: {
+          jamDatang: req.body.jamDatang !== undefined ? req.body.jamDatang?.trim() || null : existing.jamDatang,
+          jamPulang: req.body.jamPulang !== undefined ? req.body.jamPulang?.trim() || null : existing.jamPulang,
+        },
+      });
+      return { item };
+    },
+  );
+
+  app.delete<{ Params: { id: string } }>('/api/absensi-admin-klinik/:id', async (req) => {
+    await prisma.absensiAdminKlinik.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
+  // ─── Surat Peringatan Admin Klinik (SP1/SP2/SP3, dari tab Absensi) ────────
+
+  app.get<{ Querystring: ListQuery }>('/api/surat-peringatan-admin-klinik', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const where = suratPeringatanAdminKlinikListWhere(req.query.q);
+    const [total, items] = await Promise.all([
+      prisma.suratPeringatanAdminKlinik.count({ where }),
+      prisma.suratPeringatanAdminKlinik.findMany({ where, orderBy: { createdAt: 'desc' }, skip, take: limit }),
+    ]);
+    return {
+      items: items.map((it) => ({ ...it, tanggalSurat: it.tanggalSurat.toISOString().slice(0, 10) })),
+      pagination: buildPaginationMeta(total, page, limit),
+    };
+  });
+
+  app.post<{
+    Body: {
+      namaKaryawan: string;
+      jabatan?: string;
+      level: string;
+      nomorSurat?: string;
+      tanggalSurat?: string;
+      alasan: string;
+      tempatSurat?: string;
+      namaPenandatangan?: string;
+      jabatanPenandatangan?: string;
+    };
+  }>('/api/surat-peringatan-admin-klinik', async (req, reply) => {
+    if (!req.body.namaKaryawan?.trim()) return badRequest(reply, 'namaKaryawan wajib diisi');
+    if (!['SP1', 'SP2', 'SP3'].includes(req.body.level)) {
+      return badRequest(reply, 'level harus SP1, SP2, atau SP3');
+    }
+    if (!req.body.alasan?.trim()) return badRequest(reply, 'alasan wajib diisi');
+    const item = await prisma.suratPeringatanAdminKlinik.create({
+      data: {
+        namaKaryawan: req.body.namaKaryawan.trim(),
+        jabatan: req.body.jabatan?.trim() || 'Admin Klinik',
+        level: req.body.level,
+        nomorSurat: req.body.nomorSurat?.trim() || null,
+        tanggalSurat: req.body.tanggalSurat ? new Date(req.body.tanggalSurat) : new Date(),
+        alasan: req.body.alasan.trim(),
+        tempatSurat: req.body.tempatSurat?.trim() || null,
+        namaPenandatangan: req.body.namaPenandatangan?.trim() || null,
+        jabatanPenandatangan: req.body.jabatanPenandatangan?.trim() || null,
+      },
+    });
+    return reply.status(201).send({ item: { ...item, tanggalSurat: item.tanggalSurat.toISOString().slice(0, 10) } });
+  });
+
+  app.patch<{
+    Params: { id: string };
+    Body: {
+      namaKaryawan?: string;
+      jabatan?: string;
+      level?: string;
+      nomorSurat?: string;
+      tanggalSurat?: string;
+      alasan?: string;
+      tempatSurat?: string;
+      namaPenandatangan?: string;
+      jabatanPenandatangan?: string;
+    };
+  }>('/api/surat-peringatan-admin-klinik/:id', async (req, reply) => {
+    const existing = await prisma.suratPeringatanAdminKlinik.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Surat tidak ditemukan' });
+    if (req.body.level !== undefined && !['SP1', 'SP2', 'SP3'].includes(req.body.level)) {
+      return badRequest(reply, 'level harus SP1, SP2, atau SP3');
+    }
+    const item = await prisma.suratPeringatanAdminKlinik.update({
+      where: { id: req.params.id },
+      data: {
+        namaKaryawan: req.body.namaKaryawan?.trim() ?? existing.namaKaryawan,
+        jabatan: req.body.jabatan?.trim() ?? existing.jabatan,
+        level: req.body.level ?? existing.level,
+        nomorSurat: req.body.nomorSurat !== undefined ? req.body.nomorSurat?.trim() || null : existing.nomorSurat,
+        tanggalSurat: req.body.tanggalSurat ? new Date(req.body.tanggalSurat) : existing.tanggalSurat,
+        alasan: req.body.alasan?.trim() ?? existing.alasan,
+        tempatSurat: req.body.tempatSurat !== undefined ? req.body.tempatSurat?.trim() || null : existing.tempatSurat,
+        namaPenandatangan:
+          req.body.namaPenandatangan !== undefined
+            ? req.body.namaPenandatangan?.trim() || null
+            : existing.namaPenandatangan,
+        jabatanPenandatangan:
+          req.body.jabatanPenandatangan !== undefined
+            ? req.body.jabatanPenandatangan?.trim() || null
+            : existing.jabatanPenandatangan,
+      },
+    });
+    return { item: { ...item, tanggalSurat: item.tanggalSurat.toISOString().slice(0, 10) } };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/surat-peringatan-admin-klinik/:id', async (req) => {
+    await prisma.suratPeringatanAdminKlinik.delete({ where: { id: req.params.id } });
     return { ok: true };
   });
 

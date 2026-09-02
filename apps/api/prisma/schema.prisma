@@ -124,6 +124,41 @@ model AdminKlinik {
   updatedAt     DateTime @updatedAt
 }
 
+/// Absensi (jam datang/jam pulang) staff Admin Klinik — tab "Absensi" di
+/// sebelah tab Admin Klinik pada halaman Pendaftaran. `tanggal` selalu diisi
+/// server-side dengan tanggal hari pencatatan dan tidak bisa diubah lagi
+/// (PATCH hanya mengizinkan jamDatang/jamPulang) — satu baris per staff per hari.
+model AbsensiAdminKlinik {
+  id            String   @id @default(cuid())
+  adminKlinikId String
+  namaKaryawan  String
+  tanggal       String
+  jamDatang     String?
+  jamPulang     String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([adminKlinikId, tanggal])
+}
+
+/// Surat Peringatan (SP1/SP2/SP3) staff Admin Klinik — dicetak dari tab
+/// Absensi berdasarkan rekap persentase kehadiran tahunan (hari Minggu
+/// dikecualikan dari perhitungan).
+model SuratPeringatanAdminKlinik {
+  id                   String   @id @default(cuid())
+  namaKaryawan         String
+  jabatan              String   @default("Admin Klinik")
+  level                String
+  nomorSurat           String?
+  tanggalSurat         DateTime @default(now())
+  alasan               String
+  tempatSurat          String?
+  namaPenandatangan    String?
+  jabatanPenandatangan String?
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+}
+
 /// Kalender tahunan event ekonomi penting (FOMC, NFP, dll) yang biasa
 /// menggerakkan harga XAU/USD — diisi manual oleh pengguna per tahun.
 model TradingJadwal {
