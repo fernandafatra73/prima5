@@ -27,6 +27,7 @@ interface AnalisaFotoRontgenItem {
   readonly ukuranFoto: string;
   readonly kesan: string | null;
   readonly diagnosa: string | null;
+  readonly isDraftAi: boolean;
   readonly radiologNama: string | null;
 }
 
@@ -106,6 +107,12 @@ export function AnalisaFotoRontgenPage() {
   const [duplikatOptions, setDuplikatOptions] = useState<DuplikatRadiologiOption[]>([]);
   const [radiologOptions, setRadiologOptions] = useState<RadiologOption[]>([]);
 
+  // Apakah jenisPemeriksaan/kesan/diagnosa pada form saat ini berasal dari AI (belum ditinjau).
+  const [isDraftAi, setIsDraftAi] = useState(false);
+  const [confirmReviewed, setConfirmReviewed] = useState(false);
+  const [analyzing, setAnalyzing] = useState(false);
+  const [analyzeError, setAnalyzeError] = useState<string | null>(null);
+
   const loadDuplikatOptions = useCallback(async () => {
     try {
       const res = await apiGet<{ items: DuplikatRadiologiOption[] }>(
@@ -176,6 +183,9 @@ export function AnalisaFotoRontgenPage() {
 
   function openCreate() {
     setForm(emptyForm);
+    setIsDraftAi(false);
+    setConfirmReviewed(false);
+    setAnalyzeError(null);
     setError(null);
     setCreateOpen(true);
   }
@@ -192,6 +202,9 @@ export function AnalisaFotoRontgenPage() {
       diagnosa: item.diagnosa ?? '',
       radiologNama: item.radiologNama ?? '',
     });
+    setIsDraftAi(item.isDraftAi);
+    setConfirmReviewed(false);
+    setAnalyzeError(null);
     setError(null);
     setEditing(item);
   }
@@ -208,9 +221,41 @@ export function AnalisaFotoRontgenPage() {
     reader.onload = () => {
       if (typeof reader.result === 'string') {
         setForm((f) => ({ ...f, fotoDataUrl: reader.result as string }));
+        setAnalyzeError(null);
       }
     };
     reader.readAsDataURL(file);
+  }
+
+  async function handleStartAnalyze() {
+    if (!form.fotoDataUrl) {
+      setAnalyzeError('Unggah foto terlebih dahulu sebelum memulai analisa AI.');
+      return;
+    }
+    setAnalyzing(true);
+    setAnalyzeError(null);
+    try {
+      const res = await apiPost<{ jenisPemeriksaan: string; kesan: string; diagnosa: string }>(
+        '/api/analisa-foto-rontgen/analyze',
+        {
+          fotoDataUrl: form.fotoDataUrl,
+          jenisPemeriksaan: form.jenisPemeriksaan || undefined,
+          namaPasien: form.namaPasien || undefined,
+        },
+      );
+      setForm((f) => ({
+        ...f,
+        jenisPemeriksaan: f.jenisPemeriksaan || res.jenisPemeriksaan,
+        kesan: res.kesan,
+        diagnosa: res.diagnosa,
+      }));
+      setIsDraftAi(true);
+      setConfirmReviewed(false);
+    } catch (err) {
+      setAnalyzeError(err instanceof Error ? err.message : 'Gagal menganalisa foto dengan AI');
+    } finally {
+      setAnalyzing(false);
+    }
   }
 
   async function handleSubmit(e: React.FormEvent) {
@@ -231,6 +276,7 @@ export function AnalisaFotoRontgenPage() {
         ukuranFoto: form.ukuranFoto || undefined,
         kesan: form.kesan || undefined,
         diagnosa: form.diagnosa || undefined,
+        isDraftAi: isDraftAi && !confirmReviewed,
         radiologNama: form.radiologNama || undefined,
       };
       if (editing) {
@@ -302,7 +348,7 @@ export function AnalisaFotoRontgenPage() {
     <>
       <ListPageShell
         title="Analisa Foto Rontgen"
-        subtitle="Arsip foto rontgen pasien beserta kesan & diagnosa yang diisi manual oleh radiolog/dokter (bukan deteksi otomatis AI)"
+        subtitle="Arsip foto rontgen pasien — kesan & diagnosa bisa diisi manual atau dibantu AI vision (hasil AI selalu DRAFT, wajib ditinjau ulang oleh radiolog/dokter)"
         metrics={[
           { label: 'Total Data', value: String(pagination.total), tone: 'blue', iconKind: 'clipboard' },
         ]}
@@ -358,7 +404,14 @@ export function AnalisaFotoRontgenPage() {
                       )}
                     </td>
                     <td>{item.jenisPemeriksaan || '—'}</td>
-                    <td style={{ maxWidth: '220px', whiteSpace: 'normal' }}>{item.kesan || '—'}</td>
+                    <td style={{ maxWidth: '220px', whiteSpace: 'normal' }}>
+                      {item.isDraftAi && (
+                        <span className="badge badge--warn" style={{ display: 'inline-block', marginBottom: '0.3rem' }}>
+                          ⚠️ DRAFT AI — belum ditinjau
+                        </span>
+                      )}
+                      {item.kesan || '—'}
+                    </td>
                     <td>{item.radiologNama || '—'}</td>
                     <td>
                       <TableRowActions
@@ -471,6 +524,51 @@ export function AnalisaFotoRontgenPage() {
                 ))}
               </select>
             </div>
+            <div className="form-field form-field--full">
+              <button
+                type="button"
+                className="aifoto-analyze-btn"
+                disabled={analyzing || !form.fotoDataUrl}
+                onClick={() => void handleStartAnalyze()}
+              >
+                {analyzing ? '⏳ Menganalisa foto...' : '✨ Start — Analisa Foto dengan AI'}
+              </button>
+              {analyzeError && (
+                <p className="alert alert--error" style={{ marginTop: '0.5rem' }}>
+                  {analyzeError}
+                </p>
+              )}
+            </div>
+
+            {isDraftAi && (
+              <div className="form-field form-field--full aifoto-draft-banner">
+                <strong style={{ color: '#92400e' }}>⚠️ Draft AI — belum final.</strong>{' '}
+                <span style={{ color: '#78350f', fontSize: '0.85rem' }}>
+                  Jenis pemeriksaan, kesan, dan diagnosa di bawah dihasilkan otomatis oleh AI dan WAJIB
+                  diperiksa ulang oleh radiolog/dokter sebelum dipakai. Periksa dan edit bila perlu, lalu
+                  centang konfirmasi berikut sebelum menyimpan sebagai hasil final.
+                </span>
+                <label
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.5rem',
+                    marginTop: '0.6rem',
+                    fontSize: '0.85rem',
+                    fontWeight: 600,
+                    color: '#78350f',
+                  }}
+                >
+                  <input
+                    type="checkbox"
+                    checked={confirmReviewed}
+                    onChange={(e) => setConfirmReviewed(e.target.checked)}
+                  />
+                  Saya (radiolog/dokter) sudah meninjau ulang hasil ini dan menyatakannya benar
+                </label>
+              </div>
+            )}
+
             <div className="form-field form-field--full">
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <label htmlFor="afr-kesan" style={{ margin: 0 }}>Kesan (diisi manual oleh radiolog)</label>

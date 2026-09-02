@@ -570,8 +570,10 @@ model FotoDashboard {
   updatedAt DateTime @updatedAt
 }
 
-/// Arsip foto rontgen pasien beserta kesan/diagnosa yang diisi manual oleh
-/// radiolog/dokter (BUKAN deteksi otomatis AI — lihat catatan produk).
+/// Arsip foto rontgen pasien beserta kesan/diagnosa — bisa diisi manual atau
+/// lewat draft AI vision (tombol "Start — Analisa Foto dengan AI", sama
+/// seperti AI Radiologi/AI Foto). `isDraftAi` tetap true sampai radiolog/
+/// dokter meninjau ulang dan menyimpan perubahan secara manual.
 model AnalisaFotoRontgen {
   id               String   @id @default(cuid())
   namaPasien       String
@@ -582,6 +584,7 @@ model AnalisaFotoRontgen {
   ukuranFoto       String   @default("3 x 4 cm")
   kesan            String?
   diagnosa         String?
+  isDraftAi        Boolean  @default(false)
   radiologNama     String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt

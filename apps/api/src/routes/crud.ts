@@ -1,4 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from 'fastify';
+import { GoogleGenAI, Type } from '@google/genai';
 import {
   Decimal,
   PrismaClientKnownRequestError,
@@ -3112,6 +3113,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
           ukuranFoto: true,
           kesan: true,
           diagnosa: true,
+          isDraftAi: true,
           radiologNama: true,
         },
       }),
@@ -3127,6 +3129,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         ukuranFoto: a.ukuranFoto,
         kesan: a.kesan,
         diagnosa: a.diagnosa,
+        isDraftAi: a.isDraftAi,
         radiologNama: a.radiologNama,
       })),
       pagination: buildPaginationMeta(total, page, limit),
@@ -3143,6 +3146,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       ukuranFoto?: string;
       kesan?: string;
       diagnosa?: string;
+      isDraftAi?: boolean;
       radiologNama?: string;
     };
   }>('/api/analisa-foto-rontgen', async (req, reply) => {
@@ -3160,6 +3164,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         ukuranFoto: b.ukuranFoto?.trim() || '3 x 4 cm',
         kesan: b.kesan?.trim() || null,
         diagnosa: b.diagnosa?.trim() || null,
+        isDraftAi: b.isDraftAi ?? false,
         radiologNama: b.radiologNama?.trim() || null,
       },
     });
@@ -3174,6 +3179,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         ukuranFoto: item.ukuranFoto,
         kesan: item.kesan,
         diagnosa: item.diagnosa,
+        isDraftAi: item.isDraftAi,
         radiologNama: item.radiologNama,
       },
     });
@@ -3189,6 +3195,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       fotoDataUrl?: string;
       kesan?: string;
       diagnosa?: string;
+      isDraftAi?: boolean;
       radiologNama?: string;
     };
   }>('/api/analisa-foto-rontgen/:id', async (req, reply) => {
@@ -3207,6 +3214,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         fotoDataUrl: req.body.fotoDataUrl ?? existing.fotoDataUrl,
         kesan: req.body.kesan !== undefined ? req.body.kesan?.trim() || null : existing.kesan,
         diagnosa: req.body.diagnosa !== undefined ? req.body.diagnosa?.trim() || null : existing.diagnosa,
+        isDraftAi: req.body.isDraftAi ?? existing.isDraftAi,
         radiologNama:
           req.body.radiologNama !== undefined ? req.body.radiologNama?.trim() || null : existing.radiologNama,
       },
@@ -3221,6 +3229,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
         fotoDataUrl: item.fotoDataUrl,
         kesan: item.kesan,
         diagnosa: item.diagnosa,
+        isDraftAi: item.isDraftAi,
         radiologNama: item.radiologNama,
       },
     };
@@ -3229,6 +3238,138 @@ export async function registerCrudRoutes(app: FastifyInstance) {
   app.delete<{ Params: { id: string } }>('/api/analisa-foto-rontgen/:id', async (req) => {
     await prisma.analisaFotoRontgen.delete({ where: { id: req.params.id } });
     return { ok: true };
+  });
+
+  const ANALISA_FOTO_RONTGEN_ALLOWED_IMAGE_MEDIA_TYPES = [
+    'image/jpeg',
+    'image/png',
+    'image/gif',
+    'image/webp',
+  ] as const;
+  type AnalisaFotoRontgenImageMediaType = (typeof ANALISA_FOTO_RONTGEN_ALLOWED_IMAGE_MEDIA_TYPES)[number];
+
+  function parseAnalisaFotoRontgenImageDataUrl(
+    dataUrl: string,
+  ): { readonly mediaType: AnalisaFotoRontgenImageMediaType; readonly data: string } | null {
+    const match = /^data:([a-zA-Z0-9/+.-]+);base64,(.+)$/s.exec(dataUrl);
+    if (!match) return null;
+    const [, mediaType, data] = match;
+    if (!ANALISA_FOTO_RONTGEN_ALLOWED_IMAGE_MEDIA_TYPES.includes(mediaType as AnalisaFotoRontgenImageMediaType)) {
+      return null;
+    }
+    return { mediaType: mediaType as AnalisaFotoRontgenImageMediaType, data: data! };
+  }
+
+  const ANALISA_FOTO_RONTGEN_RESPONSE_SCHEMA = {
+    type: Type.OBJECT,
+    properties: {
+      jenisPemeriksaan: {
+        type: Type.STRING,
+        description:
+          'Perkiraan jenis pemeriksaan rontgen yang paling sesuai dengan foto (mis. "Thorax PA", "BNO", "Cranium AP/Lateral"). Isi "Tidak dapat ditentukan" jika tidak jelas.',
+      },
+      kesan: {
+        type: Type.STRING,
+        description: 'Kesan (impression) ringkas dari foto, dalam Bahasa Indonesia.',
+      },
+      diagnosa: {
+        type: Type.STRING,
+        description: 'Perkiraan diagnosa berdasarkan kesan di atas, dalam Bahasa Indonesia.',
+      },
+    },
+    required: ['jenisPemeriksaan', 'kesan', 'diagnosa'],
+  };
+
+  const ANALISA_FOTO_RONTGEN_SYSTEM_PROMPT = `Anda adalah asisten AI yang membantu radiolog/dokter di sebuah klinik membaca foto rontgen untuk membuat DRAFT AWAL kesan & diagnosa, bukan diagnosis final.
+
+Aturan:
+- Hasil Anda akan selalu ditampilkan ke pengguna dengan label eksplisit sebagai "draft AI yang wajib ditinjau ulang oleh radiolog/dokter" — Anda tidak perlu menambahkan disclaimer itu sendiri di dalam teks, cukup fokus pada isi kesan & diagnosa.
+- "Kesan" adalah kesimpulan/impression singkat dari temuan yang tampak pada foto.
+- "Diagnosa" adalah perkiraan diagnosa berdasarkan kesan tersebut.
+- Jika gambar buram, tidak jelas, bukan foto rontgen, atau tidak cukup informasi, katakan itu secara eksplisit (mis. "Foto tidak cukup jelas untuk dibaca") alih-alih menebak-nebak.
+- Jangan berikan rekomendasi pengobatan, dosis obat, atau resep.
+- Tulis dalam Bahasa Indonesia, ringkas, dan gunakan istilah medis yang wajar dipakai radiolog/dokter Indonesia.
+- Jawab HANYA sesuai skema JSON yang diberikan.`;
+
+  app.post<{
+    Body: { fotoDataUrl?: string; jenisPemeriksaan?: string; namaPasien?: string };
+  }>('/api/analisa-foto-rontgen/analyze', async (req, reply) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return reply.status(503).send({
+        error: 'Fitur analisa AI belum dikonfigurasi. Admin perlu mengatur GEMINI_API_KEY di server.',
+      });
+    }
+
+    const { fotoDataUrl, jenisPemeriksaan, namaPasien } = req.body;
+    if (!fotoDataUrl?.trim()) {
+      return badRequest(reply, 'fotoDataUrl wajib diisi');
+    }
+    const parsedImage = parseAnalisaFotoRontgenImageDataUrl(fotoDataUrl);
+    if (!parsedImage) {
+      return badRequest(reply, 'Format foto tidak didukung. Gunakan JPEG, PNG, GIF, atau WEBP.');
+    }
+
+    const contextLines = [
+      namaPasien?.trim() ? `Nama pasien: ${namaPasien.trim()}` : null,
+      jenisPemeriksaan?.trim() ? `Jenis pemeriksaan: ${jenisPemeriksaan.trim()}` : null,
+    ].filter((line): line is string => Boolean(line));
+
+    try {
+      const client = new GoogleGenAI({ apiKey });
+      const response = await client.models.generateContent({
+        model: 'gemini-flash-latest',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { inlineData: { mimeType: parsedImage.mediaType, data: parsedImage.data } },
+              {
+                text: [
+                  ...contextLines,
+                  'Baca foto rontgen di atas dan berikan draft jenis pemeriksaan, kesan (impression ringkas), dan diagnosa sesuai skema JSON.',
+                ].join('\n'),
+              },
+            ],
+          },
+        ],
+        config: {
+          systemInstruction: ANALISA_FOTO_RONTGEN_SYSTEM_PROMPT,
+          responseMimeType: 'application/json',
+          responseSchema: ANALISA_FOTO_RONTGEN_RESPONSE_SCHEMA,
+        },
+      });
+
+      const finishReason = response.candidates?.[0]?.finishReason;
+      if (finishReason === 'SAFETY' || finishReason === 'PROHIBITED_CONTENT') {
+        return reply.status(502).send({
+          error: 'AI menolak membaca foto ini. Silakan isi kesan & diagnosa secara manual.',
+        });
+      }
+
+      const text = response.text;
+      if (!text) {
+        return reply.status(502).send({ error: 'AI tidak mengembalikan hasil bacaan yang valid.' });
+      }
+
+      let parsed: { jenisPemeriksaan?: unknown; kesan?: unknown; diagnosa?: unknown };
+      try {
+        parsed = JSON.parse(text) as { jenisPemeriksaan?: unknown; kesan?: unknown; diagnosa?: unknown };
+      } catch {
+        return reply.status(502).send({ error: 'AI mengembalikan format hasil yang tidak valid.' });
+      }
+
+      return {
+        jenisPemeriksaan: typeof parsed.jenisPemeriksaan === 'string' ? parsed.jenisPemeriksaan : '',
+        kesan: typeof parsed.kesan === 'string' ? parsed.kesan : '',
+        diagnosa: typeof parsed.diagnosa === 'string' ? parsed.diagnosa : '',
+      };
+    } catch (err) {
+      req.log.error(err, 'Gagal memanggil AI vision untuk analisa foto rontgen');
+      return reply.status(502).send({
+        error: err instanceof Error ? `Gagal menghubungi layanan AI: ${err.message}` : 'Gagal menghubungi layanan AI',
+      });
+    }
   });
 
   app.get<{ Querystring: UsgListQuery }>('/api/usg', async (req) => {
