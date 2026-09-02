@@ -1995,7 +1995,7 @@ export function PasienPage() {
         </form>
       </Modal>
 
-      <Modal open={aiFotoOpen} title="✨ AI Foto — Analisa & Isi Kesan Otomatis" onClose={() => setAiFotoOpen(false)} size="md">
+      <Modal open={aiFotoOpen} title="✨ AI Foto — Analisa & Isi Kesan Otomatis" onClose={() => setAiFotoOpen(false)} size="xl">
         <div className="form-grid">
           {aiFotoError && <div className="alert alert--error form-grid--full">{aiFotoError}</div>}
 
