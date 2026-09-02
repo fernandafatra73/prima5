@@ -337,16 +337,31 @@ function renderView(
 const LOGIN_GREETING =
   'Selamat anda memasuki area prima husada. Bekerjalah dengan sungguh-sungguh, semoga hari harimu menyenangkan. Buatlah kebahagian di tempat kerja mu, rejeki akan mengikuti selamanya.';
 
-/** Cari voice Bahasa Indonesia terbaik yang sudah terpasang di browser/OS.
- * Voice "Google"/"Natural"/"Online" biasanya lebih jelas & natural daripada
- * voice bawaan OS yang bersuara robotik. */
+/** Cari voice Bahasa Indonesia terbaik yang sudah terpasang di browser/OS,
+ * dengan prioritas suara wanita (mis. "Microsoft Gadis Online (Natural)",
+ * "Google Bahasa Indonesia" pada beberapa browser sudah bersuara wanita).
+ * Web Speech API tidak punya properti gender eksplisit, jadi dideteksi dari
+ * nama voice — voice yang jelas bersuara pria (mis. "Andika") dihindari kalau
+ * ada alternatif lain. Voice "Google"/"Natural"/"Online" biasanya lebih
+ * jelas & natural daripada voice bawaan OS yang bersuara robotik. */
 function pickIndonesianVoice(
   voices: readonly SpeechSynthesisVoice[],
 ): SpeechSynthesisVoice | null {
   const idVoices = voices.filter((v) => v.lang.toLowerCase().startsWith('id'));
   if (idVoices.length === 0) return null;
-  const preferred = idVoices.find((v) => /google|natural|online|neural/i.test(v.name));
-  return preferred ?? idVoices[0]!;
+
+  const isNaturalSounding = (v: SpeechSynthesisVoice) => /google|natural|online|neural/i.test(v.name);
+  const isFemale = (v: SpeechSynthesisVoice) => /female|wanita|perempuan|gadis|damayanti/i.test(v.name);
+  const isMale = (v: SpeechSynthesisVoice) => /\bmale\b|\bpria\b|andika|\bardi\b/i.test(v.name);
+
+  const femaleVoices = idVoices.filter(isFemale);
+  if (femaleVoices.length > 0) {
+    return femaleVoices.find(isNaturalSounding) ?? femaleVoices[0]!;
+  }
+
+  const notMaleVoices = idVoices.filter((v) => !isMale(v));
+  const pool = notMaleVoices.length > 0 ? notMaleVoices : idVoices;
+  return pool.find(isNaturalSounding) ?? pool[0]!;
 }
 
 /** Bunyi "ding-dong" khas pengumuman kabin pesawat, dimainkan sebelum
