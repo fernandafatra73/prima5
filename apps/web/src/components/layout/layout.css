@@ -74,7 +74,8 @@
 
 .app-navbar__credit {
   font-size: 0.65rem;
-  font-weight: 500;
+  font-weight: 700;
+  font-style: italic;
   color: #ffffff;
   white-space: nowrap;
 }
