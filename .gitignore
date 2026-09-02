@@ -31,6 +31,7 @@ mise.local.toml
 # Env
 .env
 .env.local
+kuncigemini.txt
 
 # Prisma generated client
 apps/api/src/generated/
