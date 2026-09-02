@@ -3653,6 +3653,84 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     return { ok: true };
   });
 
+  // ─── Trading MinPlus (harga acuan, peringatan tiap kelipatan $10) ─────────
+
+  function serializeTradingMinPlus(item: {
+    id: string;
+    hargaAcuan: unknown;
+    keterangan: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+  }): {
+    id: string;
+    hargaAcuan: string | null;
+    keterangan: string | null;
+    createdAt: string;
+    updatedAt: string;
+  } {
+    return {
+      id: item.id,
+      hargaAcuan: serializeDecimal(item.hargaAcuan as never),
+      keterangan: item.keterangan,
+      createdAt: item.createdAt.toISOString(),
+      updatedAt: item.updatedAt.toISOString(),
+    };
+  }
+
+  app.get<{ Querystring: ListQuery }>('/api/trading-minplus', async (req) => {
+    const { page, limit, skip } = parsePagination(req.query);
+    const [total, items] = await Promise.all([
+      prisma.tradingMinPlus.count(),
+      prisma.tradingMinPlus.findMany({ orderBy: { createdAt: 'desc' }, skip, take: limit }),
+    ]);
+    return { items: items.map(serializeTradingMinPlus), pagination: buildPaginationMeta(total, page, limit) };
+  });
+
+  app.post<{ Body: { hargaAcuan: number | string; keterangan?: string } }>(
+    '/api/trading-minplus',
+    async (req, reply) => {
+      const b = req.body;
+      if (b.hargaAcuan === undefined || b.hargaAcuan === null || b.hargaAcuan === '') {
+        return badRequest(reply, 'hargaAcuan wajib diisi');
+      }
+      const hargaAcuan = parseDecimalInput(b.hargaAcuan);
+      if (!hargaAcuan) return badRequest(reply, 'hargaAcuan harus berupa angka');
+      const item = await prisma.tradingMinPlus.create({
+        data: { hargaAcuan, keterangan: b.keterangan?.trim() || null },
+      });
+      return reply.status(201).send({ item: serializeTradingMinPlus(item) });
+    },
+  );
+
+  app.patch<{
+    Params: { id: string };
+    Body: { hargaAcuan?: number | string; keterangan?: string };
+  }>('/api/trading-minplus/:id', async (req, reply) => {
+    const existing = await prisma.tradingMinPlus.findUnique({ where: { id: req.params.id } });
+    if (!existing) return reply.status(404).send({ error: 'Acuan tidak ditemukan' });
+
+    let hargaAcuan = existing.hargaAcuan;
+    if (req.body.hargaAcuan !== undefined) {
+      const parsed = parseDecimalInput(req.body.hargaAcuan);
+      if (!parsed) return badRequest(reply, 'hargaAcuan harus berupa angka');
+      hargaAcuan = parsed;
+    }
+
+    const item = await prisma.tradingMinPlus.update({
+      where: { id: req.params.id },
+      data: {
+        hargaAcuan,
+        keterangan: req.body.keterangan !== undefined ? req.body.keterangan?.trim() || null : existing.keterangan,
+      },
+    });
+    return { item: serializeTradingMinPlus(item) };
+  });
+
+  app.delete<{ Params: { id: string } }>('/api/trading-minplus/:id', async (req) => {
+    await prisma.tradingMinPlus.delete({ where: { id: req.params.id } });
+    return { ok: true };
+  });
+
   app.get('/api/kop-surat', async () => {
     const item = await prisma.kopSurat.findUnique({ where: { id: 'default' } });
     if (!item) {

@@ -195,6 +195,18 @@ model TradingLevel {
   updatedAt  DateTime @updatedAt
 }
 
+/// Harga acuan (entry) XAU/USD untuk fitur "MinPlus" di halaman Trading —
+/// begitu harga live bergerak naik/turun kelipatan $10 dari acuan ini,
+/// peringatan suara "santai, santai..." diucapkan di frontend. Entri terbaru
+/// (createdAt terbesar) adalah acuan aktif yang dipantau.
+model TradingMinPlus {
+  id         String   @id @default(cuid())
+  hargaAcuan Decimal
+  keterangan String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
 /// Teks berjalan (marquee) pada band bawah aplikasi. Satu baris singleton,
 /// diisi lewat menu Pengaturan > Autote1.
 model AutoText {

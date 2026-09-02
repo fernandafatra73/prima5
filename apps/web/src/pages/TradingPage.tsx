@@ -25,6 +25,13 @@ interface TradingLevelItem {
   readonly createdAt: string;
 }
 
+interface TradingMinPlusItem {
+  readonly id: string;
+  readonly hargaAcuan: string;
+  readonly keterangan: string | null;
+  readonly createdAt: string;
+}
+
 /** Ekstrak Sinyal/High/Low/Close/Pivot dari teks "[Analisa Otomatis Harian]"
  * yang dibuat job pivot harian — dipakai supaya data ini bisa disimpan
  * sebagai tabel (Export Excel), bukan cuma teks bebas. Entri manual yang
@@ -186,6 +193,20 @@ function speakLevelAlert(): void {
   ucapkan();
 }
 
+const MINPLUS_ALERT_TEXT = 'Santai, santai. Diteruskan atau dijual, sedang menunggu keputusan yang tepat.';
+
+/** Ucapkan peringatan MinPlus (harga bergerak kelipatan $10 dari acuan). */
+function speakMinPlusAlert(): void {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(MINPLUS_ALERT_TEXT);
+  utter.lang = 'id-ID';
+  utter.rate = 0.95;
+  utter.pitch = 1;
+  utter.volume = 1;
+  window.speechSynthesis.speak(utter);
+}
+
 function chartSrc(interval: string): string {
   const config = {
     autosize: true,
@@ -300,6 +321,15 @@ export function TradingPage() {
   const [editLevelKeterangan, setEditLevelKeterangan] = useState('');
   const [editLevelSaving, setEditLevelSaving] = useState(false);
 
+  const [minPlusList, setMinPlusList] = useState<TradingMinPlusItem[]>([]);
+  const [minPlusHargaAcuan, setMinPlusHargaAcuan] = useState('');
+  const [minPlusKeterangan, setMinPlusKeterangan] = useState('');
+  const [minPlusSubmitting, setMinPlusSubmitting] = useState(false);
+  const [editingMinPlusId, setEditingMinPlusId] = useState<string | null>(null);
+  const [editMinPlusHargaAcuan, setEditMinPlusHargaAcuan] = useState('');
+  const [editMinPlusKeterangan, setEditMinPlusKeterangan] = useState('');
+  const [editMinPlusSaving, setEditMinPlusSaving] = useState(false);
+
   const [showKalkulator, setShowKalkulator] = useState(false);
   const [highInput, setHighInput] = useState('');
   const [lowInput, setLowInput] = useState('');
@@ -361,12 +391,22 @@ export function TradingPage() {
     }
   }
 
+  async function loadMinPlus() {
+    try {
+      const res = await apiGet<{ items: TradingMinPlusItem[] }>('/api/trading-minplus?limit=50');
+      setMinPlusList(res.items);
+    } catch {
+      setMinPlusList([]);
+    }
+  }
+
   useEffect(() => {
     void loadJadwal();
     void loadAnalisa();
     void loadHargaXau();
     void loadHargaBinance();
     void loadLevel();
+    void loadMinPlus();
     const timer = setInterval(() => {
       void loadHargaXau();
       void loadHargaBinance();
@@ -447,6 +487,76 @@ export function TradingPage() {
       setError(err instanceof Error ? err.message : 'Gagal menyimpan perubahan level');
     } finally {
       setEditLevelSaving(false);
+    }
+  }
+
+  // Acuan aktif = entri MinPlus paling baru. Selisih harga live terhadap
+  // acuan dibagi $10 (dibulatkan ke bawah) menghasilkan "step" — tiap kali
+  // step berubah (naik ATAU turun kelipatan $10, dari kedua arah plus/minus),
+  // peringatan dibunyikan sekali, lalu reset begitu harga kembali ke bawah $10.
+  const activeMinPlus = minPlusList[0] ?? null;
+  const minPlusSelisih =
+    activeMinPlus !== null && hargaSaatIni !== null ? hargaSaatIni - Number(activeMinPlus.hargaAcuan) : null;
+  const minPlusStep = minPlusSelisih !== null ? Math.floor(Math.abs(minPlusSelisih) / 10) : 0;
+  const isMinPlusTriggering = minPlusStep >= 1;
+
+  const minPlusStepSebelumnyaRef = useRef(0);
+  useEffect(() => {
+    if (minPlusStep >= 1 && minPlusStep !== minPlusStepSebelumnyaRef.current) {
+      speakMinPlusAlert();
+    }
+    minPlusStepSebelumnyaRef.current = minPlusStep;
+  }, [minPlusStep]);
+
+  async function handleMinPlusSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!minPlusHargaAcuan.trim()) return;
+    setMinPlusSubmitting(true);
+    setError(null);
+    try {
+      await apiPost('/api/trading-minplus', {
+        hargaAcuan: minPlusHargaAcuan.trim(),
+        keterangan: minPlusKeterangan.trim() || undefined,
+      });
+      setMinPlusHargaAcuan('');
+      setMinPlusKeterangan('');
+      await loadMinPlus();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menyimpan acuan MinPlus');
+    } finally {
+      setMinPlusSubmitting(false);
+    }
+  }
+
+  async function handleMinPlusDelete(id: string) {
+    await apiDelete(`/api/trading-minplus/${id}`);
+    await loadMinPlus();
+  }
+
+  function openEditMinPlus(item: TradingMinPlusItem) {
+    setEditingMinPlusId(item.id);
+    setEditMinPlusHargaAcuan(item.hargaAcuan);
+    setEditMinPlusKeterangan(item.keterangan ?? '');
+  }
+
+  function cancelEditMinPlus() {
+    setEditingMinPlusId(null);
+  }
+
+  async function handleMinPlusEditSave(id: string) {
+    setEditMinPlusSaving(true);
+    setError(null);
+    try {
+      await apiPatch(`/api/trading-minplus/${id}`, {
+        hargaAcuan: editMinPlusHargaAcuan.trim(),
+        keterangan: editMinPlusKeterangan.trim() || undefined,
+      });
+      setEditingMinPlusId(null);
+      await loadMinPlus();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Gagal menyimpan perubahan acuan MinPlus');
+    } finally {
+      setEditMinPlusSaving(false);
     }
   }
 
@@ -693,6 +803,24 @@ export function TradingPage() {
               }}
             >
               🛒 Beli
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                document.getElementById('tr-minplus-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+              }
+              style={{
+                padding: '0.35rem 0.9rem',
+                borderRadius: '999px',
+                border: '1px solid #7c3aed',
+                background: isMinPlusTriggering ? '#7c3aed' : 'transparent',
+                color: isMinPlusTriggering ? '#ffffff' : 'var(--color-text)',
+                fontWeight: 700,
+                fontSize: '0.8rem',
+                cursor: 'pointer',
+              }}
+            >
+              ⚖️ MinPlus{isMinPlusTriggering ? '!' : ''}
             </button>
             <button
               type="button"
@@ -1340,6 +1468,184 @@ export function TradingPage() {
                           <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#dc2626' }}>RESISTANCE</div>
                           <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#b91c1c' }}>
                             {item.resistance}
+                          </div>
+                        </div>
+                        {item.keterangan && (
+                          <span style={{ fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+                            {item.keterangan}
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div id="tr-minplus-section" style={cardStyle}>
+        <div
+          style={{
+            ...cardTitlebarStyle,
+            background: isMinPlusTriggering ? 'linear-gradient(90deg, #7c3aed, #a78bfa)' : cardTitlebarStyle.background,
+          }}
+        >
+          ⚖️ MinPlus — Peringatan Tiap Kelipatan $10 dari Harga Acuan
+        </div>
+        <div style={cardBodyStyle}>
+          <p style={{ margin: '0 0 0.75rem', fontSize: '0.8rem', color: 'var(--color-text-muted)' }}>
+            Simpan harga acuan (entry) di sini. Setiap kali harga XAU/USD live bergerak minus atau plus
+            kelipatan $10 dari acuan ini, suara "Santai, santai. Diteruskan atau dijual, sedang menunggu
+            keputusan yang tepat." akan diucapkan.
+          </p>
+
+          {activeMinPlus && (
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.75rem',
+                flexWrap: 'wrap',
+                padding: '0.75rem 1rem',
+                borderRadius: '8px',
+                marginBottom: '1rem',
+                background: isMinPlusTriggering ? '#f3e8ff' : '#f0fdf4',
+                border: `1px solid ${isMinPlusTriggering ? '#7c3aed' : '#16a34a'}`,
+              }}
+            >
+              <span style={{ fontWeight: 800, color: isMinPlusTriggering ? '#7c3aed' : '#16a34a' }}>
+                {isMinPlusTriggering ? '⚖️ SUDAH BERGERAK ≥ $10!' : '✅ Masih di bawah $10 dari acuan'}
+              </span>
+              <span style={{ fontSize: '0.8rem' }}>
+                Harga acuan: ${Number(activeMinPlus.hargaAcuan).toFixed(2)}
+                {minPlusSelisih !== null &&
+                  ` · Selisih: ${minPlusSelisih >= 0 ? '+' : ''}${minPlusSelisih.toFixed(2)} USD (${minPlusSelisih >= 0 ? 'PLUS' : 'MINUS'})`}
+              </span>
+            </div>
+          )}
+
+          <form onSubmit={(e) => void handleMinPlusSubmit(e)} className="form-grid">
+            <div className="form-field">
+              <label htmlFor="tr-minplus-acuan" style={{ color: BLUE, fontWeight: 700 }}>Harga Acuan (Entry)</label>
+              <input
+                id="tr-minplus-acuan"
+                value={minPlusHargaAcuan}
+                onChange={(e) => setMinPlusHargaAcuan(e.target.value)}
+                placeholder="Contoh: 2400.00"
+                style={{ borderLeft: '3px solid #7c3aed' }}
+                required
+              />
+            </div>
+            <div className="form-field form-field--full">
+              <label htmlFor="tr-minplus-ket" style={{ color: BLUE, fontWeight: 700 }}>Keterangan (Opsional)</label>
+              <input
+                id="tr-minplus-ket"
+                value={minPlusKeterangan}
+                onChange={(e) => setMinPlusKeterangan(e.target.value)}
+                placeholder="Catatan tambahan..."
+              />
+            </div>
+            <div className="form-grid--full" style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <button type="submit" className="btn btn--primary" disabled={minPlusSubmitting}>
+                {minPlusSubmitting ? 'Menyimpan…' : '+ Tambah Acuan'}
+              </button>
+            </div>
+          </form>
+
+          <div style={{ marginTop: '1rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+            {minPlusList.length === 0 ? (
+              <p style={{ color: 'var(--color-text-muted)', margin: 0 }}>Belum ada harga acuan tersimpan.</p>
+            ) : (
+              minPlusList.map((item, idx) => {
+                const isEditingMinPlus = editingMinPlusId === item.id;
+                return (
+                  <div
+                    key={item.id}
+                    style={{
+                      padding: '0.75rem',
+                      border: '1px solid var(--color-border)',
+                      borderLeft: `4px solid ${idx === 0 ? '#7c3aed' : 'var(--color-border)'}`,
+                      borderRadius: '6px',
+                      background: '#f8fafc',
+                    }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', gap: '0.5rem', marginBottom: '0.3rem' }}>
+                      <strong style={{ fontSize: '0.78rem', color: BLUE }}>
+                        {formatTanggalJamDisplay(item.createdAt)}
+                        {idx === 0 && ' · (Aktif dipantau)'}
+                      </strong>
+                      <div style={{ display: 'flex', gap: '0.35rem' }}>
+                        {isEditingMinPlus ? (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--primary"
+                              onClick={() => void handleMinPlusEditSave(item.id)}
+                              disabled={editMinPlusSaving}
+                            >
+                              {editMinPlusSaving ? 'Menyimpan…' : '💾 Simpan'}
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--ghost"
+                              onClick={cancelEditMinPlus}
+                              disabled={editMinPlusSaving}
+                            >
+                              Batal
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--ghost"
+                              onClick={() => openEditMinPlus(item)}
+                            >
+                              ✏️ Edit
+                            </button>
+                            <button
+                              type="button"
+                              className="btn btn--xs btn--ghost"
+                              onClick={() => void handleMinPlusDelete(item.id)}
+                              style={{ color: '#dc2626' }}
+                            >
+                              Hapus
+                            </button>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {isEditingMinPlus ? (
+                      <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                        <input
+                          value={editMinPlusHargaAcuan}
+                          onChange={(e) => setEditMinPlusHargaAcuan(e.target.value)}
+                          placeholder="Harga Acuan"
+                          style={{ flex: 1, borderLeft: '3px solid #7c3aed' }}
+                        />
+                        <input
+                          value={editMinPlusKeterangan}
+                          onChange={(e) => setEditMinPlusKeterangan(e.target.value)}
+                          placeholder="Keterangan"
+                          style={{ flex: 2 }}
+                        />
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap', alignItems: 'center' }}>
+                        <div
+                          style={{
+                            border: '1px solid #c4b5fd',
+                            borderRadius: '6px',
+                            background: '#f5f3ff',
+                            padding: '0.3rem 0.6rem',
+                          }}
+                        >
+                          <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#7c3aed' }}>HARGA ACUAN</div>
+                          <div style={{ fontSize: '0.9rem', fontWeight: 700, color: '#6d28d9' }}>
+                            ${Number(item.hargaAcuan).toFixed(2)}
                           </div>
                         </div>
                         {item.keterangan && (
