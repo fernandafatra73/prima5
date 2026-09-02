@@ -73,6 +73,98 @@ Aturan:
 - Tulis dalam Bahasa Indonesia, ringkas, dan gunakan istilah medis yang wajar dipakai radiolog Indonesia.
 - Jawab HANYA sesuai skema JSON yang diberikan.`;
 
+const TB_INDICATOR_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    persen: { type: Type.NUMBER, description: 'Skor kemungkinan temuan ini, dalam persen (0-100).' },
+    keterangan: { type: Type.STRING, description: 'Keterangan singkat temuan ini, dalam Bahasa Indonesia.' },
+  },
+  required: ['persen', 'keterangan'],
+};
+
+const TB_AREA_TEMUAN_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    kondisi: {
+      type: Type.STRING,
+      description: 'Salah satu dari: "tbc", "pneumonia", "bronchopneumonia", atau "bronchitis".',
+    },
+    ymin: { type: Type.NUMBER, description: 'Batas atas kotak area kelainan, dinormalisasi 0-1000 dari tinggi foto.' },
+    xmin: { type: Type.NUMBER, description: 'Batas kiri kotak area kelainan, dinormalisasi 0-1000 dari lebar foto.' },
+    ymax: { type: Type.NUMBER, description: 'Batas bawah kotak area kelainan, dinormalisasi 0-1000 dari tinggi foto.' },
+    xmax: { type: Type.NUMBER, description: 'Batas kanan kotak area kelainan, dinormalisasi 0-1000 dari lebar foto.' },
+  },
+  required: ['kondisi', 'ymin', 'xmin', 'ymax', 'xmax'],
+};
+
+const TB_SCREENING_RESPONSE_SCHEMA = {
+  type: Type.OBJECT,
+  properties: {
+    diagnosis: {
+      type: Type.STRING,
+      description: 'Label diagnosis singkat, misalnya "TBC" jika ditemukan indikasi tuberkulosis yang signifikan, atau "Normal" jika tidak ada indikasi signifikan.',
+    },
+    confidenceScore: {
+      type: Type.NUMBER,
+      description: 'Skor keyakinan TB secara keseluruhan, dalam persen (0-100).',
+    },
+    ringkasan: {
+      type: Type.STRING,
+      description: 'Satu kalimat ringkasan temuan utama dalam Bahasa Indonesia.',
+    },
+    areaTemuan: {
+      type: Type.ARRAY,
+      description:
+        'Kotak pembatas (bounding box) lokasi kelainan pada foto rontgen thorax, satu entri per kondisi yang benar-benar terdeteksi signifikan (tbc/pneumonia/bronchopneumonia/bronchitis). Kosongkan array jika tidak ada kelainan signifikan.',
+      items: TB_AREA_TEMUAN_SCHEMA,
+    },
+    indikator: {
+      type: Type.OBJECT,
+      properties: {
+        infiltrate: TB_INDICATOR_SCHEMA,
+        consolidation: TB_INDICATOR_SCHEMA,
+        cavity: TB_INDICATOR_SCHEMA,
+        effusion: TB_INDICATOR_SCHEMA,
+        fibrotic: TB_INDICATOR_SCHEMA,
+        calcification: TB_INDICATOR_SCHEMA,
+        bronchopneumonia: TB_INDICATOR_SCHEMA,
+        bronchitis: TB_INDICATOR_SCHEMA,
+        cardiomegali: TB_INDICATOR_SCHEMA,
+        pneumonia: TB_INDICATOR_SCHEMA,
+      },
+      required: [
+        'infiltrate',
+        'consolidation',
+        'cavity',
+        'effusion',
+        'fibrotic',
+        'calcification',
+        'bronchopneumonia',
+        'bronchitis',
+        'cardiomegali',
+        'pneumonia',
+      ],
+    },
+  },
+  required: ['diagnosis', 'confidenceScore', 'ringkasan', 'areaTemuan', 'indikator'],
+};
+
+const TB_SCREENING_SYSTEM_PROMPT = `Anda adalah asisten AI skrining tuberkulosis (TB) yang membantu radiolog membuat DRAFT AWAL skrining foto rontgen thorax, bukan diagnosis final.
+
+Aturan:
+- Hasil Anda akan selalu ditampilkan ke pengguna dengan label eksplisit sebagai "draft AI yang wajib ditinjau ulang oleh radiolog" — Anda tidak perlu menambahkan disclaimer itu sendiri di dalam teks, cukup fokus pada isi analisa.
+- Nilai setiap indikator (infiltrate, consolidation, cavity, effusion, fibrotic, calcification, bronchopneumonia, bronchitis, cardiomegali, pneumonia) secara independen berdasarkan temuan yang tampak pada foto.
+- Untuk "areaTemuan": beri satu kotak pembatas (bounding box) per kondisi tbc/pneumonia/bronchopneumonia/bronchitis yang skornya diperkirakan 30% atau lebih (skor "confidenceScore" untuk tbc, atau skor indikator terkait untuk pneumonia/bronchopneumonia/bronchitis), menandai lokasi kelainan tersebut (mis. area paru kanan atas). Koordinat dinormalisasi 0-1000 relatif terhadap lebar (xmin/xmax) dan tinggi (ymin/ymax) foto, dengan (0,0) di pojok kiri atas. Jangan sertakan entri untuk kondisi dengan skor di bawah 30%.
+- Jika gambar buram, tidak jelas, atau bukan foto rontgen thorax, katakan itu secara eksplisit pada "ringkasan", kosongkan "areaTemuan", dan beri skor 0 pada semua indikator alih-alih menebak-nebak.
+- Jangan berikan rekomendasi pengobatan, dosis obat, atau resep.
+- Tulis dalam Bahasa Indonesia, ringkas, dan gunakan istilah medis yang wajar dipakai radiolog Indonesia.
+- Jawab HANYA sesuai skema JSON yang diberikan.`;
+
+const TB_SCREENING_MODEL_BY_VERSION: Record<string, string> = {
+  v1: 'gemini-flash-latest',
+  v2: 'gemini-flash-lite-latest',
+};
+
 export async function registerAnalisaFotoAiRoutes(app: FastifyInstance): Promise<void> {
   app.get<{ Querystring: { page?: string; limit?: string; q?: string } }>(
     '/api/analisa-foto-ai',
@@ -238,6 +330,123 @@ export async function registerAnalisaFotoAiRoutes(app: FastifyInstance): Promise
       };
     } catch (err) {
       req.log.error(err, 'Gagal memanggil AI vision untuk analisa foto');
+      if (isRetryableGeminiError(err)) {
+        return reply.status(503).send({
+          error: 'Layanan AI sedang sibuk (lonjakan permintaan). Coba lagi dalam beberapa saat.',
+        });
+      }
+      return reply.status(502).send({
+        error: err instanceof Error ? `Gagal menghubungi layanan AI: ${err.message}` : 'Gagal menghubungi layanan AI',
+      });
+    }
+  });
+
+  app.post<{
+    Body: { fotoDataUrl?: string; model?: string };
+  }>('/api/analisa-foto-ai/tb-screening', async (req, reply) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return reply.status(503).send({
+        error: 'Fitur analisa AI belum dikonfigurasi. Admin perlu mengatur GEMINI_API_KEY di server.',
+      });
+    }
+
+    const { fotoDataUrl, model } = req.body;
+    if (!fotoDataUrl?.trim()) {
+      return badRequest(reply, 'fotoDataUrl wajib diisi');
+    }
+    const parsedImage = parseImageDataUrl(fotoDataUrl);
+    if (!parsedImage) {
+      return badRequest(reply, 'Format foto tidak didukung. Gunakan JPEG, PNG, GIF, atau WEBP.');
+    }
+    const geminiModel = (model && TB_SCREENING_MODEL_BY_VERSION[model]) || TB_SCREENING_MODEL_BY_VERSION.v1!;
+
+    try {
+      const client = new GoogleGenAI({ apiKey });
+      const response = await generateContentWithRetry(client, {
+        model: geminiModel,
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              { inlineData: { mimeType: parsedImage.mediaType, data: parsedImage.data } },
+              {
+                text: 'Lakukan skrining TB pada foto rontgen thorax di atas dan berikan draft diagnosis, skor keyakinan, ringkasan, serta indikator detail sesuai skema JSON.',
+              },
+            ],
+          },
+        ],
+        config: {
+          systemInstruction: TB_SCREENING_SYSTEM_PROMPT,
+          responseMimeType: 'application/json',
+          responseSchema: TB_SCREENING_RESPONSE_SCHEMA,
+        },
+      });
+
+      const finishReason = response.candidates?.[0]?.finishReason;
+      if (finishReason === 'SAFETY' || finishReason === 'PROHIBITED_CONTENT') {
+        return reply.status(502).send({ error: 'AI menolak menganalisa foto ini.' });
+      }
+
+      const text = response.text;
+      if (!text) {
+        return reply.status(502).send({ error: 'AI tidak mengembalikan hasil analisa yang valid.' });
+      }
+
+      let parsed: {
+        diagnosis?: unknown;
+        confidenceScore?: unknown;
+        ringkasan?: unknown;
+        areaTemuan?: readonly { kondisi?: unknown; ymin?: unknown; xmin?: unknown; ymax?: unknown; xmax?: unknown }[];
+        indikator?: Record<string, { persen?: unknown; keterangan?: unknown }>;
+      };
+      try {
+        parsed = JSON.parse(text) as typeof parsed;
+      } catch {
+        return reply.status(502).send({ error: 'AI mengembalikan format hasil yang tidak valid.' });
+      }
+
+      const toIndicator = (key: string): { persen: number; keterangan: string } => {
+        const raw = parsed.indikator?.[key];
+        return {
+          persen: typeof raw?.persen === 'number' ? raw.persen : 0,
+          keterangan: typeof raw?.keterangan === 'string' ? raw.keterangan : '',
+        };
+      };
+
+      const KNOWN_KONDISI = ['tbc', 'pneumonia', 'bronchopneumonia', 'bronchitis'];
+      const areaTemuan = (parsed.areaTemuan ?? [])
+        .filter(
+          (a): a is { kondisi: string; ymin: number; xmin: number; ymax: number; xmax: number } =>
+            typeof a.kondisi === 'string' &&
+            KNOWN_KONDISI.includes(a.kondisi.toLowerCase()) &&
+            typeof a.ymin === 'number' &&
+            typeof a.xmin === 'number' &&
+            typeof a.ymax === 'number' &&
+            typeof a.xmax === 'number',
+        )
+        .map((a) => ({ ...a, kondisi: a.kondisi.toLowerCase() }));
+
+      return {
+        diagnosis: typeof parsed.diagnosis === 'string' ? parsed.diagnosis : '',
+        confidenceScore: typeof parsed.confidenceScore === 'number' ? parsed.confidenceScore : 0,
+        ringkasan: typeof parsed.ringkasan === 'string' ? parsed.ringkasan : '',
+        areaTemuan,
+        indikator: {
+          infiltrate: toIndicator('infiltrate'),
+          consolidation: toIndicator('consolidation'),
+          cavity: toIndicator('cavity'),
+          effusion: toIndicator('effusion'),
+          fibrotic: toIndicator('fibrotic'),
+          calcification: toIndicator('calcification'),
+          bronchopneumonia: toIndicator('bronchopneumonia'),
+          bronchitis: toIndicator('bronchitis'),
+          cardiomegali: toIndicator('cardiomegali'),
+          pneumonia: toIndicator('pneumonia'),
+        },
+      };
+    } catch (err) {
+      req.log.error(err, 'Gagal memanggil AI vision untuk skrining TB');
       if (isRetryableGeminiError(err)) {
         return reply.status(503).send({
           error: 'Layanan AI sedang sibuk (lonjakan permintaan). Coba lagi dalam beberapa saat.',

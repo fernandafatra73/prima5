@@ -117,6 +117,86 @@ interface PasienSummary {
   readonly totalSharing: string;
 }
 
+interface TbIndicator {
+  readonly persen: number;
+  readonly keterangan: string;
+}
+
+interface TbAreaTemuan {
+  readonly kondisi: string;
+  readonly ymin: number;
+  readonly xmin: number;
+  readonly ymax: number;
+  readonly xmax: number;
+}
+
+interface TbScreeningResult {
+  readonly diagnosis: string;
+  readonly confidenceScore: number;
+  readonly ringkasan: string;
+  readonly areaTemuan: readonly TbAreaTemuan[];
+  readonly indikator: {
+    readonly infiltrate: TbIndicator;
+    readonly consolidation: TbIndicator;
+    readonly cavity: TbIndicator;
+    readonly effusion: TbIndicator;
+    readonly fibrotic: TbIndicator;
+    readonly calcification: TbIndicator;
+    readonly bronchopneumonia: TbIndicator;
+    readonly bronchitis: TbIndicator;
+    readonly cardiomegali: TbIndicator;
+    readonly pneumonia: TbIndicator;
+  };
+}
+
+const TB_INDICATOR_LABELS: Record<keyof TbScreeningResult['indikator'], string> = {
+  infiltrate: 'Infiltrate',
+  consolidation: 'Consolidation',
+  cavity: 'Cavity',
+  effusion: 'Effusion',
+  fibrotic: 'Fibrotic',
+  calcification: 'Calcification',
+  bronchopneumonia: 'Bronchopneumonia',
+  bronchitis: 'Bronchitis',
+  cardiomegali: 'Cardiomegali',
+  pneumonia: 'Pneumonia',
+};
+
+interface TbCondition {
+  readonly key: string;
+  readonly label: string;
+  readonly color: string;
+}
+
+const TB_ABNORMALITY_THRESHOLD = 30;
+
+const TB_CONDITION_STYLE: Record<string, { readonly label: string; readonly color: string }> = {
+  tbc: { label: 'TBC', color: '#ef4444' },
+  pneumonia: { label: 'Pneumonia', color: '#22c55e' },
+  bronchopneumonia: { label: 'Bronchopneumonia', color: '#3b82f6' },
+  bronchitis: { label: 'Bronchitis', color: '#eab308' },
+};
+
+/** Deteksi kelainan utama dari hasil skrining untuk pewarnaan foto rontgen,
+ * berurutan berdasarkan prioritas — TBC didahulukan karena itu tujuan utama
+ * skrining, baru diikuti indikator lain yang skornya melewati ambang. */
+function getAiBanding2Conditions(result: TbScreeningResult): readonly TbCondition[] {
+  const conditions: TbCondition[] = [];
+  if (/tbc|tuberk/i.test(result.diagnosis) && result.confidenceScore >= TB_ABNORMALITY_THRESHOLD) {
+    conditions.push({ key: 'tbc', ...TB_CONDITION_STYLE.tbc! });
+  }
+  if (result.indikator.pneumonia.persen >= TB_ABNORMALITY_THRESHOLD) {
+    conditions.push({ key: 'pneumonia', ...TB_CONDITION_STYLE.pneumonia! });
+  }
+  if (result.indikator.bronchopneumonia.persen >= TB_ABNORMALITY_THRESHOLD) {
+    conditions.push({ key: 'bronchopneumonia', ...TB_CONDITION_STYLE.bronchopneumonia! });
+  }
+  if (result.indikator.bronchitis.persen >= TB_ABNORMALITY_THRESHOLD) {
+    conditions.push({ key: 'bronchitis', ...TB_CONDITION_STYLE.bronchitis! });
+  }
+  return conditions;
+}
+
 const HASIL_TABS = [
   { id: 'all', label: 'Semua data' },
   { id: 'MENUNGGU_HASIL', label: 'Menunggu hasil' },
@@ -201,6 +281,13 @@ export function PasienPage() {
   const [aiFotoError, setAiFotoError] = useState<string | null>(null);
   const [aiFotoNamaPenyakit, setAiFotoNamaPenyakit] = useState('');
   const [aiFotoKesan, setAiFotoKesan] = useState('');
+  const [aiBanding2Open, setAiBanding2Open] = useState(false);
+  const [aiBanding2Model, setAiBanding2Model] = useState('');
+  const [aiBanding2DataUrl, setAiBanding2DataUrl] = useState('');
+  const [aiBanding2DragOver, setAiBanding2DragOver] = useState(false);
+  const [aiBanding2Analyzing, setAiBanding2Analyzing] = useState(false);
+  const [aiBanding2Error, setAiBanding2Error] = useState<string | null>(null);
+  const [aiBanding2Result, setAiBanding2Result] = useState<TbScreeningResult | null>(null);
   const [nama, setNama] = useState('');
   const [tanggalLahir, setTanggalLahir] = useState('');
   const [umurManual, setUmurManual] = useState('');
@@ -648,6 +735,114 @@ export function PasienPage() {
     );
     setAiFotoOpen(false);
     setAddOpen(true);
+  }
+
+  function openAiBanding2Modal() {
+    setAiBanding2Model('');
+    setAiBanding2DataUrl('');
+    setAiBanding2DragOver(false);
+    setAiBanding2Error(null);
+    setAiBanding2Result(null);
+    setAiBanding2Open(true);
+  }
+
+  function loadAiBanding2File(file: File) {
+    if (!/^image\/(png|jpe?g)$/i.test(file.type)) {
+      setAiBanding2Error('Format foto tidak didukung. Gunakan PNG, JPG, atau JPEG.');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === 'string') {
+        setAiBanding2DataUrl(reader.result);
+        setAiBanding2Error(null);
+        setAiBanding2Result(null);
+      }
+    };
+    reader.readAsDataURL(file);
+  }
+
+  function handleAiBanding2FileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) loadAiBanding2File(file);
+  }
+
+  function handleAiBanding2Drop(e: React.DragEvent<HTMLLabelElement>) {
+    e.preventDefault();
+    setAiBanding2DragOver(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file) loadAiBanding2File(file);
+  }
+
+  async function handleAiBanding2Analyze() {
+    if (!aiBanding2Model) {
+      setAiBanding2Error('Pilih model version terlebih dahulu.');
+      return;
+    }
+    if (!aiBanding2DataUrl) {
+      setAiBanding2Error('Unggah foto rontgen terlebih dahulu sebelum memulai analisa AI.');
+      return;
+    }
+    setAiBanding2Analyzing(true);
+    setAiBanding2Error(null);
+    try {
+      const res = await apiPost<TbScreeningResult>('/api/analisa-foto-ai/tb-screening', {
+        fotoDataUrl: aiBanding2DataUrl,
+        model: aiBanding2Model,
+      });
+      setAiBanding2Result(res);
+    } catch (err) {
+      setAiBanding2Error(err instanceof Error ? err.message : 'Gagal menganalisa foto dengan AI');
+    } finally {
+      setAiBanding2Analyzing(false);
+    }
+  }
+
+  function handleSaveAiBanding2Kesan() {
+    if (!aiBanding2Result) return;
+    resetForm();
+    setKesan(
+      `Kemungkinan: ${aiBanding2Result.diagnosis} (Skor keyakinan TB: ${aiBanding2Result.confidenceScore}%)\n\n${aiBanding2Result.ringkasan}`,
+    );
+    setAiBanding2Open(false);
+    setAddOpen(true);
+  }
+
+  function handlePrintAiBanding2() {
+    if (!aiBanding2Result || !aiBanding2DataUrl) return;
+    const win = window.open('', '_blank', 'width=850,height=700');
+    if (!win) return;
+    const ind = aiBanding2Result.indikator;
+    const rows = (Object.keys(TB_INDICATOR_LABELS) as (keyof typeof ind)[])
+      .map(
+        (key) =>
+          `<tr><td>${TB_INDICATOR_LABELS[key]}</td><td>${ind[key].persen}%</td><td>${ind[key].keterangan}</td></tr>`,
+      )
+      .join('');
+    win.document.write(`<!DOCTYPE html><html><head><title>Hasil AI Banding 2</title>
+      <style>
+        body { font-family: Arial, sans-serif; padding: 24px; color: #0f172a; }
+        h1 { font-size: 20px; margin-bottom: 4px; }
+        .score { font-size: 28px; font-weight: 700; color: #ea580c; }
+        table { width: 100%; border-collapse: collapse; margin-top: 16px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; font-size: 13px; }
+        img { max-width: 320px; margin-top: 12px; border: 1px solid #cbd5e1; }
+        .note { font-size: 11px; color: #64748b; font-style: italic; margin-top: 16px; }
+      </style>
+      </head><body>
+        <h1>Hasil AI Banding 2 — Skrining TB</h1>
+        <div class="score">${aiBanding2Result.diagnosis} — ${aiBanding2Result.confidenceScore}%</div>
+        <p>${aiBanding2Result.ringkasan}</p>
+        <img src="${aiBanding2DataUrl}" alt="X-Ray" />
+        <table>
+          <thead><tr><th>Indikator</th><th>Skor</th><th>Keterangan</th></tr></thead>
+          <tbody>${rows}</tbody>
+        </table>
+        <p class="note">Catatan: Hasil analisa AI ini adalah draft skrining awal dan wajib ditinjau ulang oleh radiolog, bukan diagnosis final.</p>
+      </body></html>`);
+    win.document.close();
+    win.focus();
+    win.print();
   }
 
   async function handlePrint(id: string) {
@@ -1285,6 +1480,25 @@ export function PasienPage() {
             <button type="button" className="aifoto-analyze-btn" onClick={openAiFotoModal} style={{ padding: '0.5rem 0.9rem', fontSize: '0.8rem' }}>
               ✨ AI Foto
             </button>
+            <button
+              type="button"
+              className="btn btn--sm btn--ghost"
+              onClick={openAiBanding2Modal}
+              style={{ border: '1px solid var(--color-border)' }}
+              title="Analisa TB X-Ray dengan AI (pilih model version)"
+            >
+              🩻 AI Banding 2
+            </button>
+            <a
+              href="https://tbscreen.ai/login"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn btn--sm btn--ghost"
+              style={{ border: '1px solid var(--color-border)', textDecoration: 'none' }}
+              title="Buka TBScreen.ai untuk banding hasil AI"
+            >
+              🤖 AI Banding
+            </a>
             <button
               type="button"
               className={`btn btn--sm ${timeFilter === 'today' ? 'btn--primary' : 'btn--ghost'}`}
@@ -2057,6 +2271,208 @@ export function PasienPage() {
                 </button>
               </div>
             </>
+          )}
+        </div>
+      </Modal>
+
+      <Modal open={aiBanding2Open} title="🩻 AI Banding 2 — TB X-ray Analysis with AI" onClose={() => setAiBanding2Open(false)} size="xl">
+        <div className="form-grid">
+          {aiBanding2Error && <div className="alert alert--error form-grid--full">{aiBanding2Error}</div>}
+
+          <div className="form-field">
+            <label htmlFor="tbscan-model">Model Version</label>
+            <select
+              id="tbscan-model"
+              value={aiBanding2Model}
+              onChange={(e) => setAiBanding2Model(e.target.value)}
+            >
+              <option value="">Select Model Version</option>
+              <option value="v1">Model Version 1</option>
+              <option value="v2">Model Version 2</option>
+              <option value="lumbosacral">Lumbo Sacral</option>
+              <option value="genu">Genu</option>
+              <option value="knee">Knee</option>
+              <option value="cranium">Cranium</option>
+              <option value="cervikal">Cervikal</option>
+              <option value="bno">BNO</option>
+              <option value="femur">Femur</option>
+              <option value="cruris">Cruris</option>
+              <option value="anthebrachi">Anthebrachi</option>
+              <option value="usg-abdomen">USG Abdomen</option>
+              <option value="usg-mammae">USG Mammae</option>
+            </select>
+          </div>
+
+          <div className="form-field">
+            <label htmlFor="tbscan-upload">Upload X-Ray Image</label>
+            <label
+              htmlFor="tbscan-upload"
+              className={`tbscan-upload${aiBanding2DragOver ? ' tbscan-upload--dragover' : ''}`}
+              onDragOver={(e) => {
+                e.preventDefault();
+                setAiBanding2DragOver(true);
+              }}
+              onDragLeave={() => setAiBanding2DragOver(false)}
+              onDrop={handleAiBanding2Drop}
+            >
+              <span className="tbscan-upload__icon">🖼️</span>
+              <strong>Upload X-Ray Image or drag and drop</strong>
+              <p className="tbscan-upload__hint">PNG, JPG, JPEG</p>
+            </label>
+            <input
+              id="tbscan-upload"
+              type="file"
+              accept="image/png,image/jpeg"
+              onChange={handleAiBanding2FileChange}
+              style={{ display: 'none' }}
+            />
+            {aiBanding2DataUrl && (
+              <div className="tbscan-preview">
+                <img src={aiBanding2DataUrl} alt="Preview X-Ray" />
+              </div>
+            )}
+          </div>
+
+          <div className="form-field form-grid--full">
+            <button
+              type="button"
+              className="aifoto-analyze-btn"
+              disabled={aiBanding2Analyzing || !aiBanding2DataUrl || !aiBanding2Model}
+              onClick={() => void handleAiBanding2Analyze()}
+            >
+              {aiBanding2Analyzing ? '⏳ Menganalisa...' : '▶ Analyze'}
+            </button>
+          </div>
+
+          {aiBanding2Result && (
+            <div className="form-grid--full">
+              <div className="tbscan-panel">
+                <div className="tbscan-card">
+                  <div className="tbscan-diagnosis-row">
+                    <h4 style={{ margin: 0 }}>AI Diagnosis</h4>
+                    <span className="tbscan-score-label">TB Confidence Score</span>
+                  </div>
+                  <div className="tbscan-diagnosis-row">
+                    <span className="tbscan-diagnosis-label">{aiBanding2Result.diagnosis || '—'}</span>
+                    <span className="tbscan-score">
+                      <span className="tbscan-score-value">{aiBanding2Result.confidenceScore}%</span>
+                    </span>
+                  </div>
+                  <div className="tbscan-progress-track">
+                    <div
+                      className="tbscan-progress-fill"
+                      style={{ width: `${Math.min(100, Math.max(0, aiBanding2Result.confidenceScore))}%` }}
+                    />
+                  </div>
+                  <p className="tbscan-summary">{aiBanding2Result.ringkasan}</p>
+                  <p className="tbscan-note">
+                    Note: This AI analysis is used as an initial screening tool and does not replace professional
+                    medical evaluation. Please consult a healthcare professional for a definitive diagnosis.
+                  </p>
+                </div>
+
+                <div className="tbscan-card tbscan-xray">
+                  <h4 style={{ textAlign: 'center' }}>X-Ray Image</h4>
+                  {(() => {
+                    const conditions = getAiBanding2Conditions(aiBanding2Result);
+                    return (
+                      <>
+                        <div className="tbscan-xray-frame">
+                          <img src={aiBanding2DataUrl} alt="X-Ray" />
+                          {aiBanding2Result.areaTemuan.map((area, idx) => {
+                            const style = TB_CONDITION_STYLE[area.kondisi];
+                            if (!style) return null;
+                            const top = Math.min(100, Math.max(0, area.ymin / 10));
+                            const left = Math.min(100, Math.max(0, area.xmin / 10));
+                            const height = Math.min(100 - top, Math.max(0, (area.ymax - area.ymin) / 10));
+                            const width = Math.min(100 - left, Math.max(0, (area.xmax - area.xmin) / 10));
+                            return (
+                              <div
+                                key={`${area.kondisi}-${idx}`}
+                                className="tbscan-xray-box"
+                                style={{
+                                  top: `${top}%`,
+                                  left: `${left}%`,
+                                  width: `${width}%`,
+                                  height: `${height}%`,
+                                  borderColor: style.color,
+                                  background: `${style.color}33`,
+                                }}
+                              >
+                                <span className="tbscan-xray-box__label" style={{ background: style.color }}>
+                                  {style.label}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                        {conditions.length > 0 && (
+                          <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', justifyContent: 'center', marginTop: '0.75rem' }}>
+                            {conditions.map((c) => (
+                              <span
+                                key={c.key}
+                                style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  padding: '0.2rem 0.55rem',
+                                  borderRadius: '999px',
+                                  color: c.color,
+                                  background: `${c.color}22`,
+                                  border: `1px solid ${c.color}`,
+                                }}
+                              >
+                                ● {c.label}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
+                </div>
+              </div>
+
+              <div className="tbscan-card" style={{ marginTop: '1rem' }}>
+                <h4>Detailed Indicators</h4>
+                <div className="tbscan-indicator-grid">
+                  {(Object.keys(TB_INDICATOR_LABELS) as (keyof TbScreeningResult['indikator'])[]).map((key) => {
+                    const item = aiBanding2Result.indikator[key];
+                    const isDanger = item.persen >= TB_ABNORMALITY_THRESHOLD;
+                    return (
+                      <div className="tbscan-indicator" key={key}>
+                        <div className="tbscan-indicator-head">
+                          <span>{TB_INDICATOR_LABELS[key]}</span>
+                          <span className={isDanger ? 'tbscan-indicator-percent--danger' : 'tbscan-indicator-percent--ok'}>
+                            {item.persen}%
+                          </span>
+                        </div>
+                        <div className="tbscan-progress-track">
+                          <div
+                            className={`tbscan-progress-fill ${isDanger ? 'tbscan-progress-fill--danger' : 'tbscan-progress-fill--ok'}`}
+                            style={{ width: `${Math.min(100, Math.max(0, item.persen))}%` }}
+                          />
+                        </div>
+                        {item.keterangan && <p className="tbscan-indicator-desc">{item.keterangan}</p>}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', marginTop: '1rem' }}>
+                <button
+                  type="button"
+                  className="btn btn--sm btn--ghost"
+                  onClick={handlePrintAiBanding2}
+                  style={{ border: '1px solid var(--color-border)' }}
+                >
+                  🖨️ Print Results
+                </button>
+                <button type="button" className="btn btn--sm btn--primary" onClick={handleSaveAiBanding2Kesan}>
+                  Simpan ke Kesan
+                </button>
+              </div>
+            </div>
           )}
         </div>
       </Modal>

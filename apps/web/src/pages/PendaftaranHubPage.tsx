@@ -11,6 +11,20 @@ const PENDAFTARAN_TABS = [
 
 type PendaftaranTabId = (typeof PENDAFTARAN_TABS)[number]['id'];
 
+/** Ucapkan teks panggilan lewat speaker. */
+function speakPanggilan(text: string) {
+  const trimmed = text.trim();
+  if (!trimmed) return;
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  window.speechSynthesis.cancel();
+  const utter = new SpeechSynthesisUtterance(trimmed);
+  utter.lang = 'id-ID';
+  utter.rate = 0.9;
+  utter.pitch = 1;
+  utter.volume = 1;
+  window.speechSynthesis.speak(utter);
+}
+
 function renderTabContent(tabId: PendaftaranTabId) {
   switch (tabId) {
     case 'pendaftaran-umum':
@@ -30,10 +44,11 @@ function renderTabContent(tabId: PendaftaranTabId) {
  * dengan tab. */
 export function PendaftaranHubPage() {
   const [activeTab, setActiveTab] = useState<PendaftaranTabId>('pendaftaran-umum');
+  const [panggilanText, setPanggilanText] = useState('');
 
   return (
     <>
-      <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+      <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.75rem', flexWrap: 'wrap', alignItems: 'center' }}>
         {PENDAFTARAN_TABS.map((tab) => (
           <button
             key={tab.id}
@@ -45,6 +60,34 @@ export function PendaftaranHubPage() {
             {tab.label}
           </button>
         ))}
+        <input
+          type="text"
+          className="filter-control"
+          value={panggilanText}
+          onChange={(e) => setPanggilanText(e.target.value)}
+          placeholder="Tulis teks panggilan..."
+          aria-label="Teks panggilan"
+          style={{ width: '360px' }}
+        />
+        <button
+          type="button"
+          className="btn btn--sm btn--primary"
+          onClick={() => speakPanggilan(panggilanText)}
+          disabled={!panggilanText.trim()}
+          title="Ucapkan teks panggilan"
+        >
+          🔊 Panggilan
+        </button>
+        <button
+          type="button"
+          className="btn btn--sm btn--ghost"
+          onClick={() => setPanggilanText('')}
+          disabled={!panggilanText}
+          title="Hapus teks panggilan"
+          style={{ border: '1px solid var(--color-border)' }}
+        >
+          ✕ Hapus
+        </button>
       </div>
       {renderTabContent(activeTab)}
     </>
