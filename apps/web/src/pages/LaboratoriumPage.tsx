@@ -10,7 +10,8 @@ import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '../lib/api.ts';
 import { formatDateShort, formatRupiah, formatUmurDetail, formatUmurTahun, parseUmurManualToTanggalLahir } from '../lib/format.ts';
-import { terbilangRupiah } from '../lib/terbilang.ts';
+import { angkaKeKata, terbilangRupiah } from '../lib/terbilang.ts';
+import { withIndonesianVoice } from '../lib/speechVoice.ts';
 import type { PaginatedResponse } from '../lib/pagination.ts';
 import { LabReportDocument, type LabReportData } from '../pdf/LabReportDocument.tsx';
 import { KwitansiReportDocument, type KwitansiReportData } from '../pdf/KwitansiReportDocument.tsx';
@@ -122,6 +123,48 @@ function formatDateDisplay(dateStr: string): string {
   } catch {
     return dateStr;
   }
+}
+
+/** Ambil nomor antrian dari 3 digit terakhir kode registrasi (mis. REG-20260903-003 -> 3). */
+function parseAntrianNumberLab(regCode: string): number | null {
+  const match = /(\d{3})$/.exec(regCode);
+  return match ? Number(match[1]) : null;
+}
+
+/** Ucapkan teks lewat speaker dengan suara lembut (pelan & lirih), diulang 2x —
+ * pola sama seperti panggilan antrian di PendaftaranUmumPage. */
+function speakSoftAntrianLab(text: string) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  withIndonesianVoice((voice) => {
+    window.speechSynthesis.cancel();
+    for (let i = 0; i < 2; i += 1) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = voice?.lang ?? 'id-ID';
+      utter.rate = 0.85;
+      utter.pitch = 0.9;
+      utter.volume = 0.75;
+      if (voice) utter.voice = voice;
+      window.speechSynthesis.speak(utter);
+    }
+  });
+}
+
+/** Tentukan sapaan (Ananda/Tuan/Nyonya/Saudari) dari umur & jenis kelamin,
+ * sama seperti aturan di PendaftaranUmumPage. */
+function resolveSapaanLab(umur: number, jenisKelamin: 'L' | 'P'): string {
+  if (umur < 17) return 'Ananda';
+  if (jenisKelamin === 'P') return umur < 25 ? 'Saudari' : 'Nyonya';
+  return 'Tuan';
+}
+
+/** Umumkan nomor antrian pasien laboratorium lewat speaker beserta sapaan & namanya. */
+function announceAntrianLab(regCode: string, nama: string, umur: number, jenisKelamin: 'L' | 'P') {
+  const nomor = parseAntrianNumberLab(regCode);
+  if (nomor === null) return;
+  const sebutan = `${resolveSapaanLab(umur, jenisKelamin)} ${nama}`.trim();
+  speakSoftAntrianLab(
+    `Nomor antrian ${angkaKeKata(nomor)}, atas nama ${sebutan}. Silakan masuk ke ruangan laboratorium.`,
+  );
 }
 
 interface LaboratoriumPageProps {
@@ -880,6 +923,14 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
                 </td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn--primary btn--sm"
+                      onClick={() => announceAntrianLab(item.regCode, item.nama, item.umur, item.jenisKelamin)}
+                      title={`Umumkan: Nomor antrian atas nama ${item.nama}`}
+                    >
+                      📢 Panggil
+                    </button>
                     <button
                       type="button"
                       className="btn btn--secondary btn--sm"
