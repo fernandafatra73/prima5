@@ -33,8 +33,7 @@ const BLACK = '#1a1a1a';
 
 const styles = StyleSheet.create({
   page: {
-    // Margin halaman 0.5cm (14.17pt) di semua sisi.
-    padding: 14.17,
+    padding: 12,
     fontFamily: 'Helvetica',
     fontSize: 10,
     color: BLACK,
@@ -238,16 +237,13 @@ const styles = StyleSheet.create({
   signatureWrap: {
     marginTop: 'auto',
     alignItems: 'flex-end',
-    // ~3 baris kosong (enter) + 0.5cm (14.17pt) tambahan di atas blok tanda tangan,
-    // dikurangi 1cm (28.35pt) supaya blok tanda tangan naik.
+    // Catatan: paddingTop besar (dulu 62.17) sekarang menyebabkan baris
+    // "RADIOLOG" meluber sendirian ke halaman 2, karena frame di bawah
+    // sudah berubah dari height tetap jadi minHeight + bodyMiddle flexGrow
+    // (bagian dari fitur Cetak Lengkap). paddingTop juga terbukti tidak
+    // memengaruhi posisi akhir sama sekali di struktur baru ini (diserap
+    // penuh oleh bodyMiddle), jadi dibiarkan kecil supaya aman dari overflow.
     paddingTop: 33.82,
-    // marginTop 'auto' menyerap paddingTop sepenuhnya (posisi akhir tidak
-    // berubah walau paddingTop diubah), jadi dipakai marginBottom supaya
-    // blok naik. Nilai ini setara ~1cm lebih tinggi dari 0.5cm murni,
-    // karena di sekitar marginBottom 19-20pt ada lompatan tata letak
-    // non-linear (~11pt) akibat bodyMiddle (flexGrow) mencapai tinggi
-    // minimumnya — sudah dikalibrasi lewat pengukuran render langsung.
-    marginBottom: 31.52,
   },
   /** Varian "Cetak Lengkap": Klinis + templat bacaan sudah memakan banyak
    * ruang, jadi blok tanda tangan dinaikkan dari posisi signatureWrap biasa
