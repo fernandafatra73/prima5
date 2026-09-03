@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
@@ -90,6 +90,15 @@ const emptyForm = {
   radiologNama: '',
 };
 
+const editInputStyle: CSSProperties = {
+  width: '100%',
+  padding: '0.25rem 0.4rem',
+  fontSize: '0.8rem',
+  border: '1px solid #cbd5e1',
+  borderRadius: '4px',
+  fontFamily: 'inherit',
+};
+
 export function UsgPage() {
   const { search, setSearch } = useListSearch();
   const [timeFilter, setTimeFilter] = useState<'all' | 'today' | 'week' | 'month'>('all');
@@ -135,7 +144,7 @@ export function UsgPage() {
   const [printingId, setPrintingId] = useState<string | null>(null);
   const [printChoice, setPrintChoice] = useState<UsgItem | null>(null);
   const [printingKesanId, setPrintingKesanId] = useState<string | null>(null);
-  const [printingAmplopId, setPrintingAmplopId] = useState<string | null>(null);
+  const [amplopItem, setAmplopItem] = useState<UsgItem | null>(null);
   const [previewBlob, setPreviewBlob] = useState<Blob | null>(null);
   const [previewBlobKecil, setPreviewBlobKecil] = useState<Blob | null>(null);
   const [previewBlobNoSignature, setPreviewBlobNoSignature] = useState<Blob | null>(null);
@@ -387,174 +396,6 @@ export function UsgPage() {
       setPreviewFilename(`Kesan_USG_${item.namaPasien}.pdf`);
     } finally {
       setPrintingKesanId(null);
-    }
-  }
-
-  /** Amplop kecil (14cm x 6cm) berisi kop klinik + data pasien, dicetak di
-   * atas kertas biasa dengan margin atas 4cm supaya jatuh pas di badan
-   * amplop fisik yang diselipkan ke printer. */
-  async function handlePrintAmplop(item: UsgItem) {
-    setPrintingAmplopId(item.id);
-    try {
-      const [logoRes, kopSuratRes] = await Promise.all([
-        loadLogoDataUrl().catch(() => ''),
-        apiGet<{ item: KopSuratData }>('/api/kop-surat').catch(() => null),
-      ]);
-      const logoSrc = kopSuratRes?.item.logoDataUrl || logoRes;
-      const namaKlinik = kopSuratRes?.item.namaKlinik || 'KLINIK PRIMA HUSADA';
-      const alamatKlinik = kopSuratRes?.item.alamat || '';
-      const teleponKlinik = kopSuratRes?.item.telepon || '';
-
-      const win = window.open('', '_blank', 'width=850,height=700');
-      if (!win) {
-        alert('Jendela cetak diblokir oleh browser. Harap izinkan pop-up untuk situs ini.');
-        return;
-      }
-
-      win.document.write(`
-        <!DOCTYPE html>
-        <html>
-          <head>
-            <title> </title>
-            <style>
-              @page { margin: 4cm 0 0 0; }
-              body {
-                font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-                color: #0f172a;
-                background: #fff;
-                margin: 0;
-                padding: 0;
-              }
-              .amplop-sheet {
-                width: 14cm;
-                height: 6cm;
-                box-sizing: border-box;
-                overflow: hidden;
-                padding: 10px;
-                margin: 0 auto;
-                display: flex;
-                flex-direction: column;
-                justify-content: center;
-              }
-              .amplop-header {
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                gap: 16px;
-                margin-bottom: 10px;
-              }
-              .amplop-logo {
-                width: 48px;
-                height: 48px;
-                object-fit: contain;
-                flex-shrink: 0;
-              }
-              .amplop-headertext {
-                text-align: center;
-                color: #1d4ed8;
-              }
-              .amplop-kop {
-                font-size: 10.5px;
-                font-weight: 700;
-              }
-              .amplop-clinicname {
-                font-size: 19px;
-                font-weight: 800;
-                line-height: 1.3;
-              }
-              .amplop-address {
-                font-size: 10px;
-                font-weight: 700;
-              }
-              .amplop-table {
-                width: 12cm;
-                height: 3cm;
-                border-collapse: collapse;
-                table-layout: fixed;
-                margin: 0 auto 10px auto;
-              }
-              .amplop-table td {
-                border: 1px solid #000;
-                padding: 3px 5px;
-                font-size: 10px;
-                vertical-align: middle;
-              }
-              .amplop-label {
-                width: 20%;
-                color: #0f172a;
-              }
-              .amplop-colon {
-                width: 3%;
-                text-align: center;
-                color: #0f172a;
-              }
-              .amplop-value {
-                width: 27%;
-                color: #1d4ed8;
-                font-weight: 600;
-                white-space: nowrap;
-                overflow: hidden;
-                text-overflow: ellipsis;
-              }
-              .amplop-footer {
-                text-align: center;
-                font-size: 10.5px;
-                font-weight: 700;
-                font-style: italic;
-                color: #1d4ed8;
-              }
-            </style>
-          </head>
-          <body>
-            <div class="amplop-sheet">
-              <div class="amplop-header">
-                ${logoSrc ? `<img class="amplop-logo" src="${logoSrc}" alt="Logo" />` : ''}
-                <div class="amplop-headertext">
-                  <div class="amplop-kop">KLINIK ROENTGEN DAN USG</div>
-                  <div class="amplop-clinicname">${namaKlinik}</div>
-                  <div class="amplop-address">${alamatKlinik}</div>
-                  <div class="amplop-address">Telp/HP ${teleponKlinik}</div>
-                </div>
-              </div>
-              <table class="amplop-table">
-                <tr>
-                  <td class="amplop-label">Nama Pasien</td>
-                  <td class="amplop-colon">:</td>
-                  <td class="amplop-value">${item.namaPasien}</td>
-                  <td class="amplop-label">Umur</td>
-                  <td class="amplop-colon">:</td>
-                  <td class="amplop-value">${item.umur || '-'}</td>
-                </tr>
-                <tr>
-                  <td class="amplop-label">Alamat</td>
-                  <td class="amplop-colon">:</td>
-                  <td class="amplop-value">${item.alamat || '-'}</td>
-                  <td class="amplop-label">Tanggal</td>
-                  <td class="amplop-colon">:</td>
-                  <td class="amplop-value">${formatTanggalDisplay(item.tanggal)}</td>
-                </tr>
-                <tr>
-                  <td class="amplop-label">Pemeriksaan</td>
-                  <td class="amplop-colon">:</td>
-                  <td class="amplop-value">${item.jenisPemeriksaan || '-'}</td>
-                  <td class="amplop-label">Pengirim</td>
-                  <td class="amplop-colon">:</td>
-                  <td class="amplop-value">${item.dokterPengirim || '-'}</td>
-                </tr>
-              </table>
-              <div class="amplop-footer">HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!</div>
-            </div>
-            <script>
-              window.onload = function() {
-                window.print();
-              };
-            </script>
-          </body>
-        </html>
-      `);
-      win.document.close();
-    } finally {
-      setPrintingAmplopId(null);
     }
   }
 
@@ -1046,10 +887,9 @@ export function UsgPage() {
                     type="button"
                     className="btn btn--sm btn--ghost"
                     style={{ border: '1px solid var(--color-border)' }}
-                    onClick={() => void handlePrintAmplop(item)}
-                    disabled={printingAmplopId === item.id}
+                    onClick={() => setAmplopItem(item)}
                   >
-                    <IconPrint className="icon-btn__svg" /> {printingAmplopId === item.id ? '...' : 'Amplop'}
+                    <IconPrint className="icon-btn__svg" /> Amplop
                   </button>
                   <button
                     type="button"
@@ -1105,6 +945,13 @@ export function UsgPage() {
           onChoose={(count) => void handlePrint(printChoice, count)}
         />
       )}
+
+      <UsgAmplopPreviewModal
+        item={amplopItem}
+        kopSurat={kopSurat}
+        logoFallback={logoFallback}
+        onClose={() => setAmplopItem(null)}
+      />
     </>
   );
 }
@@ -1137,6 +984,368 @@ function UsgPrintChoiceModal({ item, onClose, onChoose }: UsgPrintChoiceModalPro
             {count} Foto
           </button>
         ))}
+      </div>
+    </Modal>
+  );
+}
+
+interface UsgAmplopForm {
+  readonly nama: string;
+  readonly umur: string;
+  readonly alamat: string;
+  readonly tanggal: string;
+  readonly jenisPemeriksaan: string;
+  readonly dokterPengirim: string;
+}
+
+interface UsgAmplopPreviewModalProps {
+  readonly item: UsgItem | null;
+  readonly kopSurat: KopSuratData | null;
+  readonly logoFallback: string;
+  readonly onClose: () => void;
+}
+
+/** Pratinjau amplop kecil (14cm x 6cm) sebelum dicetak — sama polanya
+ * dengan modal "Pratinjau Cetak Amplop" di Laboratorium/Pendaftaran,
+ * supaya petugas bisa cek & koreksi data dulu sebelum kertas amplop
+ * fisik ditarik ke printer. */
+function UsgAmplopPreviewModal({ item, kopSurat, logoFallback, onClose }: UsgAmplopPreviewModalProps) {
+  const [editing, setEditing] = useState(false);
+  const [form, setForm] = useState<UsgAmplopForm>({
+    nama: '',
+    umur: '',
+    alamat: '',
+    tanggal: '',
+    jenisPemeriksaan: '',
+    dokterPengirim: '',
+  });
+
+  useEffect(() => {
+    if (!item) return;
+    setForm({
+      nama: item.namaPasien,
+      umur: item.umur || '-',
+      alamat: item.alamat || '-',
+      tanggal: formatTanggalDisplay(item.tanggal),
+      jenisPemeriksaan: item.jenisPemeriksaan || '-',
+      dokterPengirim: item.dokterPengirim || '-',
+    });
+    setEditing(false);
+  }, [item]);
+
+  if (!item) {
+    return null;
+  }
+
+  const namaKlinik = kopSurat?.namaKlinik || 'KLINIK PRIMA HUSADA';
+  const alamatKlinik = kopSurat?.alamat || '';
+  const teleponKlinik = kopSurat?.telepon || '';
+  const logoSrc = kopSurat?.logoDataUrl || logoFallback;
+
+  function updateForm(field: keyof UsgAmplopForm, value: string) {
+    setForm((f) => ({ ...f, [field]: value }));
+  }
+
+  function handlePrintNow() {
+    const win = window.open('', '_blank', 'width=850,height=700');
+    if (!win) {
+      alert('Jendela cetak diblokir oleh browser. Harap izinkan pop-up untuk situs ini.');
+      return;
+    }
+
+    win.document.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title> </title>
+          <style>
+            @page { margin: 4cm 0 0 0; }
+            body {
+              font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+              color: #0f172a;
+              background: #fff;
+              margin: 0;
+              padding: 0;
+            }
+            .amplop-sheet {
+              width: 14cm;
+              height: 6cm;
+              box-sizing: border-box;
+              overflow: hidden;
+              padding: 10px;
+              margin: 0 auto;
+              display: flex;
+              flex-direction: column;
+              justify-content: center;
+            }
+            .amplop-header {
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 16px;
+              margin-bottom: 10px;
+            }
+            .amplop-logo {
+              width: 48px;
+              height: 48px;
+              object-fit: contain;
+              flex-shrink: 0;
+            }
+            .amplop-headertext {
+              text-align: center;
+              color: #1d4ed8;
+            }
+            .amplop-kop {
+              font-size: 10.5px;
+              font-weight: 700;
+            }
+            .amplop-clinicname {
+              font-size: 19px;
+              font-weight: 800;
+              line-height: 1.3;
+            }
+            .amplop-address {
+              font-size: 10px;
+              font-weight: 700;
+            }
+            .amplop-table {
+              width: 12cm;
+              height: 3cm;
+              border-collapse: collapse;
+              table-layout: fixed;
+              margin: 0 auto 10px auto;
+            }
+            .amplop-table td {
+              border: 1px solid #000;
+              padding: 3px 5px;
+              font-size: 10px;
+              vertical-align: middle;
+            }
+            .amplop-label {
+              width: 20%;
+              color: #0f172a;
+            }
+            .amplop-colon {
+              width: 3%;
+              text-align: center;
+              color: #0f172a;
+            }
+            .amplop-value {
+              width: 27%;
+              color: #1d4ed8;
+              font-weight: 600;
+              white-space: nowrap;
+              overflow: hidden;
+              text-overflow: ellipsis;
+            }
+            .amplop-footer {
+              text-align: center;
+              font-size: 10.5px;
+              font-weight: 700;
+              font-style: italic;
+              color: #1d4ed8;
+            }
+          </style>
+        </head>
+        <body>
+          <div class="amplop-sheet">
+            <div class="amplop-header">
+              ${logoSrc ? `<img class="amplop-logo" src="${logoSrc}" alt="Logo" />` : ''}
+              <div class="amplop-headertext">
+                <div class="amplop-kop">KLINIK ROENTGEN DAN USG</div>
+                <div class="amplop-clinicname">${namaKlinik}</div>
+                <div class="amplop-address">${alamatKlinik}</div>
+                <div class="amplop-address">Telp/HP ${teleponKlinik}</div>
+              </div>
+            </div>
+            <table class="amplop-table">
+              <tr>
+                <td class="amplop-label">Nama Pasien</td>
+                <td class="amplop-colon">:</td>
+                <td class="amplop-value">${form.nama}</td>
+                <td class="amplop-label">Umur</td>
+                <td class="amplop-colon">:</td>
+                <td class="amplop-value">${form.umur}</td>
+              </tr>
+              <tr>
+                <td class="amplop-label">Alamat</td>
+                <td class="amplop-colon">:</td>
+                <td class="amplop-value">${form.alamat}</td>
+                <td class="amplop-label">Tanggal</td>
+                <td class="amplop-colon">:</td>
+                <td class="amplop-value">${form.tanggal}</td>
+              </tr>
+              <tr>
+                <td class="amplop-label">Pemeriksaan</td>
+                <td class="amplop-colon">:</td>
+                <td class="amplop-value">${form.jenisPemeriksaan}</td>
+                <td class="amplop-label">Pengirim</td>
+                <td class="amplop-colon">:</td>
+                <td class="amplop-value">${form.dokterPengirim}</td>
+              </tr>
+            </table>
+            <div class="amplop-footer">HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!</div>
+          </div>
+          <script>
+            window.onload = function() {
+              window.print();
+            };
+          </script>
+        </body>
+      </html>
+    `);
+    win.document.close();
+  }
+
+  return (
+    <Modal open={item !== null} title={`Pratinjau Cetak Amplop — ${item.regCode || item.namaPasien}`} onClose={onClose} size="lg">
+      <div>
+        <div
+          style={{
+            background: '#f8fafc',
+            border: '1px solid #e2e8f0',
+            borderRadius: '8px',
+            padding: '1.5rem',
+            maxHeight: '60vh',
+            overflowY: 'auto',
+          }}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              border: '2px solid #1e293b',
+              borderRadius: '8px',
+              padding: '1.5rem',
+              boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.08)',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.75rem',
+                marginBottom: '1rem',
+              }}
+            >
+              {logoSrc && (
+                <img src={logoSrc} alt="Logo" style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }} />
+              )}
+              <div style={{ textAlign: 'center', color: '#1d4ed8' }}>
+                <div style={{ fontSize: '0.7rem', fontWeight: 700 }}>KLINIK ROENTGEN DAN USG</div>
+                <div style={{ fontSize: '1.2rem', fontWeight: 800, lineHeight: 1.3 }}>{namaKlinik}</div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>{alamatKlinik}</div>
+                <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>Telp/HP {teleponKlinik}</div>
+              </div>
+            </div>
+            <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1rem' }}>
+              <tbody>
+                <tr>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', width: '18%' }}>
+                    Nama Pasien
+                  </td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', width: '3%', textAlign: 'center' }}>
+                    :
+                  </td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', color: '#1d4ed8', fontWeight: 600 }}>
+                    {editing ? (
+                      <input value={form.nama} onChange={(e) => updateForm('nama', e.target.value)} style={editInputStyle} />
+                    ) : (
+                      form.nama
+                    )}
+                  </td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', width: '14%' }}>
+                    Umur
+                  </td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', width: '3%', textAlign: 'center' }}>
+                    :
+                  </td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', color: '#1d4ed8', fontWeight: 600 }}>
+                    {editing ? (
+                      <input value={form.umur} onChange={(e) => updateForm('umur', e.target.value)} style={editInputStyle} />
+                    ) : (
+                      form.umur
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem' }}>Alamat</td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', textAlign: 'center' }}>:</td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', color: '#1d4ed8', fontWeight: 600 }}>
+                    {editing ? (
+                      <input value={form.alamat} onChange={(e) => updateForm('alamat', e.target.value)} style={editInputStyle} />
+                    ) : (
+                      form.alamat
+                    )}
+                  </td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem' }}>Tanggal</td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', textAlign: 'center' }}>:</td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', color: '#1d4ed8', fontWeight: 600 }}>
+                    {editing ? (
+                      <input value={form.tanggal} onChange={(e) => updateForm('tanggal', e.target.value)} style={editInputStyle} />
+                    ) : (
+                      form.tanggal
+                    )}
+                  </td>
+                </tr>
+                <tr>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem' }}>Pemeriksaan</td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', textAlign: 'center' }}>:</td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', color: '#1d4ed8', fontWeight: 600 }}>
+                    {editing ? (
+                      <input
+                        value={form.jenisPemeriksaan}
+                        onChange={(e) => updateForm('jenisPemeriksaan', e.target.value)}
+                        style={editInputStyle}
+                      />
+                    ) : (
+                      form.jenisPemeriksaan
+                    )}
+                  </td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem' }}>Pengirim</td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', textAlign: 'center' }}>:</td>
+                  <td style={{ border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', color: '#1d4ed8', fontWeight: 600 }}>
+                    {editing ? (
+                      <input
+                        value={form.dokterPengirim}
+                        onChange={(e) => updateForm('dokterPengirim', e.target.value)}
+                        style={editInputStyle}
+                      />
+                    ) : (
+                      form.dokterPengirim
+                    )}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+            <div style={{ textAlign: 'center', fontSize: '0.85rem', fontWeight: 700, fontStyle: 'italic', color: '#1d4ed8' }}>
+              HARAP FOTO LAMA DI BAWA LAGI SEWAKTU KONTROL !!!
+            </div>
+          </div>
+        </div>
+
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            marginTop: '1.25rem',
+            paddingTop: '1rem',
+            borderTop: '1px solid #e2e8f0',
+          }}
+        >
+          <button type="button" className="btn btn--secondary btn--sm" onClick={() => setEditing((e) => !e)}>
+            {editing ? '✓ Selesai Edit' : '✏️ Edit'}
+          </button>
+          <div style={{ display: 'flex', gap: '0.75rem' }}>
+            <button type="button" className="btn btn--secondary" onClick={onClose}>
+              Tutup
+            </button>
+            <button type="button" className="btn btn--primary" onClick={handlePrintNow} style={{ fontWeight: 600 }}>
+              🖨️ Cetak Amplop Sekarang
+            </button>
+          </div>
+        </div>
       </div>
     </Modal>
   );

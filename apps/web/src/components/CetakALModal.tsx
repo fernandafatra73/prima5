@@ -468,6 +468,8 @@ export function CetakALModal({
               height: 7cm;
               box-sizing: border-box;
               overflow: hidden;
+              border: 1.75px solid #1e293b;
+              border-radius: 8px;
               padding: 10px;
               margin: 0 auto;
               display: flex;
