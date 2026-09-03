@@ -240,6 +240,14 @@ const styles = StyleSheet.create({
     // ~3 baris kosong (enter) + 0.5cm (14.17pt) tambahan di atas blok tanda tangan.
     paddingTop: 62.17,
   },
+  /** Varian "Cetak Lengkap": Klinis + templat bacaan sudah memakan banyak
+   * ruang, jadi blok tanda tangan dinaikkan dari posisi signatureWrap biasa
+   * supaya baris "RADIOLOG" tidak lagi meluber sendirian ke halaman 2. */
+  signatureWrapTight: {
+    marginTop: 'auto',
+    alignItems: 'flex-end',
+    paddingTop: 5.65,
+  },
   signature: {
     width: 200,
     alignItems: 'center',
@@ -415,7 +423,7 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
             </View>
           </View>
 
-          <View style={styles.signatureWrap}>
+          <View style={data.templatBacaan ? styles.signatureWrapTight : styles.signatureWrap}>
             <View style={styles.signature}>
               {includeFrame ? <Text style={styles.signatureLine}>Salam Sejawat,</Text> : null}
               {data.includeSignature && data.signatureSrc ? (
