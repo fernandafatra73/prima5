@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     fontSize: 9.5, lineHeight: 1.5, padding: 6, borderWidth: 0.5, borderColor: '#cbd5e1', minHeight: 30,
   },
 
-  disclaimer: { fontSize: 6.5, fontStyle: 'italic', color: '#64748b', marginTop: 8 },
+  disclaimer: { fontSize: 6.5, fontStyle: 'italic', color: '#64748b', marginTop: 8, textAlign: 'center' },
 
   // marginTop dinaikkan 1cm (28.3465pt) dari posisi semula (18).
   signatureSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: -10.35, paddingHorizontal: 20 },
@@ -193,8 +193,6 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
             <Text style={styles.sectionBody}>{data.kesan || '—'}</Text>
           </View>
 
-          <Text style={styles.disclaimer}>Tgl Cetak: {data.tanggalCetak}</Text>
-
           <View style={styles.signatureSection}>
             <View style={styles.signatureBox}>
               <Text style={styles.signatureTitle}>Teman Sejawat</Text>
@@ -207,6 +205,8 @@ export function UsgReportDocument({ data }: { readonly data: UsgReportData }) {
               <Text style={styles.signatureRole}>Radiolog</Text>
             </View>
           </View>
+
+          <Text style={styles.disclaimer}>Tgl Cetak: {data.tanggalCetak}</Text>
         </View>
       </Page>
     </Document>
