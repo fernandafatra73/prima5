@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal } from './Modal.tsx';
 
-type PdfVersion = 'with-signature' | 'without-signature' | 'with-signature-no-frame' | 'without-signature-no-frame';
+type PdfVersion =
+  | 'with-signature'
+  | 'without-signature'
+  | 'with-signature-no-frame'
+  | 'without-signature-no-frame'
+  | 'complete';
 
 interface PdfPreviewModalProps {
   readonly open: boolean;
@@ -9,6 +14,7 @@ interface PdfPreviewModalProps {
   readonly withoutSignature: Blob | null;
   readonly withSignatureNoFrame: Blob | null;
   readonly withoutSignatureNoFrame: Blob | null;
+  readonly complete: Blob | null;
   readonly filename: string;
   readonly onClose: () => void;
 }
@@ -19,6 +25,7 @@ export function PdfPreviewModal({
   withoutSignature,
   withSignatureNoFrame,
   withoutSignatureNoFrame,
+  complete,
   filename,
   onClose,
 }: PdfPreviewModalProps) {
@@ -31,6 +38,7 @@ export function PdfPreviewModal({
     'without-signature': withoutSignature,
     'with-signature-no-frame': withSignatureNoFrame,
     'without-signature-no-frame': withoutSignatureNoFrame,
+    complete,
   };
   const activeBlob = blobByVersion[version];
 
@@ -64,6 +72,7 @@ export function PdfPreviewModal({
       'without-signature': '-tanpa-ttd',
       'with-signature-no-frame': '-tanpa-kerangka',
       'without-signature-no-frame': '-tanpa-ttd-tanpa-kerangka',
+      complete: '-lengkap',
     };
     const suffix = suffixByVersion[version];
     const base = filename.replace(/\.pdf$/i, '');
@@ -114,6 +123,15 @@ export function PdfPreviewModal({
             onClick={() => setVersion('without-signature-no-frame')}
           >
             Tanpa TTD tanpa kerangka
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={version === 'complete'}
+            className={`filter-tab${version === 'complete' ? ' filter-tab--active' : ''}`}
+            onClick={() => setVersion('complete')}
+          >
+            Cetak Lengkap
           </button>
         </div>
         <div className="pdf-preview__toolbar">

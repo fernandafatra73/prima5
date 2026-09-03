@@ -23,6 +23,9 @@ export interface RadiologyReportData {
   readonly klinis: string;
   readonly kesan: string;
   readonly radiologNama: string;
+  /** Templat bacaan baku, ditampilkan di bawah Klinis dipisah 2 baris kosong
+   * (khusus varian "Cetak Lengkap"). */
+  readonly templatBacaan?: string;
 }
 
 const BLUE = '#2b4c9b';
@@ -381,6 +384,7 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
               <View style={styles.clinicalValueWrap}>
                 <Text style={styles.clinicalInlineValue}>
                   {formatPdfClinicalText(data.klinis)}
+                  {data.templatBacaan ? `\n\n${data.templatBacaan}` : ''}
                 </Text>
               </View>
             </View>
