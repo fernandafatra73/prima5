@@ -42,7 +42,7 @@ const styles = StyleSheet.create({
     paddingTop: '0.5cm', paddingLeft: '0.5cm', paddingRight: '0.5cm', paddingBottom: '0.5cm',
     fontFamily: 'Helvetica', fontSize: 9.5, color: BLACK,
   },
-  frame: { height: '100%', borderWidth: 1, borderColor: BLACK, padding: 12, flexDirection: 'column' },
+  frame: { height: '100%', borderWidth: 1, borderColor: BLACK, padding: 12, flexDirection: 'column', position: 'relative' },
   headerRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 2 },
   logo: { width: 44, height: 44, marginRight: 10 },
   headerText: { flex: 1 },
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     fontSize: 9.5, lineHeight: 1.5, padding: 6, borderWidth: 0.5, borderColor: '#cbd5e1', minHeight: 30,
   },
 
-  disclaimer: { fontSize: 6.5, fontStyle: 'italic', color: '#64748b', marginTop: 8, textAlign: 'center' },
+  disclaimer: { fontSize: 6.5, fontStyle: 'italic', color: '#64748b', position: 'absolute', bottom: 4, left: 12 },
 
   // marginTop dinaikkan 1cm (28.3465pt) dari posisi semula (18).
   signatureSection: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: -10.35, paddingHorizontal: 20 },
