@@ -21,8 +21,9 @@ export interface RadiologyPdfPreview {
 }
 
 /** Templat bacaan baku foto rontgen thorax, disisipkan di varian "Cetak
- * Lengkap" 2 baris di bawah Klinis. */
-const TEMPLAT_BACAAN_THORAX = `Trakea berada di garis tengah.
+ * Lengkap" 2 baris di bawah Klinis — bisa diedit radiolog di pratinjau
+ * sebelum dicetak, teks ini cuma nilai awal/default-nya. */
+export const TEMPLAT_BACAAN_THORAX = `Trakea berada di garis tengah.
 Siluet jantung tidak tampak membesar.
 Mediastinum tidak tampak melebar.
 Tampak peningkatan infiltrat pada lapangan paru kanan
@@ -32,10 +33,10 @@ Tidak tampak efusi pleura.
 Hemidiafragma tampak dalam batas yang dapat dinilai.
 Struktur tulang yang tervisualisasi tidak menunjukkan kelainan osseus akut yang jelas.`;
 
-let openPreview: ((preview: RadiologyPdfPreview) => void) | null = null;
+let openPreview: ((preview: RadiologyPdfPreview, input: PrintRadiologyReportInput) => void) | null = null;
 
 export function registerPdfPreviewHandler(
-  handler: (preview: RadiologyPdfPreview) => void,
+  handler: (preview: RadiologyPdfPreview, input: PrintRadiologyReportInput) => void,
 ): () => void {
   openPreview = handler;
   return () => {
@@ -97,6 +98,22 @@ export async function generateRadiologyReportVersions(
   };
 }
 
+/** Bangun ulang cuma varian "Cetak Lengkap" dengan teks templat bacaan yang
+ * sudah diedit radiolog, tanpa perlu membangun ulang 4 varian lainnya. */
+export async function regenerateCompleteReportBlob(
+  input: PrintRadiologyReportInput,
+  templatBacaan: string,
+): Promise<Blob> {
+  const logoSrc = await loadLogoDataUrl();
+  let signatureSrc: string | undefined;
+  try {
+    signatureSrc = await loadSignatureDataUrl();
+  } catch {
+    signatureSrc = undefined;
+  }
+  return buildReportBlob(input, logoSrc, true, true, signatureSrc, templatBacaan);
+}
+
 /** @deprecated Prefer `generateRadiologyReportVersions` for preview flows. */
 export async function generateRadiologyReportBlob(
   input: PrintRadiologyReportInput,
@@ -119,7 +136,7 @@ export async function printRadiologyReport(input: PrintRadiologyReportInput): Pr
   const versions = await generateRadiologyReportVersions(input);
 
   if (openPreview) {
-    openPreview(versions);
+    openPreview(versions, input);
     return;
   }
 

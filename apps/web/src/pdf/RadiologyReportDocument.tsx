@@ -39,7 +39,12 @@ const styles = StyleSheet.create({
     color: BLACK,
   },
   frame: {
-    height: '100%',
+    // minHeight (bukan height tetap) supaya tabel identitas pasien & elemen
+    // lain tidak ikut "diperas" saat konten Klinis lebih panjang dari satu
+    // halaman (mis. varian Cetak Lengkap dengan templat bacaan) — kelebihan
+    // konten meluber ke halaman berikutnya alih-alih memaksa semua elemen
+    // menyusut mengikuti tinggi tetap.
+    minHeight: '100%',
     padding: 10,
     flexDirection: 'column',
   },

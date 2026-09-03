@@ -15,6 +15,10 @@ interface PdfPreviewModalProps {
   readonly withSignatureNoFrame: Blob | null;
   readonly withoutSignatureNoFrame: Blob | null;
   readonly complete: Blob | null;
+  /** Nilai awal templat bacaan yang ditampilkan di kotak edit varian "Cetak Lengkap". */
+  readonly templatBacaanDefault?: string;
+  /** Dipanggil saat radiolog klik "Perbarui PDF" setelah mengedit templat bacaan. */
+  readonly onTemplatBacaanChange?: (templatBacaan: string) => void | Promise<void>;
   readonly filename: string;
   readonly onClose: () => void;
 }
@@ -26,11 +30,15 @@ export function PdfPreviewModal({
   withSignatureNoFrame,
   withoutSignatureNoFrame,
   complete,
+  templatBacaanDefault = '',
+  onTemplatBacaanChange,
   filename,
   onClose,
 }: PdfPreviewModalProps) {
   const [version, setVersion] = useState<PdfVersion>('with-signature');
   const [url, setUrl] = useState<string | null>(null);
+  const [templatBacaanText, setTemplatBacaanText] = useState(templatBacaanDefault);
+  const [regenerating, setRegenerating] = useState(false);
   const iframeRef = useRef<HTMLIFrameElement>(null);
 
   const blobByVersion: Record<PdfVersion, Blob | null> = {
@@ -45,7 +53,9 @@ export function PdfPreviewModal({
   useEffect(() => {
     if (!open) {
       setVersion('with-signature');
+      setTemplatBacaanText(templatBacaanDefault);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   useEffect(() => {
@@ -63,6 +73,16 @@ export function PdfPreviewModal({
     if (!win) return;
     win.focus();
     win.print();
+  }
+
+  async function handleRegenerateComplete() {
+    if (!onTemplatBacaanChange) return;
+    setRegenerating(true);
+    try {
+      await onTemplatBacaanChange(templatBacaanText);
+    } finally {
+      setRegenerating(false);
+    }
   }
 
   function handleDownload() {
@@ -142,6 +162,30 @@ export function PdfPreviewModal({
             Unduh PDF
           </button>
         </div>
+        {version === 'complete' && onTemplatBacaanChange && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', marginBottom: '0.75rem' }}>
+            <label htmlFor="pdf-preview-templat-bacaan" style={{ fontSize: '0.82rem', fontWeight: 700, color: '#2b4c9b' }}>
+              Templat bacaan (bisa diedit sebelum dicetak):
+            </label>
+            <textarea
+              id="pdf-preview-templat-bacaan"
+              rows={6}
+              value={templatBacaanText}
+              onChange={(e) => setTemplatBacaanText(e.target.value)}
+              style={{ border: '1px solid #cbd5e1', borderRadius: '4px', fontFamily: 'inherit', fontSize: '0.85rem' }}
+            />
+            <div>
+              <button
+                type="button"
+                className="btn btn--sm btn--primary"
+                onClick={() => void handleRegenerateComplete()}
+                disabled={regenerating}
+              >
+                {regenerating ? '⏳ Memperbarui…' : '🔄 Perbarui PDF'}
+              </button>
+            </div>
+          </div>
+        )}
         {url ? (
           <iframe
             ref={iframeRef}
