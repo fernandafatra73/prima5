@@ -243,8 +243,11 @@ const styles = StyleSheet.create({
     paddingTop: 33.82,
     // marginTop 'auto' menyerap paddingTop sepenuhnya (posisi akhir tidak
     // berubah walau paddingTop diubah), jadi dipakai marginBottom supaya
-    // blok naik tapi jarak ke garis bawah kerangka tetap kecil (0.5cm).
-    marginBottom: 14.17,
+    // blok naik. Nilai ini setara ~1cm lebih tinggi dari 0.5cm murni,
+    // karena di sekitar marginBottom 19-20pt ada lompatan tata letak
+    // non-linear (~11pt) akibat bodyMiddle (flexGrow) mencapai tinggi
+    // minimumnya — sudah dikalibrasi lewat pengukuran render langsung.
+    marginBottom: 31.52,
   },
   /** Varian "Cetak Lengkap": Klinis + templat bacaan sudah memakan banyak
    * ruang, jadi blok tanda tangan dinaikkan dari posisi signatureWrap biasa
