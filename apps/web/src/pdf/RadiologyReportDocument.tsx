@@ -227,6 +227,13 @@ const styles = StyleSheet.create({
     // Turunkan 4cm dari posisi tengah semula (4 * 28.3465 pt/cm).
     marginTop: 113.4,
   },
+  /** Varian "Cetak Lengkap": Klinis sudah panjang (ada templat bacaan), jadi
+   * offset 4cm di atas tidak diperlukan lagi — dinaikkan kembali ke posisi
+   * semula supaya Kesan tidak jatuh terlalu jauh ke bawah. */
+  kesanBlockNoOffset: {
+    width: '100%',
+    marginTop: 0,
+  },
   signatureWrap: {
     marginTop: 'auto',
     alignItems: 'flex-end',
@@ -396,7 +403,7 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
           </View>
 
           <View style={styles.bodyMiddle}>
-            <View style={styles.kesanBlock}>
+            <View style={data.templatBacaan ? styles.kesanBlockNoOffset : styles.kesanBlock}>
               <View style={styles.clinicalRow}>
                 {includeFrame ? <Text style={styles.clinicalInlineLabel}>Kesan : </Text> : null}
                 <View style={styles.clinicalValueWrap}>
