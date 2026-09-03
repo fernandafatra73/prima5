@@ -7,6 +7,7 @@ import {
   type PrintRadiologyReportInput,
   type RadiologyPdfPreview,
 } from './printRadiologyReport.tsx';
+import { printRadiologyAmplop } from './printRadiologyAmplop.ts';
 
 export function PdfPreviewHost({ children }: { readonly children: ReactNode }) {
   const [preview, setPreview] = useState<RadiologyPdfPreview | null>(null);
@@ -28,6 +29,11 @@ export function PdfPreviewHost({ children }: { readonly children: ReactNode }) {
     [reportInput],
   );
 
+  const handleCetakAmplop = useCallback(() => {
+    if (!reportInput) return;
+    printRadiologyAmplop(reportInput);
+  }, [reportInput]);
+
   return (
     <>
       {children}
@@ -40,6 +46,7 @@ export function PdfPreviewHost({ children }: { readonly children: ReactNode }) {
         complete={preview?.complete ?? null}
         templatBacaanDefault={TEMPLAT_BACAAN_THORAX}
         onTemplatBacaanChange={reportInput ? handleTemplatBacaanChange : undefined}
+        onCetakAmplop={reportInput ? handleCetakAmplop : undefined}
         filename={preview?.filename ?? 'hasil-radiologi.pdf'}
         onClose={() => {
           setPreview(null);

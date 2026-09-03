@@ -19,6 +19,8 @@ interface PdfPreviewModalProps {
   readonly templatBacaanDefault?: string;
   /** Dipanggil saat radiolog klik "Perbarui PDF" setelah mengedit templat bacaan. */
   readonly onTemplatBacaanChange?: (templatBacaan: string) => void | Promise<void>;
+  /** Dipanggil saat klik tombol "Cetak Amplop" di sebelah tab Cetak Lengkap. */
+  readonly onCetakAmplop?: () => void;
   readonly filename: string;
   readonly onClose: () => void;
 }
@@ -32,6 +34,7 @@ export function PdfPreviewModal({
   complete,
   templatBacaanDefault = '',
   onTemplatBacaanChange,
+  onCetakAmplop,
   filename,
   onClose,
 }: PdfPreviewModalProps) {
@@ -153,6 +156,17 @@ export function PdfPreviewModal({
           >
             Cetak Lengkap
           </button>
+          {onCetakAmplop && (
+            <button
+              type="button"
+              role="tab"
+              aria-selected={false}
+              className="filter-tab"
+              onClick={onCetakAmplop}
+            >
+              ✉️ Cetak Amplop
+            </button>
+          )}
         </div>
         <div className="pdf-preview__toolbar">
           <button type="button" className="btn btn--primary btn--sm" onClick={handlePrint}>
