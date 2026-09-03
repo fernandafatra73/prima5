@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ConfirmModal } from '../components/ui/ConfirmModal.tsx';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
+import { UsgIdentifikasiModal } from '../components/UsgIdentifikasiModal.tsx';
 import { IconPencil, IconPrint, IconTrash } from '../components/icons/ActionIcons.tsx';
 import { useListQueryParams, useListSearch } from '../hooks/useListQueryParams.ts';
 import { useMutationReload } from '../hooks/useMutationReload.ts';
@@ -125,6 +126,7 @@ export function UsgPage() {
   } = usePaginatedList<UsgItem>('/api/usg', queryParams);
   const reload = useMutationReload(reloadList);
 
+  const [identifikasiOpen, setIdentifikasiOpen] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<UsgItem | null>(null);
   const [deleting, setDeleting] = useState<UsgItem | null>(null);
@@ -943,9 +945,14 @@ export function UsgPage() {
         pagination={pagination}
         onPageChange={setPage}
         action={
-          <button type="button" className="btn btn--primary" onClick={openCreate}>
-            + Tambah Pasien
-          </button>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+            <button type="button" className="btn btn--secondary" onClick={() => setIdentifikasiOpen(true)}>
+              🩻 Identifikasi USG
+            </button>
+            <button type="button" className="btn btn--primary" onClick={openCreate}>
+              + Tambah Pasien
+            </button>
+          </div>
         }
         filterExtra={
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
@@ -1066,6 +1073,16 @@ export function UsgPage() {
         loading={submitting}
         onClose={() => setDeleting(null)}
         onConfirm={() => void handleDeleteConfirm()}
+      />
+
+      <UsgIdentifikasiModal
+        open={identifikasiOpen}
+        onClose={() => setIdentifikasiOpen(false)}
+        onGunakan={(kesanText) => {
+          openCreate();
+          setForm((f) => ({ ...f, kesan: kesanText }));
+          setIdentifikasiOpen(false);
+        }}
       />
 
       <UsgPdfPreviewModal
