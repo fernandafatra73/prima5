@@ -132,7 +132,7 @@ export function PdfPreviewModal({
           <iframe
             ref={iframeRef}
             title="Pratinjau PDF"
-            className="pdf-preview__frame"
+            className="pdf-preview__frame pdf-preview__frame--radiologi"
             src={url}
           />
         ) : (

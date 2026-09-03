@@ -895,6 +895,16 @@
   background: #f8fafc;
 }
 
+/* Pratinjau hasil radiologi: PDF-nya 15x21cm (150x210mm), jadi kotak
+   pratinjau dibuat mengikuti proporsi itu persis (bukan tinggi tetap)
+   supaya tidak ada spasi kosong di kiri/kanan saat PDF di-auto-fit. */
+.pdf-preview__frame--radiologi {
+  height: auto;
+  aspect-ratio: 150 / 210;
+  max-width: calc(min(72vh, 720px) * 150 / 210);
+  margin: 0 auto;
+}
+
 /* List page: metrics terpisah, tabel di data-card */
 .list-page {
   display: flex;
