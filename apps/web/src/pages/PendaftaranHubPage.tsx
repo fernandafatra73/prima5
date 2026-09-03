@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { PendaftaranUmumPage } from './PendaftaranUmumPage.tsx';
 import { AdminKlinikPage } from './AdminKlinikPage.tsx';
 import { AbsensiAdminKlinikPage } from './AbsensiAdminKlinikPage.tsx';
+import { withIndonesianVoice } from '../lib/speechVoice.ts';
 
 const PENDAFTARAN_TABS = [
   { id: 'pendaftaran-umum', label: 'Pendaftaran Umum' },
@@ -16,13 +17,16 @@ function speakPanggilan(text: string) {
   const trimmed = text.trim();
   if (!trimmed) return;
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(trimmed);
-  utter.lang = 'id-ID';
-  utter.rate = 0.9;
-  utter.pitch = 1;
-  utter.volume = 1;
-  window.speechSynthesis.speak(utter);
+  withIndonesianVoice((voice) => {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(trimmed);
+    utter.lang = voice?.lang ?? 'id-ID';
+    utter.rate = 0.9;
+    utter.pitch = 1;
+    utter.volume = 1;
+    if (voice) utter.voice = voice;
+    window.speechSynthesis.speak(utter);
+  });
 }
 
 function renderTabContent(tabId: PendaftaranTabId) {

@@ -9,6 +9,7 @@ import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
 import { apiDelete, apiPatch, apiPost } from '../lib/api.ts';
 import { formatDateShort, formatRupiah } from '../lib/format.ts';
+import { withIndonesianVoice } from '../lib/speechVoice.ts';
 import '../components/ui/ui.css';
 
 interface PemakaianFilmItem {
@@ -40,13 +41,16 @@ function speakFilmWarning(): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
   const text =
     'Mohon perhatian. Stok film di bawah 50 persen. Segera kontak pembelian film dan langsung segera pesan. Terima kasih atas perhatiannya.';
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'id-ID';
-  utter.rate = 0.95;
-  utter.pitch = 1;
-  utter.volume = 1;
-  window.speechSynthesis.speak(utter);
+  withIndonesianVoice((voice) => {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = voice?.lang ?? 'id-ID';
+    utter.rate = 0.95;
+    utter.pitch = 1;
+    utter.volume = 1;
+    if (voice) utter.voice = voice;
+    window.speechSynthesis.speak(utter);
+  });
 }
 
 export function PemakaianFilmPage() {

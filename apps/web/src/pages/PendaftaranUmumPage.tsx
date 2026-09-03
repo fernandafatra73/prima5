@@ -17,6 +17,7 @@ import { PendaftaranKopSuratDocument } from '../pdf/PendaftaranKopSuratDocument.
 import { loadLogoDataUrl } from '../pdf/loadLogoDataUrl.ts';
 import { angkaKeKata } from '../lib/terbilang.ts';
 import { getSpeechRecognitionConstructor, type SpeechRecognitionLike } from '../lib/speechRecognition.ts';
+import { withIndonesianVoice } from '../lib/speechVoice.ts';
 import '../components/ui/ui.css';
 
 function todayDateStr(): string {
@@ -52,15 +53,18 @@ function parseAntrianNumber(noRegistrasi: string): number | null {
 /** Ucapkan teks lewat speaker dengan suara lembut (pelan & lirih), diulang 2x. */
 function speakSoftAntrian(text: string) {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  for (let i = 0; i < 2; i += 1) {
-    const utter = new SpeechSynthesisUtterance(text);
-    utter.lang = 'id-ID';
-    utter.rate = 0.85;
-    utter.pitch = 0.9;
-    utter.volume = 0.75;
-    window.speechSynthesis.speak(utter);
-  }
+  withIndonesianVoice((voice) => {
+    window.speechSynthesis.cancel();
+    for (let i = 0; i < 2; i += 1) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = voice?.lang ?? 'id-ID';
+      utter.rate = 0.85;
+      utter.pitch = 0.9;
+      utter.volume = 0.75;
+      if (voice) utter.voice = voice;
+      window.speechSynthesis.speak(utter);
+    }
+  });
 }
 
 /** Tentukan sapaan (Ananda/Tuan/Nyonya/Saudari) dari umur & jenis kelamin.
