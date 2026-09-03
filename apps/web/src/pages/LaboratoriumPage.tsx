@@ -149,9 +149,31 @@ function speakSoftAntrianLab(text: string) {
   });
 }
 
+/** Singkatan sapaan yang lazim ditulis di depan nama pasien (mis. "Ny. Siti"),
+ * supaya dibaca lengkap ("Nyonya Siti") bukan dieja huruf per huruf. Sdri/Sdra
+ * dicek lebih dulu supaya tidak tertukar dengan pola lain. */
+const SAPAAN_ABBR_LAB: ReadonlyArray<readonly [RegExp, string]> = [
+  [/^sdri\.?\s+/i, 'Saudari'],
+  [/^sdra\.?\s+/i, 'Saudara'],
+  [/^ny\.?\s+/i, 'Nyonya'],
+  [/^tn\.?\s+/i, 'Tuan'],
+  [/^an\.?\s+/i, 'Ananda'],
+];
+
+/** Pisahkan sapaan singkatan di depan nama, jika ada (mis. "Ny. Siti" -> {sapaan: "Nyonya", nama: "Siti"}). */
+function pisahSapaanDariNamaLab(nama: string): { sapaan: string | null; nama: string } {
+  for (const [pattern, label] of SAPAAN_ABBR_LAB) {
+    if (pattern.test(nama)) {
+      return { sapaan: label, nama: nama.replace(pattern, '') };
+    }
+  }
+  return { sapaan: null, nama };
+}
+
 /** Tentukan sapaan dari umur — data pasien lab/radiologi (model Pasien) tidak
- * menyimpan jenis kelamin, jadi hanya anak (di bawah 17 tahun) yang disapa
- * "Ananda"; selain itu cukup sebut nama saja tanpa Tuan/Nyonya. */
+ * menyimpan jenis kelamin, jadi kalau nama tidak diawali singkatan sapaan,
+ * hanya anak (di bawah 17 tahun) yang disapa "Ananda"; selain itu cukup
+ * sebut nama saja tanpa Tuan/Nyonya. */
 function resolveSapaanLab(umur: number): string {
   return umur < 17 ? 'Ananda' : '';
 }
@@ -160,8 +182,9 @@ function resolveSapaanLab(umur: number): string {
 function announceAntrianLab(regCode: string, nama: string, umur: number) {
   const nomor = parseAntrianNumberLab(regCode);
   if (nomor === null) return;
-  const sapaan = resolveSapaanLab(umur);
-  const sebutan = sapaan ? `${sapaan} ${nama}` : nama;
+  const { sapaan: sapaanDariNama, nama: namaBersih } = pisahSapaanDariNamaLab(nama);
+  const sapaan = sapaanDariNama ?? resolveSapaanLab(umur);
+  const sebutan = sapaan ? `${sapaan} ${namaBersih}` : namaBersih;
   speakSoftAntrianLab(
     `Nomor antrian ${angkaKeKata(nomor)}, atas nama ${sebutan}. Silakan masuk ke ruangan laboratorium.`,
   );
