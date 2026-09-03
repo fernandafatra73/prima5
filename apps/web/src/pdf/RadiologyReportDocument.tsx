@@ -241,10 +241,10 @@ const styles = StyleSheet.create({
     // ~3 baris kosong (enter) + 0.5cm (14.17pt) tambahan di atas blok tanda tangan,
     // dikurangi 1cm (28.35pt) supaya blok tanda tangan naik.
     paddingTop: 33.82,
-    // Naikkan total 4cm (113.38pt): marginTop 'auto' menyerap paddingTop
-    // sepenuhnya (posisi akhir tidak berubah walau paddingTop diubah), jadi
-    // dipakai marginBottom supaya blok benar-benar naik.
-    marginBottom: 113.38,
+    // marginTop 'auto' menyerap paddingTop sepenuhnya (posisi akhir tidak
+    // berubah walau paddingTop diubah), jadi dipakai marginBottom supaya
+    // blok naik tapi jarak ke garis bawah kerangka tetap kecil (0.5cm).
+    marginBottom: 14.17,
   },
   /** Varian "Cetak Lengkap": Klinis + templat bacaan sudah memakan banyak
    * ruang, jadi blok tanda tangan dinaikkan dari posisi signatureWrap biasa
