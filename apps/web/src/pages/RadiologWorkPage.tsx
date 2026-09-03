@@ -16,6 +16,8 @@ import type { PaginatedResponse } from '../lib/pagination.ts';
 import { printPasienReport } from '../lib/pasienPrint.ts';
 import { formatKlinisDisplay, parseKlinisData } from '../lib/penunjang.ts';
 import { formatRupiah } from '../lib/format.ts';
+import { angkaKeKata } from '../lib/terbilang.ts';
+import { withIndonesianVoice } from '../lib/speechVoice.ts';
 import '../components/ui/ui.css';
 
 interface AntreanItem {
@@ -47,6 +49,48 @@ interface KesanTemplateItem {
 interface RadiologItem {
   readonly id: string;
   readonly nama: string;
+}
+
+/** Ambil nomor antrian dari 3 digit terakhir kode registrasi (mis. REG-20260903-003 -> 3). */
+function parseAntrianNumberRadiolog(regCode: string): number | null {
+  const match = /(\d{3})$/.exec(regCode);
+  return match ? Number(match[1]) : null;
+}
+
+/** Ucapkan teks lewat speaker dengan suara lembut (pelan & lirih), diulang 2x —
+ * pola sama seperti panggilan antrian di PendaftaranUmumPage. */
+function speakSoftAntrianRadiolog(text: string) {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  withIndonesianVoice((voice) => {
+    window.speechSynthesis.cancel();
+    for (let i = 0; i < 2; i += 1) {
+      const utter = new SpeechSynthesisUtterance(text);
+      utter.lang = voice?.lang ?? 'id-ID';
+      utter.rate = 0.85;
+      utter.pitch = 0.9;
+      utter.volume = 0.75;
+      if (voice) utter.voice = voice;
+      window.speechSynthesis.speak(utter);
+    }
+  });
+}
+
+/** Tentukan sapaan dari umur — data pasien lab/radiologi (model Pasien) tidak
+ * menyimpan jenis kelamin, jadi hanya anak (di bawah 17 tahun) yang disapa
+ * "Ananda"; selain itu cukup sebut nama saja tanpa Tuan/Nyonya. */
+function resolveSapaanRadiolog(umur: number): string {
+  return umur < 17 ? 'Ananda' : '';
+}
+
+/** Umumkan nomor antrian pasien radiologi lewat speaker beserta sapaan & namanya. */
+function announceAntrianRadiolog(regCode: string, nama: string, umur: number) {
+  const nomor = parseAntrianNumberRadiolog(regCode);
+  if (nomor === null) return;
+  const sapaan = resolveSapaanRadiolog(umur);
+  const sebutan = sapaan ? `${sapaan} ${nama}` : nama;
+  speakSoftAntrianRadiolog(
+    `Nomor antrian ${angkaKeKata(nomor)}, atas nama ${sebutan}. Silakan masuk ke ruangan radiologi.`,
+  );
 }
 
 const DEFAULT_KESAN_TEMPLATES: readonly KesanTemplateItem[] = [
@@ -525,6 +569,14 @@ export function RadiologWorkPage() {
                   </td>
                   <td>
                     <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}>
+                      <button
+                        type="button"
+                        className="btn btn--primary btn--sm"
+                        onClick={() => announceAntrianRadiolog(p.regCode, p.nama, p.umur)}
+                        title={`Umumkan: Nomor antrian atas nama ${p.nama}`}
+                      >
+                        📢 Panggil
+                      </button>
                       <button
                         type="button"
                         className="btn btn--xs btn--ghost"

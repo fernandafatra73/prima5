@@ -375,9 +375,10 @@ function playAnnouncementChime(): Promise<void> {
 }
 
 /** Ucapkan sambutan login ala pengumuman layanan pesawat: bunyi chime
- * "ding-dong" dulu, baru ucapan dengan tempo sedikit lebih pelan dan nada
- * datar seperti pramugari/pramugara membacakan pengumuman kabin. Voice
- * Bahasa Indonesia dipilih setelah daftar voice browser termuat (pada
+ * "ding-dong" dulu, baru ucapan dengan suara perempuan Indonesia yang lembut
+ * dan enak didengar (tempo pelan, nada sedikit lebih tinggi & volume tidak
+ * penuh supaya terasa hangat, bukan datar seperti pengumuman kabin biasa).
+ * Voice Bahasa Indonesia dipilih setelah daftar voice browser termuat (pada
  * beberapa browser getVoices() kosong sampai event "voiceschanged"
  * terpicu), supaya tidak salah lafal dan terdengar tidak jelas. */
 function speakLoginGreeting(onDone: () => void): void {
@@ -388,8 +389,9 @@ function speakLoginGreeting(onDone: () => void): void {
   const synth = window.speechSynthesis;
   const utter = new SpeechSynthesisUtterance(LOGIN_GREETING);
   utter.lang = 'id-ID';
-  utter.rate = 0.92;
-  utter.pitch = 0.95;
+  utter.rate = 0.88;
+  utter.pitch = 1.05;
+  utter.volume = 0.9;
   utter.onend = onDone;
   utter.onerror = onDone;
 

@@ -149,19 +149,19 @@ function speakSoftAntrianLab(text: string) {
   });
 }
 
-/** Tentukan sapaan (Ananda/Tuan/Nyonya/Saudari) dari umur & jenis kelamin,
- * sama seperti aturan di PendaftaranUmumPage. */
-function resolveSapaanLab(umur: number, jenisKelamin: 'L' | 'P'): string {
-  if (umur < 17) return 'Ananda';
-  if (jenisKelamin === 'P') return umur < 25 ? 'Saudari' : 'Nyonya';
-  return 'Tuan';
+/** Tentukan sapaan dari umur — data pasien lab/radiologi (model Pasien) tidak
+ * menyimpan jenis kelamin, jadi hanya anak (di bawah 17 tahun) yang disapa
+ * "Ananda"; selain itu cukup sebut nama saja tanpa Tuan/Nyonya. */
+function resolveSapaanLab(umur: number): string {
+  return umur < 17 ? 'Ananda' : '';
 }
 
 /** Umumkan nomor antrian pasien laboratorium lewat speaker beserta sapaan & namanya. */
-function announceAntrianLab(regCode: string, nama: string, umur: number, jenisKelamin: 'L' | 'P') {
+function announceAntrianLab(regCode: string, nama: string, umur: number) {
   const nomor = parseAntrianNumberLab(regCode);
   if (nomor === null) return;
-  const sebutan = `${resolveSapaanLab(umur, jenisKelamin)} ${nama}`.trim();
+  const sapaan = resolveSapaanLab(umur);
+  const sebutan = sapaan ? `${sapaan} ${nama}` : nama;
   speakSoftAntrianLab(
     `Nomor antrian ${angkaKeKata(nomor)}, atas nama ${sebutan}. Silakan masuk ke ruangan laboratorium.`,
   );
@@ -926,7 +926,7 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
                     <button
                       type="button"
                       className="btn btn--primary btn--sm"
-                      onClick={() => announceAntrianLab(item.regCode, item.nama, item.umur, item.jenisKelamin)}
+                      onClick={() => announceAntrianLab(item.regCode, item.nama, item.umur)}
                       title={`Umumkan: Nomor antrian atas nama ${item.nama}`}
                     >
                       📢 Panggil
