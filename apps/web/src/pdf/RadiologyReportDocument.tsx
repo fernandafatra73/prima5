@@ -33,7 +33,8 @@ const BLACK = '#1a1a1a';
 
 const styles = StyleSheet.create({
   page: {
-    padding: 12,
+    // Margin halaman 0.5cm (14.17pt) di semua sisi.
+    padding: 14.17,
     fontFamily: 'Helvetica',
     fontSize: 10,
     color: BLACK,
