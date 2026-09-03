@@ -72,9 +72,9 @@ function AmplopV2TablePreview({
   readonly editing: boolean;
   readonly onChange: (field: keyof AmplopFormFields, value: string) => void;
 }) {
-  const valueCellStyle = { border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', color: '#1d4ed8', fontWeight: 600 } as const;
-  const labelCellStyle = { border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem' } as const;
-  const colonCellStyle = { border: '1px solid #000', padding: '4px 6px', fontSize: '0.8rem', textAlign: 'center' } as const;
+  const valueCellStyle = { border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', color: '#1d4ed8', fontWeight: 600 } as const;
+  const labelCellStyle = { border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem' } as const;
+  const colonCellStyle = { border: '1px solid #000', padding: '4px 6px', fontSize: '0.9rem', textAlign: 'center' } as const;
 
   return (
     <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: '1rem' }}>
@@ -267,8 +267,7 @@ export function CetakALModal({
           <div class="amplopv2-headertext">
             <div class="amplopv2-kop">KLINIK ROENTGEN DAN USG</div>
             <div class="amplopv2-clinicname">PRIMA HUSADA</div>
-            <div class="amplopv2-address">Jl. Raya Siliwangi Parung Kuda</div>
-            <div class="amplopv2-address">Telp/HP 0857-1932-5557</div>
+            <div class="amplopv2-address">Jl. Raya Siliwangi Parung Kuda, Telp/HP 0857-1932-5557</div>
           </div>
         </div>
         ${amplopV2TableHtml}
@@ -466,7 +465,7 @@ export function CetakALModal({
 
             .amplopv2-sheet {
               width: 14cm;
-              height: 6cm;
+              height: 7cm;
               box-sizing: border-box;
               overflow: hidden;
               padding: 10px;
@@ -483,8 +482,8 @@ export function CetakALModal({
               margin-bottom: 10px;
             }
             .amplopv2-logo {
-              width: 48px;
-              height: 48px;
+              width: 50px;
+              height: 50px;
               object-fit: contain;
               flex-shrink: 0;
             }
@@ -507,7 +506,7 @@ export function CetakALModal({
             }
             .amplopv2-table {
               width: 12cm;
-              height: 3cm;
+              height: 4cm;
               border-collapse: collapse;
               table-layout: fixed;
               margin: 0 auto 10px auto;
@@ -515,7 +514,7 @@ export function CetakALModal({
             .amplopv2-table td {
               border: 1px solid #000;
               padding: 3px 5px;
-              font-size: 10px;
+              font-size: 11.5px;
               vertical-align: middle;
             }
             .amplopv2-label {
@@ -894,13 +893,14 @@ export function CetakALModal({
                 <img
                   src={logoLabprima}
                   alt="Logo"
-                  style={{ width: 48, height: 48, objectFit: 'contain', flexShrink: 0 }}
+                  style={{ width: 50, height: 50, objectFit: 'contain', flexShrink: 0 }}
                 />
                 <div style={{ textAlign: 'center', color: '#1d4ed8' }}>
                   <div style={{ fontSize: '0.7rem', fontWeight: 700 }}>KLINIK ROENTGEN DAN USG</div>
                   <div style={{ fontSize: '1.2rem', fontWeight: 800, lineHeight: 1.3 }}>PRIMA HUSADA</div>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>Jl. Raya Siliwangi Parung Kuda</div>
-                  <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>Telp/HP 0857-1932-5557</div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 700 }}>
+                    Jl. Raya Siliwangi Parung Kuda, Telp/HP 0857-1932-5557
+                  </div>
                 </div>
               </div>
               <AmplopV2TablePreview form={form} editing={editing} onChange={updateForm} />
