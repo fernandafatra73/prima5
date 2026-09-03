@@ -224,8 +224,10 @@ const styles = StyleSheet.create({
   },
   kesanBlock: {
     width: '100%',
-    // Turunkan 4cm dari posisi tengah semula (4 * 28.3465 pt/cm).
-    marginTop: 113.4,
+    // Dorongan 4cm sebelumnya dihapus: dengan Klinis/Kesan yang panjang,
+    // offset itu membuat total konten melebihi 1 halaman sehingga baris
+    // "RADIOLOG" meluber sendirian ke halaman 2.
+    marginTop: 0,
   },
   /** Varian "Cetak Lengkap": Klinis sudah panjang (ada templat bacaan), jadi
    * offset 4cm di atas tidak diperlukan lagi — dinaikkan kembali ke posisi
