@@ -2480,6 +2480,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       klinis?: string;
       admin?: string;
       foto?: string;
+      ruangan?: string;
     };
   }>('/api/pendaftaran-umum', async (req, reply) => {
     if (!req.body.namaPasien?.trim() || !req.body.tanggalMasuk) {
@@ -2500,6 +2501,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
           klinis: req.body.klinis?.trim() || null,
           admin: req.body.admin?.trim() || null,
           foto: req.body.foto?.trim() || null,
+          ruangan: req.body.ruangan?.trim() || null,
         },
       });
       return reply.status(201).send({ item });
@@ -2528,6 +2530,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       klinis?: string;
       admin?: string;
       foto?: string;
+      ruangan?: string;
       status?: 'MENUNGGU' | 'SELESAI';
     };
   }>('/api/pendaftaran-umum/:id', async (req, reply) => {
@@ -2550,6 +2553,7 @@ export async function registerCrudRoutes(app: FastifyInstance) {
           klinis: req.body.klinis !== undefined ? req.body.klinis?.trim() || null : existing.klinis,
           admin: req.body.admin !== undefined ? req.body.admin?.trim() || null : existing.admin,
           foto: req.body.foto !== undefined ? req.body.foto?.trim() || null : existing.foto,
+          ruangan: req.body.ruangan !== undefined ? req.body.ruangan?.trim() || null : existing.ruangan,
           status: req.body.status ?? existing.status,
         },
       });

@@ -41,8 +41,11 @@ interface PendaftaranUmumItem {
   readonly klinis: string | null;
   readonly admin: string | null;
   readonly foto: string | null;
+  readonly ruangan: string | null;
   readonly status: 'MENUNGGU' | 'SELESAI';
 }
+
+const RUANGAN_OPTIONS = ['Radiologi', 'USG', 'Laboratorium'] as const;
 
 /** Ambil nomor antrian dari 3 digit terakhir kode registrasi (mis. PH260805003 -> 3). */
 function parseAntrianNumber(noRegistrasi: string): number | null {
@@ -105,18 +108,21 @@ function pisahSapaanDariNama(nama: string): { sapaan: string | null; nama: strin
   return { sapaan: null, nama };
 }
 
-/** Umumkan nomor antrian pasien lewat speaker beserta sapaan & namanya. */
+/** Umumkan nomor antrian pasien lewat speaker beserta sapaan, namanya, dan
+ * ruangan tujuan (dipilih saat pendaftaran; default radiologi kalau kosong). */
 function announceAntrianDenganNama(
   nomor: number,
   nama: string,
   umur: string | null,
   jenisKelamin: string | null,
+  ruangan: string | null,
 ) {
   const { sapaan: sapaanDariNama, nama: namaBersih } = pisahSapaanDariNama(nama);
   const sapaan = sapaanDariNama ?? resolveSapaan(umur, jenisKelamin);
   const sebutan = sapaan ? `${sapaan} ${namaBersih}` : namaBersih;
+  const tujuanRuangan = ruangan?.trim() || 'radiologi';
   speakSoftAntrian(
-    `Nomor antrian ${angkaKeKata(nomor)}, atas nama ${sebutan}. Silakan masuk ke ruangan radiologi.`,
+    `Nomor antrian ${angkaKeKata(nomor)}, atas nama ${sebutan}. Silakan masuk ke ruangan ${tujuanRuangan}.`,
   );
 }
 
@@ -216,7 +222,8 @@ export function PendaftaranUmumPage() {
     dokterPengirim: '',
     klinis: '',
     admin: '',
-    foto: ''
+    foto: '',
+    ruangan: ''
   });
 
   useEffect(() => {
@@ -252,7 +259,8 @@ export function PendaftaranUmumPage() {
       dokterPengirim: '',
       klinis: '',
       admin: '',
-      foto: ''
+      foto: '',
+      ruangan: ''
     });
     setCreateOpen(true);
     setError(null);
@@ -271,7 +279,8 @@ export function PendaftaranUmumPage() {
       dokterPengirim: item.dokterPengirim || '',
       klinis: item.klinis || '',
       admin: item.admin || '',
-      foto: item.foto || ''
+      foto: item.foto || '',
+      ruangan: item.ruangan || ''
     });
     setError(null);
   }
@@ -419,6 +428,7 @@ export function PendaftaranUmumPage() {
         klinis: formData.klinis || undefined,
         admin: formData.admin || undefined,
         foto: formData.foto || undefined,
+        ruangan: formData.ruangan || undefined,
       });
       closeModal();
       await reload();
@@ -447,6 +457,7 @@ export function PendaftaranUmumPage() {
         klinis: formData.klinis || undefined,
         admin: formData.admin || undefined,
         foto: formData.foto || undefined,
+        ruangan: formData.ruangan || undefined,
       });
       closeModal();
       await reload();
@@ -490,7 +501,7 @@ export function PendaftaranUmumPage() {
       );
       const next = res.items.find((p) => p.noRegistrasi === expectedNextCode && p.status === 'MENUNGGU');
       if (next) {
-        announceAntrianDenganNama(nextAntrian, next.namaPasien, next.umur, next.jenisKelamin);
+        announceAntrianDenganNama(nextAntrian, next.namaPasien, next.umur, next.jenisKelamin, next.ruangan);
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Gagal menandai selesai');
@@ -599,6 +610,7 @@ export function PendaftaranUmumPage() {
               <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Alamat</th>
               <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Telpon</th>
               <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Dokter Pengirim</th>
+              <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Ruangan</th>
               <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Status</th>
               <th style={{ background: '#93c5fd', color: '#1e3a8a' }}>Aksi</th>
             </tr>
@@ -606,7 +618,7 @@ export function PendaftaranUmumPage() {
           <tbody>
             {items.length === 0 ? (
               <tr style={{ background: '#1d4ed8' }}>
-                <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: '#ffffff' }}>
+                <td colSpan={10} style={{ textAlign: 'center', padding: '2rem', color: '#ffffff' }}>
                   Belum ada data pendaftaran umum.
                 </td>
               </tr>
@@ -629,7 +641,7 @@ export function PendaftaranUmumPage() {
                         <button
                           type="button"
                           onClick={() =>
-                            announceAntrianDenganNama(antrian, item.namaPasien, item.umur, item.jenisKelamin)
+                            announceAntrianDenganNama(antrian, item.namaPasien, item.umur, item.jenisKelamin, item.ruangan)
                           }
                           title={`Umumkan: Nomor antrian ${antrian} atas nama ${item.namaPasien}`}
                           style={{
@@ -706,6 +718,7 @@ export function PendaftaranUmumPage() {
                     )}
                   </td>
                   <td>{item.dokterPengirim || '-'}</td>
+                  <td>{item.ruangan || '-'}</td>
                   <td>
                     <span
                       style={{
@@ -865,6 +878,23 @@ export function PendaftaranUmumPage() {
                       <option value="">— Pilih —</option>
                       <option value="Laki-laki">Laki-laki</option>
                       <option value="Perempuan">Perempuan</option>
+                    </select>
+                  </div>
+
+                  <div className="legacy-form-row">
+                    <label htmlFor="ruangan">Ruangan</label>
+                    <select
+                      id="ruangan"
+                      name="ruangan"
+                      value={formData.ruangan}
+                      onChange={handleChange}
+                    >
+                      <option value="">— Pilih Ruangan —</option>
+                      {RUANGAN_OPTIONS.map((r) => (
+                        <option key={r} value={r}>
+                          {r}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
