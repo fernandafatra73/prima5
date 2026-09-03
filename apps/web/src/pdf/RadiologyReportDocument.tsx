@@ -237,8 +237,9 @@ const styles = StyleSheet.create({
   signatureWrap: {
     marginTop: 'auto',
     alignItems: 'flex-end',
-    // ~3 baris kosong (enter) + 0.5cm (14.17pt) tambahan di atas blok tanda tangan.
-    paddingTop: 62.17,
+    // ~3 baris kosong (enter) + 0.5cm (14.17pt) tambahan di atas blok tanda tangan,
+    // dikurangi 1cm (28.35pt) supaya blok tanda tangan naik.
+    paddingTop: 33.82,
   },
   /** Varian "Cetak Lengkap": Klinis + templat bacaan sudah memakan banyak
    * ruang, jadi blok tanda tangan dinaikkan dari posisi signatureWrap biasa
@@ -334,8 +335,8 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
 
   return (
     <Document>
-      {/* 420.95 pt x 595.28 pt = 14.85cm x 21cm (A4 dibagi 2, 28.3465 pt/cm) */}
-      <Page size={[420.95, 595.28]} style={styles.page}>
+      {/* 425.20 pt x 595.28 pt = 15cm x 21cm (28.3465 pt/cm) */}
+      <Page size={[425.2, 595.28]} style={styles.page}>
         <View style={includeFrame ? [styles.frame, styles.frameBorder] : styles.frame}>
           {includeFrame ? (
             <>
