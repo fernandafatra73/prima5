@@ -10,8 +10,7 @@ import { useMutationReload } from '../hooks/useMutationReload.ts';
 import { usePaginatedList } from '../hooks/usePaginatedList.ts';
 import { apiDelete, apiGet, apiPatch, apiPost, apiPut } from '../lib/api.ts';
 import { formatDateShort, formatRupiah, formatUmurDetail, formatUmurTahun, parseUmurManualToTanggalLahir } from '../lib/format.ts';
-import { angkaKeKata, terbilangRupiah } from '../lib/terbilang.ts';
-import { withIndonesianVoice } from '../lib/speechVoice.ts';
+import { terbilangRupiah } from '../lib/terbilang.ts';
 import type { PaginatedResponse } from '../lib/pagination.ts';
 import { LabReportDocument, type LabReportData } from '../pdf/LabReportDocument.tsx';
 import { KwitansiReportDocument, type KwitansiReportData } from '../pdf/KwitansiReportDocument.tsx';
@@ -123,71 +122,6 @@ function formatDateDisplay(dateStr: string): string {
   } catch {
     return dateStr;
   }
-}
-
-/** Ambil nomor antrian dari 3 digit terakhir kode registrasi (mis. REG-20260903-003 -> 3). */
-function parseAntrianNumberLab(regCode: string): number | null {
-  const match = /(\d{3})$/.exec(regCode);
-  return match ? Number(match[1]) : null;
-}
-
-/** Ucapkan teks lewat speaker dengan suara lembut (pelan & lirih), diulang 2x —
- * pola sama seperti panggilan antrian di PendaftaranUmumPage. */
-function speakSoftAntrianLab(text: string) {
-  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  withIndonesianVoice((voice) => {
-    window.speechSynthesis.cancel();
-    for (let i = 0; i < 2; i += 1) {
-      const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = voice?.lang ?? 'id-ID';
-      utter.rate = 0.85;
-      utter.pitch = 0.9;
-      utter.volume = 0.75;
-      if (voice) utter.voice = voice;
-      window.speechSynthesis.speak(utter);
-    }
-  });
-}
-
-/** Singkatan sapaan yang lazim ditulis di depan nama pasien (mis. "Ny. Siti"),
- * supaya dibaca lengkap ("Nyonya Siti") bukan dieja huruf per huruf. Sdri/Sdra
- * dicek lebih dulu supaya tidak tertukar dengan pola lain. */
-const SAPAAN_ABBR_LAB: ReadonlyArray<readonly [RegExp, string]> = [
-  [/^sdri\.?\s+/i, 'Saudari'],
-  [/^sdra\.?\s+/i, 'Saudara'],
-  [/^ny\.?\s+/i, 'Nyonya'],
-  [/^tn\.?\s+/i, 'Tuan'],
-  [/^an\.?\s+/i, 'Ananda'],
-];
-
-/** Pisahkan sapaan singkatan di depan nama, jika ada (mis. "Ny. Siti" -> {sapaan: "Nyonya", nama: "Siti"}). */
-function pisahSapaanDariNamaLab(nama: string): { sapaan: string | null; nama: string } {
-  for (const [pattern, label] of SAPAAN_ABBR_LAB) {
-    if (pattern.test(nama)) {
-      return { sapaan: label, nama: nama.replace(pattern, '') };
-    }
-  }
-  return { sapaan: null, nama };
-}
-
-/** Tentukan sapaan dari umur — data pasien lab/radiologi (model Pasien) tidak
- * menyimpan jenis kelamin, jadi kalau nama tidak diawali singkatan sapaan,
- * hanya anak (di bawah 17 tahun) yang disapa "Ananda"; selain itu cukup
- * sebut nama saja tanpa Tuan/Nyonya. */
-function resolveSapaanLab(umur: number): string {
-  return umur < 17 ? 'Ananda' : '';
-}
-
-/** Umumkan nomor antrian pasien laboratorium lewat speaker beserta sapaan & namanya. */
-function announceAntrianLab(regCode: string, nama: string, umur: number) {
-  const nomor = parseAntrianNumberLab(regCode);
-  if (nomor === null) return;
-  const { sapaan: sapaanDariNama, nama: namaBersih } = pisahSapaanDariNamaLab(nama);
-  const sapaan = sapaanDariNama ?? resolveSapaanLab(umur);
-  const sebutan = sapaan ? `${sapaan} ${namaBersih}` : namaBersih;
-  speakSoftAntrianLab(
-    `Nomor antrian ${angkaKeKata(nomor)}, atas nama ${sebutan}. Silakan masuk ke ruangan laboratorium.`,
-  );
 }
 
 interface LaboratoriumPageProps {
@@ -946,14 +880,6 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
                 </td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.35rem', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      className="btn btn--primary btn--sm"
-                      onClick={() => announceAntrianLab(item.regCode, item.nama, item.umur)}
-                      title={`Umumkan: Nomor antrian atas nama ${item.nama}`}
-                    >
-                      📢 Panggil
-                    </button>
                     <button
                       type="button"
                       className="btn btn--secondary btn--sm"
