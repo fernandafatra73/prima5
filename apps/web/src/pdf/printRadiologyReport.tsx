@@ -16,22 +16,8 @@ export interface RadiologyPdfPreview {
   readonly withoutSignature: Blob;
   readonly withSignatureNoFrame: Blob;
   readonly withoutSignatureNoFrame: Blob;
-  readonly complete: Blob;
   readonly filename: string;
 }
-
-/** Templat bacaan baku foto rontgen thorax, disisipkan di varian "Cetak
- * Lengkap" 2 baris di bawah Klinis — bisa diedit radiolog di pratinjau
- * sebelum dicetak, teks ini cuma nilai awal/default-nya. */
-export const TEMPLAT_BACAAN_THORAX = `Trakea berada di garis tengah.
-Siluet jantung tidak tampak membesar.
-Mediastinum tidak tampak melebar.
-Tampak peningkatan infiltrat pada lapangan paru kanan
-Corakan bronkovaskular tampak meningkat pada area tersebut.
-Tidak tampak pneumotoraks.
-Tidak tampak efusi pleura.
-Hemidiafragma tampak dalam batas yang dapat dinilai.
-Struktur tulang yang tervisualisasi tidak menunjukkan kelainan osseus akut yang jelas.`;
 
 let openPreview: ((preview: RadiologyPdfPreview, input: PrintRadiologyReportInput) => void) | null = null;
 
@@ -50,7 +36,6 @@ async function buildReportBlob(
   includeSignature: boolean,
   includeFrame: boolean,
   signatureSrc?: string,
-  templatBacaan?: string,
 ): Promise<Blob> {
   return pdf(
     <RadiologyReportDocument
@@ -60,7 +45,6 @@ async function buildReportBlob(
         includeSignature,
         includeFrame,
         signatureSrc: includeSignature ? signatureSrc : undefined,
-        templatBacaan,
       }}
     />,
   ).toBlob();
@@ -77,13 +61,12 @@ export async function generateRadiologyReportVersions(
     signatureSrc = undefined;
   }
 
-  const [withSignature, withoutSignature, withSignatureNoFrame, withoutSignatureNoFrame, complete] =
+  const [withSignature, withoutSignature, withSignatureNoFrame, withoutSignatureNoFrame] =
     await Promise.all([
       buildReportBlob(input, logoSrc, true, true, signatureSrc),
       buildReportBlob(input, logoSrc, false, true),
       buildReportBlob(input, logoSrc, true, false, signatureSrc),
       buildReportBlob(input, logoSrc, false, false),
-      buildReportBlob(input, logoSrc, true, true, signatureSrc, TEMPLAT_BACAAN_THORAX),
     ]);
 
   const cleanName = input.nama.trim().replace(/[/\\?%*:|"<>]/g, '_') || 'pasien';
@@ -93,25 +76,8 @@ export async function generateRadiologyReportVersions(
     withoutSignature,
     withSignatureNoFrame,
     withoutSignatureNoFrame,
-    complete,
     filename: `${cleanName}.pdf`,
   };
-}
-
-/** Bangun ulang cuma varian "Cetak Lengkap" dengan teks templat bacaan yang
- * sudah diedit radiolog, tanpa perlu membangun ulang 4 varian lainnya. */
-export async function regenerateCompleteReportBlob(
-  input: PrintRadiologyReportInput,
-  templatBacaan: string,
-): Promise<Blob> {
-  const logoSrc = await loadLogoDataUrl();
-  let signatureSrc: string | undefined;
-  try {
-    signatureSrc = await loadSignatureDataUrl();
-  } catch {
-    signatureSrc = undefined;
-  }
-  return buildReportBlob(input, logoSrc, true, true, signatureSrc, templatBacaan);
 }
 
 /** @deprecated Prefer `generateRadiologyReportVersions` for preview flows. */
