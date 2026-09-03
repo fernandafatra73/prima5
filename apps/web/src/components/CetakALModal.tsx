@@ -157,6 +157,8 @@ interface CetakALModalProps {
   readonly onClose: () => void;
   readonly pasien: CetakALPasien | null;
   readonly initialMode?: 'amplop' | 'label' | 'both';
+  /** Jenis pemeriksaan untuk subjudul mode "Amplop (A)", mis. "RADIOLOGI" atau "USG". */
+  readonly examLabel?: string;
 }
 
 export function CetakALModal({
@@ -164,6 +166,7 @@ export function CetakALModal({
   onClose,
   pasien,
   initialMode = 'both',
+  examLabel = 'RADIOLOGI',
 }: CetakALModalProps) {
   const [mode, setMode] = useState<CetakALMode>(initialMode);
   const [copied, setCopied] = useState(false);
@@ -295,7 +298,7 @@ export function CetakALModal({
       <div class="amplop-sheet">
         <div class="amplop-header">
           <div class="amplop-title">KLINIK PRIMA HUSADA</div>
-          <div class="amplop-subtitle">HASIL PEMERIKSAAN RADIOLOGI</div>
+          <div class="amplop-subtitle">HASIL PEMERIKSAAN ${examLabel}</div>
         </div>
         <div class="amplop-body">
           <table class="amplop-table">
@@ -767,7 +770,7 @@ export function CetakALModal({
                   KLINIK PRIMA HUSADA
                 </div>
                 <div style={{ fontSize: '0.95rem', fontWeight: 600, color: '#0369a1', marginTop: '0.25rem' }}>
-                  HASIL PEMERIKSAAN RADIOLOGI
+                  HASIL PEMERIKSAAN {examLabel}
                 </div>
               </div>
               <table style={{ width: '100%', borderCollapse: 'collapse' }}>

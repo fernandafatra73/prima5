@@ -11,8 +11,6 @@ import { apiDelete, apiGet, apiPatch } from '../lib/api.ts';
 import { computeUmurYears, formatDateShort } from '../lib/format.ts';
 import '../components/ui/ui.css';
 
-const COL_SHIFT = { marginLeft: '-3cm' } as const;
-
 interface DokterOption {
   readonly id: string;
   readonly nama: string;
@@ -146,12 +144,8 @@ export function CetakALPage() {
               <th style={{ width: '160px' }}>Tanggal &amp; No. Foto</th>
               <th style={{ width: '220px' }}>Nama Pasien &amp; Usia</th>
               <th>Pemeriksaan Radiologi</th>
-              <th style={{ width: '180px' }}>
-                <div style={COL_SHIFT}>Dokter Pengirim</div>
-              </th>
-              <th style={{ width: '90px', textAlign: 'center' }}>
-                <div style={COL_SHIFT}>Aksi</div>
-              </th>
+              <th style={{ width: '180px' }}>Dokter Pengirim</th>
+              <th style={{ width: '90px', textAlign: 'center' }}>Aksi</th>
               <th style={{ width: '280px', textAlign: 'center' }}>Cetak A+L</th>
             </tr>
           </thead>
@@ -187,15 +181,13 @@ export function CetakALPage() {
                       <div style={{ fontWeight: 500, color: '#1e293b' }}>{jenisNames}</div>
                     </td>
                     <td>
-                      <div style={{ color: '#334155', ...COL_SHIFT }}>{p.pengirim.nama}</div>
+                      <div style={{ color: '#334155' }}>{p.pengirim.nama}</div>
                     </td>
                     <td style={{ textAlign: 'center' }}>
-                      <div style={{ display: 'inline-block', ...COL_SHIFT }}>
-                        <TableRowActions
-                          onEdit={() => openEdit(p)}
-                          onDelete={() => setDeleteTarget({ id: p.id, label: p.nama })}
-                        />
-                      </div>
+                      <TableRowActions
+                        onEdit={() => openEdit(p)}
+                        onDelete={() => setDeleteTarget({ id: p.id, label: p.nama })}
+                      />
                     </td>
                     <td style={{ textAlign: 'center' }}>
                       <div
