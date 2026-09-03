@@ -1,7 +1,11 @@
 import { useEffect, useRef, useState } from 'react';
 import { Modal } from './Modal.tsx';
 
-type PdfVersion = 'with-signature' | 'without-signature' | 'with-signature-no-frame' | 'without-signature-no-frame';
+type PdfVersion =
+  | 'with-signature'
+  | 'without-signature'
+  | 'with-signature-no-frame'
+  | 'without-signature-no-frame';
 
 interface PdfPreviewModalProps {
   readonly open: boolean;
@@ -128,7 +132,7 @@ export function PdfPreviewModal({
           <iframe
             ref={iframeRef}
             title="Pratinjau PDF"
-            className="pdf-preview__frame"
+            className="pdf-preview__frame pdf-preview__frame--radiologi"
             src={url}
           />
         ) : (

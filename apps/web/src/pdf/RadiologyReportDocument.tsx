@@ -23,6 +23,9 @@ export interface RadiologyReportData {
   readonly klinis: string;
   readonly kesan: string;
   readonly radiologNama: string;
+  /** Templat bacaan baku, ditampilkan di bawah Klinis dipisah 2 baris kosong
+   * (khusus varian "Cetak Lengkap"). */
+  readonly templatBacaan?: string;
 }
 
 const BLUE = '#2b4c9b';
@@ -36,7 +39,12 @@ const styles = StyleSheet.create({
     color: BLACK,
   },
   frame: {
-    height: '100%',
+    // minHeight (bukan height tetap) supaya tabel identitas pasien & elemen
+    // lain tidak ikut "diperas" saat konten Klinis lebih panjang dari satu
+    // halaman (mis. varian Cetak Lengkap dengan templat bacaan) — kelebihan
+    // konten meluber ke halaman berikutnya alih-alih memaksa semua elemen
+    // menyusut mengikuti tinggi tetap.
+    minHeight: '100%',
     padding: 10,
     flexDirection: 'column',
   },
@@ -219,11 +227,27 @@ const styles = StyleSheet.create({
     // Turunkan 4cm dari posisi tengah semula (4 * 28.3465 pt/cm).
     marginTop: 113.4,
   },
+  /** Varian "Cetak Lengkap": Klinis sudah panjang (ada templat bacaan), jadi
+   * offset 4cm di atas tidak diperlukan lagi — dinaikkan kembali ke posisi
+   * semula supaya Kesan tidak jatuh terlalu jauh ke bawah. */
+  kesanBlockNoOffset: {
+    width: '100%',
+    marginTop: 0,
+  },
   signatureWrap: {
     marginTop: 'auto',
     alignItems: 'flex-end',
-    // ~3 baris kosong (enter) + 0.5cm (14.17pt) tambahan di atas blok tanda tangan.
-    paddingTop: 62.17,
+    // ~3 baris kosong (enter) + 0.5cm (14.17pt) tambahan di atas blok tanda tangan,
+    // dikurangi 1cm (28.35pt) supaya blok tanda tangan naik.
+    paddingTop: 33.82,
+  },
+  /** Varian "Cetak Lengkap": Klinis + templat bacaan sudah memakan banyak
+   * ruang, jadi blok tanda tangan dinaikkan dari posisi signatureWrap biasa
+   * supaya baris "RADIOLOG" tidak lagi meluber sendirian ke halaman 2. */
+  signatureWrapTight: {
+    marginTop: 'auto',
+    alignItems: 'flex-end',
+    paddingTop: 5.65,
   },
   signature: {
     width: 200,
@@ -311,8 +335,8 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
 
   return (
     <Document>
-      {/* 420.95 pt x 595.28 pt = 14.85cm x 21cm (A4 dibagi 2, 28.3465 pt/cm) */}
-      <Page size={[420.95, 595.28]} style={styles.page}>
+      {/* 425.20 pt x 595.28 pt = 15cm x 21cm (28.3465 pt/cm) */}
+      <Page size={[425.2, 595.28]} style={styles.page}>
         <View style={includeFrame ? [styles.frame, styles.frameBorder] : styles.frame}>
           {includeFrame ? (
             <>
@@ -381,13 +405,14 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
               <View style={styles.clinicalValueWrap}>
                 <Text style={styles.clinicalInlineValue}>
                   {formatPdfClinicalText(data.klinis)}
+                  {data.templatBacaan ? `\n\n${data.templatBacaan}` : ''}
                 </Text>
               </View>
             </View>
           </View>
 
           <View style={styles.bodyMiddle}>
-            <View style={styles.kesanBlock}>
+            <View style={data.templatBacaan ? styles.kesanBlockNoOffset : styles.kesanBlock}>
               <View style={styles.clinicalRow}>
                 {includeFrame ? <Text style={styles.clinicalInlineLabel}>Kesan : </Text> : null}
                 <View style={styles.clinicalValueWrap}>
@@ -399,7 +424,7 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
             </View>
           </View>
 
-          <View style={styles.signatureWrap}>
+          <View style={data.templatBacaan ? styles.signatureWrapTight : styles.signatureWrap}>
             <View style={styles.signature}>
               {includeFrame ? <Text style={styles.signatureLine}>Salam Sejawat,</Text> : null}
               {data.includeSignature && data.signatureSrc ? (

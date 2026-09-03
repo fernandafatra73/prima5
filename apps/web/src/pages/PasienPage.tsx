@@ -118,6 +118,8 @@ interface PasienSummary {
 }
 
 interface TbIndicator {
+  readonly key: string;
+  readonly label: string;
   readonly persen: number;
   readonly keterangan: string;
 }
@@ -130,37 +132,18 @@ interface TbAreaTemuan {
   readonly xmax: number;
 }
 
+/** Bentuk hasil skrining bersifat sama untuk semua "model" (jenis
+ * pemeriksaan) di dropdown AI Banding 2, tapi isi `indikator` berbeda-beda —
+ * thorax menilai infiltrate/consolidation/dst., USG Abdomen menilai per
+ * organ, Lumbo Sacral menilai per kondisi tulang belakang, dst. (ditentukan
+ * di backend sesuai model yang dipilih). */
 interface TbScreeningResult {
   readonly diagnosis: string;
   readonly confidenceScore: number;
   readonly ringkasan: string;
   readonly areaTemuan: readonly TbAreaTemuan[];
-  readonly indikator: {
-    readonly infiltrate: TbIndicator;
-    readonly consolidation: TbIndicator;
-    readonly cavity: TbIndicator;
-    readonly effusion: TbIndicator;
-    readonly fibrotic: TbIndicator;
-    readonly calcification: TbIndicator;
-    readonly bronchopneumonia: TbIndicator;
-    readonly bronchitis: TbIndicator;
-    readonly cardiomegali: TbIndicator;
-    readonly pneumonia: TbIndicator;
-  };
+  readonly indikator: readonly TbIndicator[];
 }
-
-const TB_INDICATOR_LABELS: Record<keyof TbScreeningResult['indikator'], string> = {
-  infiltrate: 'Infiltrate',
-  consolidation: 'Consolidation',
-  cavity: 'Cavity',
-  effusion: 'Effusion',
-  fibrotic: 'Fibrotic',
-  calcification: 'Calcification',
-  bronchopneumonia: 'Bronchopneumonia',
-  bronchitis: 'Bronchitis',
-  cardiomegali: 'Cardiomegali',
-  pneumonia: 'Pneumonia',
-};
 
 interface TbCondition {
   readonly key: string;
@@ -179,19 +162,23 @@ const TB_CONDITION_STYLE: Record<string, { readonly label: string; readonly colo
 
 /** Deteksi kelainan utama dari hasil skrining untuk pewarnaan foto rontgen,
  * berurutan berdasarkan prioritas — TBC didahulukan karena itu tujuan utama
- * skrining, baru diikuti indikator lain yang skornya melewati ambang. */
+ * skrining, baru diikuti indikator lain yang skornya melewati ambang. Kotak
+ * pewarnaan ini hanya berlaku untuk hasil skrining thorax (areaTemuan cuma
+ * diisi backend untuk model thorax), jadi pada model lain fungsi ini akan
+ * selalu mengembalikan array kosong secara alami. */
 function getAiBanding2Conditions(result: TbScreeningResult): readonly TbCondition[] {
   const conditions: TbCondition[] = [];
+  const persenOf = (key: string) => result.indikator.find((ind) => ind.key === key)?.persen ?? 0;
   if (/tbc|tuberk/i.test(result.diagnosis) && result.confidenceScore >= TB_ABNORMALITY_THRESHOLD) {
     conditions.push({ key: 'tbc', ...TB_CONDITION_STYLE.tbc! });
   }
-  if (result.indikator.pneumonia.persen >= TB_ABNORMALITY_THRESHOLD) {
+  if (persenOf('pneumonia') >= TB_ABNORMALITY_THRESHOLD) {
     conditions.push({ key: 'pneumonia', ...TB_CONDITION_STYLE.pneumonia! });
   }
-  if (result.indikator.bronchopneumonia.persen >= TB_ABNORMALITY_THRESHOLD) {
+  if (persenOf('bronchopneumonia') >= TB_ABNORMALITY_THRESHOLD) {
     conditions.push({ key: 'bronchopneumonia', ...TB_CONDITION_STYLE.bronchopneumonia! });
   }
-  if (result.indikator.bronchitis.persen >= TB_ABNORMALITY_THRESHOLD) {
+  if (persenOf('bronchitis') >= TB_ABNORMALITY_THRESHOLD) {
     conditions.push({ key: 'bronchitis', ...TB_CONDITION_STYLE.bronchitis! });
   }
   return conditions;
@@ -802,7 +789,7 @@ export function PasienPage() {
     if (!aiBanding2Result) return;
     resetForm();
     setKesan(
-      `Kemungkinan: ${aiBanding2Result.diagnosis} (Skor keyakinan TB: ${aiBanding2Result.confidenceScore}%)\n\n${aiBanding2Result.ringkasan}`,
+      `Kemungkinan: ${aiBanding2Result.diagnosis} (Skor keyakinan: ${aiBanding2Result.confidenceScore}%)\n\n${aiBanding2Result.ringkasan}`,
     );
     setAiBanding2Open(false);
     setAddOpen(true);
@@ -812,12 +799,8 @@ export function PasienPage() {
     if (!aiBanding2Result || !aiBanding2DataUrl) return;
     const win = window.open('', '_blank', 'width=850,height=700');
     if (!win) return;
-    const ind = aiBanding2Result.indikator;
-    const rows = (Object.keys(TB_INDICATOR_LABELS) as (keyof typeof ind)[])
-      .map(
-        (key) =>
-          `<tr><td>${TB_INDICATOR_LABELS[key]}</td><td>${ind[key].persen}%</td><td>${ind[key].keterangan}</td></tr>`,
-      )
+    const rows = aiBanding2Result.indikator
+      .map((ind) => `<tr><td>${ind.label}</td><td>${ind.persen}%</td><td>${ind.keterangan}</td></tr>`)
       .join('');
     win.document.write(`<!DOCTYPE html><html><head><title>Hasil AI Banding 2</title>
       <style>
@@ -2292,6 +2275,7 @@ export function PasienPage() {
               <option value="lumbosacral">Lumbo Sacral</option>
               <option value="genu">Genu</option>
               <option value="knee">Knee</option>
+              <option value="ankle">Ankle</option>
               <option value="cranium">Cranium</option>
               <option value="cervikal">Cervikal</option>
               <option value="bno">BNO</option>
@@ -2350,7 +2334,7 @@ export function PasienPage() {
                 <div className="tbscan-card">
                   <div className="tbscan-diagnosis-row">
                     <h4 style={{ margin: 0 }}>AI Diagnosis</h4>
-                    <span className="tbscan-score-label">TB Confidence Score</span>
+                    <span className="tbscan-score-label">Confidence Score</span>
                   </div>
                   <div className="tbscan-diagnosis-row">
                     <span className="tbscan-diagnosis-label">{aiBanding2Result.diagnosis || '—'}</span>
@@ -2435,13 +2419,12 @@ export function PasienPage() {
               <div className="tbscan-card" style={{ marginTop: '1rem' }}>
                 <h4>Detailed Indicators</h4>
                 <div className="tbscan-indicator-grid">
-                  {(Object.keys(TB_INDICATOR_LABELS) as (keyof TbScreeningResult['indikator'])[]).map((key) => {
-                    const item = aiBanding2Result.indikator[key];
+                  {aiBanding2Result.indikator.map((item) => {
                     const isDanger = item.persen >= TB_ABNORMALITY_THRESHOLD;
                     return (
-                      <div className="tbscan-indicator" key={key}>
+                      <div className="tbscan-indicator" key={item.key}>
                         <div className="tbscan-indicator-head">
-                          <span>{TB_INDICATOR_LABELS[key]}</span>
+                          <span>{item.label}</span>
                           <span className={isDanger ? 'tbscan-indicator-percent--danger' : 'tbscan-indicator-percent--ok'}>
                             {item.persen}%
                           </span>

@@ -24,7 +24,9 @@ export function PdfPreviewHost({ children }: { readonly children: ReactNode }) {
         withSignatureNoFrame={preview?.withSignatureNoFrame ?? null}
         withoutSignatureNoFrame={preview?.withoutSignatureNoFrame ?? null}
         filename={preview?.filename ?? 'hasil-radiologi.pdf'}
-        onClose={() => setPreview(null)}
+        onClose={() => {
+          setPreview(null);
+        }}
       />
     </>
   );

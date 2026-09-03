@@ -14,6 +14,7 @@ import {
 import { WindowFrame } from './components/ui/WindowFrame.tsx';
 import { useAppNavigation } from './hooks/useAppNavigation.ts';
 import { clearStoredAuthUser, loadStoredAuthUser, storeAuthUser, type AuthUser } from './lib/auth.ts';
+import { withIndonesianVoice } from './lib/speechVoice.ts';
 import { DashboardPage } from './pages/DashboardPage.tsx';
 import { DokterPage } from './pages/DokterPage.tsx';
 import { KaryawanKlinikPage } from './pages/KaryawanKlinikPage.tsx';
@@ -337,33 +338,6 @@ function renderView(
 const LOGIN_GREETING =
   'Selamat anda memasuki area prima husada. Bekerjalah dengan sungguh-sungguh, semoga hari harimu menyenangkan. Buatlah kebahagian di tempat kerja mu, rejeki akan mengikuti selamanya.';
 
-/** Cari voice Bahasa Indonesia terbaik yang sudah terpasang di browser/OS,
- * dengan prioritas suara wanita (mis. "Microsoft Gadis Online (Natural)",
- * "Google Bahasa Indonesia" pada beberapa browser sudah bersuara wanita).
- * Web Speech API tidak punya properti gender eksplisit, jadi dideteksi dari
- * nama voice — voice yang jelas bersuara pria (mis. "Andika") dihindari kalau
- * ada alternatif lain. Voice "Google"/"Natural"/"Online" biasanya lebih
- * jelas & natural daripada voice bawaan OS yang bersuara robotik. */
-function pickIndonesianVoice(
-  voices: readonly SpeechSynthesisVoice[],
-): SpeechSynthesisVoice | null {
-  const idVoices = voices.filter((v) => v.lang.toLowerCase().startsWith('id'));
-  if (idVoices.length === 0) return null;
-
-  const isNaturalSounding = (v: SpeechSynthesisVoice) => /google|natural|online|neural/i.test(v.name);
-  const isFemale = (v: SpeechSynthesisVoice) => /female|wanita|perempuan|gadis|damayanti/i.test(v.name);
-  const isMale = (v: SpeechSynthesisVoice) => /\bmale\b|\bpria\b|andika|\bardi\b/i.test(v.name);
-
-  const femaleVoices = idVoices.filter(isFemale);
-  if (femaleVoices.length > 0) {
-    return femaleVoices.find(isNaturalSounding) ?? femaleVoices[0]!;
-  }
-
-  const notMaleVoices = idVoices.filter((v) => !isMale(v));
-  const pool = notMaleVoices.length > 0 ? notMaleVoices : idVoices;
-  return pool.find(isNaturalSounding) ?? pool[0]!;
-}
-
 /** Bunyi "ding-dong" khas pengumuman kabin pesawat, dimainkan sebelum
  * ucapan sambutan supaya terasa seperti announcement layanan penerbangan. */
 function playAnnouncementChime(): Promise<void> {
@@ -401,9 +375,10 @@ function playAnnouncementChime(): Promise<void> {
 }
 
 /** Ucapkan sambutan login ala pengumuman layanan pesawat: bunyi chime
- * "ding-dong" dulu, baru ucapan dengan tempo sedikit lebih pelan dan nada
- * datar seperti pramugari/pramugara membacakan pengumuman kabin. Voice
- * Bahasa Indonesia dipilih setelah daftar voice browser termuat (pada
+ * "ding-dong" dulu, baru ucapan dengan suara perempuan Indonesia yang lembut
+ * dan enak didengar (tempo pelan, nada sedikit lebih tinggi & volume tidak
+ * penuh supaya terasa hangat, bukan datar seperti pengumuman kabin biasa).
+ * Voice Bahasa Indonesia dipilih setelah daftar voice browser termuat (pada
  * beberapa browser getVoices() kosong sampai event "voiceschanged"
  * terpicu), supaya tidak salah lafal dan terdengar tidak jelas. */
 function speakLoginGreeting(onDone: () => void): void {
@@ -414,38 +389,24 @@ function speakLoginGreeting(onDone: () => void): void {
   const synth = window.speechSynthesis;
   const utter = new SpeechSynthesisUtterance(LOGIN_GREETING);
   utter.lang = 'id-ID';
-  utter.rate = 0.92;
-  utter.pitch = 0.95;
+  utter.rate = 0.88;
+  utter.pitch = 1.05;
+  utter.volume = 0.9;
   utter.onend = onDone;
   utter.onerror = onDone;
 
   const speakNow = () => {
-    const voice = pickIndonesianVoice(synth.getVoices());
-    if (voice) {
-      utter.voice = voice;
-      utter.lang = voice.lang;
-    }
-    synth.cancel();
-    synth.speak(utter);
+    withIndonesianVoice((voice) => {
+      if (voice) {
+        utter.voice = voice;
+        utter.lang = voice.lang;
+      }
+      synth.cancel();
+      synth.speak(utter);
+    });
   };
 
-  const waitForVoicesThenSpeak = () => {
-    if (synth.getVoices().length > 0) {
-      speakNow();
-      return;
-    }
-    let started = false;
-    const start = () => {
-      if (started) return;
-      started = true;
-      synth.removeEventListener('voiceschanged', start);
-      speakNow();
-    };
-    synth.addEventListener('voiceschanged', start);
-    setTimeout(start, 300);
-  };
-
-  void playAnnouncementChime().then(waitForVoicesThenSpeak);
+  void playAnnouncementChime().then(speakNow);
 }
 
 /** Ucapan selamat datang (text-to-speech) + auto-play lagu pertama di

@@ -7,6 +7,7 @@ import {
   type Departemen,
   type StaffRole,
 } from '../../config/navigation.ts';
+import { useMusicPlayer } from '../../context/MusicPlayerContext.tsx';
 import {
   IconClipboard,
   IconCurrency,
@@ -61,6 +62,9 @@ const NAVBAR_SPECS: readonly NavbarSpec[] = [
 export function TopNavbar({ activeId, onNavigate, role, departemen, onLogout }: TopNavbarProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const navRef = useRef<HTMLElement>(null);
+  const { playingId, playLoadingId, toggleQuickPlay } = useMusicPlayer();
+  const isMusicPlaying = playingId !== null;
+  const isMusicLoading = playLoadingId !== null;
 
   useEffect(() => {
     if (!openMenuId) return;
@@ -82,7 +86,7 @@ export function TopNavbar({ activeId, onNavigate, role, departemen, onLogout }: 
         <div className="app-navbar__brand-text">
           <span className="app-navbar__title">Klinik Prima Husada</span>
           <span className="app-navbar__subtitle">Sistem Informasi Klinik Prima Husada</span>
-          <span className="app-navbar__credit">By: Fatra Al-Khawarizmi</span>
+          <span className="app-navbar__credit">By: Fatra. AK</span>
         </div>
       </div>
 
@@ -170,6 +174,16 @@ export function TopNavbar({ activeId, onNavigate, role, departemen, onLogout }: 
       </nav>
 
       <div className="app-navbar__actions">
+        <button
+          type="button"
+          className="app-navbar__icon-btn"
+          aria-label={isMusicPlaying ? 'Stop musik' : 'Putar musik'}
+          title={isMusicPlaying ? 'Stop musik' : 'Putar musik'}
+          onClick={toggleQuickPlay}
+          disabled={isMusicLoading}
+        >
+          {isMusicLoading ? '⏳' : isMusicPlaying ? '⏸️' : '▶️'}
+        </button>
         <button type="button" className="app-navbar__icon-btn" aria-label="Logout" onClick={onLogout}>
           <IconLogout />
         </button>

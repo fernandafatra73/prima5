@@ -2,6 +2,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { Modal } from '../ui/Modal.tsx';
 import { ModalFormFooter } from '../ui/ModalFormFooter.tsx';
 import { apiGet, apiPut } from '../../lib/api.ts';
+import { withIndonesianVoice } from '../../lib/speechVoice.ts';
 
 const REAGEN_REMINDER_STORAGE_KEY = 'labprima-reagen-stock-opname-reminder-tanggal';
 
@@ -17,13 +18,16 @@ interface ReagenReminderSetting {
  * PemakaianFilmPage. */
 function speakText(text: string): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window) || !text.trim()) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(text);
-  utter.lang = 'id-ID';
-  utter.rate = 0.95;
-  utter.pitch = 1;
-  utter.volume = 1;
-  window.speechSynthesis.speak(utter);
+  withIndonesianVoice((voice) => {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(text);
+    utter.lang = voice?.lang ?? 'id-ID';
+    utter.rate = 0.95;
+    utter.pitch = 1;
+    utter.volume = 1;
+    if (voice) utter.voice = voice;
+    window.speechSynthesis.speak(utter);
+  });
 }
 
 /** Tombol & pengaturan pengingat stock opname reagen — ditampilkan di

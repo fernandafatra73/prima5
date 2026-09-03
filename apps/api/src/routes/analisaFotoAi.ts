@@ -82,6 +82,153 @@ const TB_INDICATOR_SCHEMA = {
   required: ['persen', 'keterangan'],
 };
 
+interface IndicatorSpec {
+  readonly key: string;
+  readonly label: string;
+}
+
+/** Daftar indikator yang dinilai AI berbeda-beda tergantung "model" (jenis
+ * pemeriksaan) yang dipilih di dropdown — thorax pakai indikator TB seperti
+ * semula, sedangkan USG Abdomen & Lumbo Sacral punya daftar organ/kondisi
+ * sendiri. Model lain (genu, knee, dst.) belum punya set khusus, jadi jatuh
+ * ke set thorax sebagai fallback lama. */
+const CHEST_INDICATORS: readonly IndicatorSpec[] = [
+  { key: 'infiltrate', label: 'Infiltrate' },
+  { key: 'consolidation', label: 'Consolidation' },
+  { key: 'cavity', label: 'Cavity' },
+  { key: 'effusion', label: 'Effusion' },
+  { key: 'fibrotic', label: 'Fibrotic' },
+  { key: 'calcification', label: 'Calcification' },
+  { key: 'bronchopneumonia', label: 'Bronchopneumonia' },
+  { key: 'bronchitis', label: 'Bronchitis' },
+  { key: 'cardiomegali', label: 'Cardiomegali' },
+  { key: 'pneumonia', label: 'Pneumonia' },
+];
+
+const USG_ABDOMEN_INDICATORS: readonly IndicatorSpec[] = [
+  { key: 'hepar', label: 'Hepar' },
+  { key: 'kandung-empedu', label: 'Kandung Empedu' },
+  { key: 'pankreas', label: 'Pankreas' },
+  { key: 'limpa', label: 'Limpa' },
+  { key: 'ginjal-kanan', label: 'Ginjal Kanan' },
+  { key: 'ginjal-kiri', label: 'Ginjal Kiri' },
+  { key: 'usus-buntu', label: 'Usus Buntu (Appendiks)' },
+  { key: 'vesica-urinaria', label: 'Vesica Urinaria' },
+];
+
+const LUMBOSACRAL_INDICATORS: readonly IndicatorSpec[] = [
+  { key: 'spondiloarthrosis', label: 'Spondiloarthrosis' },
+  { key: 'spondilolisthesis', label: 'Spondilolisthesis' },
+  { key: 'penyempitan', label: 'Penyempitan Diskus/Kanalis' },
+  { key: 'hnp', label: 'HNP (Hernia Nukleus Pulposus)' },
+  { key: 'ischialgia', label: 'Ischialgia' },
+  { key: 'fraktur', label: 'Fraktur' },
+  { key: 'skoliosis', label: 'Skoliosis' },
+  { key: 'lordosis', label: 'Lordosis' },
+];
+
+const CERVIKAL_INDICATORS: readonly IndicatorSpec[] = [
+  { key: 'spondylosis', label: 'Spondylosis Servikal' },
+  { key: 'penyempitan-diskus', label: 'Penyempitan Diskus' },
+  { key: 'listhesis', label: 'Listhesis' },
+  { key: 'straightening', label: 'Straightening / Hilang Lordosis' },
+  { key: 'fraktur', label: 'Fraktur' },
+  { key: 'osteofit', label: 'Osteofit' },
+  { key: 'foraminal-stenosis', label: 'Foraminal Stenosis' },
+];
+
+const CRANIUM_INDICATORS: readonly IndicatorSpec[] = [
+  { key: 'fraktur', label: 'Fraktur' },
+  { key: 'lesi-litik', label: 'Lesi Litik' },
+  { key: 'lesi-sklerotik', label: 'Lesi Sklerotik' },
+  { key: 'kalsifikasi', label: 'Kalsifikasi Intrakranial' },
+  { key: 'kelainan-sutura', label: 'Kelainan Sutura' },
+  { key: 'erosi-tulang', label: 'Erosi Tulang' },
+  { key: 'massa-jaringan-lunak', label: 'Massa Jaringan Lunak' },
+];
+
+const BNO_INDICATORS: readonly IndicatorSpec[] = [
+  { key: 'batu-ginjal', label: 'Batu Ginjal (Nephrolithiasis)' },
+  { key: 'batu-ureter', label: 'Batu Ureter' },
+  { key: 'batu-buli', label: 'Batu Buli (Vesikolithiasis)' },
+  { key: 'kalsifikasi', label: 'Kalsifikasi Abnormal' },
+  { key: 'dilatasi-usus', label: 'Dilatasi Usus (Obstruksi)' },
+  { key: 'free-air', label: 'Free Air (Udara Bebas)' },
+  { key: 'skoliosis', label: 'Skoliosis Vertebra Lumbal' },
+];
+
+const FEMUR_INDICATORS: readonly IndicatorSpec[] = [
+  { key: 'fraktur', label: 'Fraktur' },
+  { key: 'dislokasi', label: 'Dislokasi Sendi Panggul' },
+  { key: 'lesi-litik-sklerotik', label: 'Lesi Litik/Sklerotik' },
+  { key: 'deformitas', label: 'Deformitas Angulasi' },
+  { key: 'osteoarthritis', label: 'Osteoarthritis Panggul' },
+];
+
+const CRURIS_INDICATORS: readonly IndicatorSpec[] = [
+  { key: 'fraktur', label: 'Fraktur' },
+  { key: 'dislokasi', label: 'Dislokasi' },
+  { key: 'lesi-litik-sklerotik', label: 'Lesi Litik/Sklerotik' },
+  { key: 'deformitas', label: 'Deformitas Angulasi' },
+  { key: 'kalsifikasi-jaringan-lunak', label: 'Kalsifikasi Jaringan Lunak' },
+];
+
+const ANTHEBRACHI_INDICATORS: readonly IndicatorSpec[] = [
+  { key: 'fraktur', label: 'Fraktur' },
+  { key: 'dislokasi', label: 'Dislokasi' },
+  { key: 'lesi-litik-sklerotik', label: 'Lesi Litik/Sklerotik' },
+  { key: 'deformitas', label: 'Deformitas Angulasi' },
+  { key: 'kalsifikasi-jaringan-lunak', label: 'Kalsifikasi Jaringan Lunak' },
+];
+
+const GENU_INDICATORS: readonly IndicatorSpec[] = [
+  { key: 'osteoarthritis', label: 'Osteoarthritis' },
+  { key: 'efusi-sendi', label: 'Efusi Sendi' },
+  { key: 'penyempitan-celah-sendi', label: 'Penyempitan Celah Sendi' },
+  { key: 'fraktur', label: 'Fraktur' },
+  { key: 'dislokasi', label: 'Dislokasi/Subluksasi' },
+  { key: 'osteofit', label: 'Osteofit' },
+  { key: 'kalsifikasi', label: 'Kalsifikasi (Chondrocalcinosis)' },
+];
+
+const ANKLE_INDICATORS: readonly IndicatorSpec[] = [
+  { key: 'fraktur', label: 'Fraktur' },
+  { key: 'dislokasi', label: 'Dislokasi' },
+  { key: 'efusi-sendi', label: 'Efusi Sendi' },
+  { key: 'penyempitan-celah-sendi', label: 'Penyempitan Celah Sendi' },
+  { key: 'osteofit', label: 'Osteofit' },
+  { key: 'kalsifikasi', label: 'Kalsifikasi' },
+  { key: 'benda-asing', label: 'Benda Asing' },
+];
+
+const MODEL_INDICATOR_SETS: Record<string, readonly IndicatorSpec[]> = {
+  'usg-abdomen': USG_ABDOMEN_INDICATORS,
+  lumbosacral: LUMBOSACRAL_INDICATORS,
+  cervikal: CERVIKAL_INDICATORS,
+  cranium: CRANIUM_INDICATORS,
+  bno: BNO_INDICATORS,
+  femur: FEMUR_INDICATORS,
+  cruris: CRURIS_INDICATORS,
+  anthebrachi: ANTHEBRACHI_INDICATORS,
+  genu: GENU_INDICATORS,
+  knee: GENU_INDICATORS,
+  ankle: ANKLE_INDICATORS,
+};
+
+function getIndicatorSet(model: string | undefined): readonly IndicatorSpec[] {
+  return (model && MODEL_INDICATOR_SETS[model]) || CHEST_INDICATORS;
+}
+
+function buildIndikatorSchema(indicators: readonly IndicatorSpec[]) {
+  const properties: Record<string, typeof TB_INDICATOR_SCHEMA> = {};
+  for (const ind of indicators) properties[ind.key] = TB_INDICATOR_SCHEMA;
+  return {
+    type: Type.OBJECT,
+    properties,
+    required: indicators.map((ind) => ind.key),
+  };
+}
+
 const TB_AREA_TEMUAN_SCHEMA = {
   type: Type.OBJECT,
   properties: {
@@ -97,59 +244,36 @@ const TB_AREA_TEMUAN_SCHEMA = {
   required: ['kondisi', 'ymin', 'xmin', 'ymax', 'xmax'],
 };
 
-const TB_SCREENING_RESPONSE_SCHEMA = {
-  type: Type.OBJECT,
-  properties: {
-    diagnosis: {
-      type: Type.STRING,
-      description: 'Label diagnosis singkat, misalnya "TBC" jika ditemukan indikasi tuberkulosis yang signifikan, atau "Normal" jika tidak ada indikasi signifikan.',
-    },
-    confidenceScore: {
-      type: Type.NUMBER,
-      description: 'Skor keyakinan TB secara keseluruhan, dalam persen (0-100).',
-    },
-    ringkasan: {
-      type: Type.STRING,
-      description: 'Satu kalimat ringkasan temuan utama dalam Bahasa Indonesia.',
-    },
-    areaTemuan: {
-      type: Type.ARRAY,
-      description:
-        'Kotak pembatas (bounding box) lokasi kelainan pada foto rontgen thorax, satu entri per kondisi yang benar-benar terdeteksi signifikan (tbc/pneumonia/bronchopneumonia/bronchitis). Kosongkan array jika tidak ada kelainan signifikan.',
-      items: TB_AREA_TEMUAN_SCHEMA,
-    },
-    indikator: {
-      type: Type.OBJECT,
-      properties: {
-        infiltrate: TB_INDICATOR_SCHEMA,
-        consolidation: TB_INDICATOR_SCHEMA,
-        cavity: TB_INDICATOR_SCHEMA,
-        effusion: TB_INDICATOR_SCHEMA,
-        fibrotic: TB_INDICATOR_SCHEMA,
-        calcification: TB_INDICATOR_SCHEMA,
-        bronchopneumonia: TB_INDICATOR_SCHEMA,
-        bronchitis: TB_INDICATOR_SCHEMA,
-        cardiomegali: TB_INDICATOR_SCHEMA,
-        pneumonia: TB_INDICATOR_SCHEMA,
+function buildScreeningResponseSchema(indicators: readonly IndicatorSpec[]) {
+  return {
+    type: Type.OBJECT,
+    properties: {
+      diagnosis: {
+        type: Type.STRING,
+        description:
+          'Label diagnosis/impression singkat berdasarkan temuan yang tampak, atau "Normal" jika tidak ada indikasi signifikan.',
       },
-      required: [
-        'infiltrate',
-        'consolidation',
-        'cavity',
-        'effusion',
-        'fibrotic',
-        'calcification',
-        'bronchopneumonia',
-        'bronchitis',
-        'cardiomegali',
-        'pneumonia',
-      ],
+      confidenceScore: {
+        type: Type.NUMBER,
+        description: 'Skor keyakinan keseluruhan atas diagnosis/impression di atas, dalam persen (0-100).',
+      },
+      ringkasan: {
+        type: Type.STRING,
+        description: 'Satu kalimat ringkasan temuan utama dalam Bahasa Indonesia.',
+      },
+      areaTemuan: {
+        type: Type.ARRAY,
+        description:
+          'Kotak pembatas (bounding box) lokasi kelainan pada foto. Hanya diisi untuk foto rontgen thorax (kondisi tbc/pneumonia/bronchopneumonia/bronchitis); untuk jenis pemeriksaan lain, selalu kosongkan array ini.',
+        items: TB_AREA_TEMUAN_SCHEMA,
+      },
+      indikator: buildIndikatorSchema(indicators),
     },
-  },
-  required: ['diagnosis', 'confidenceScore', 'ringkasan', 'areaTemuan', 'indikator'],
-};
+    required: ['diagnosis', 'confidenceScore', 'ringkasan', 'areaTemuan', 'indikator'],
+  };
+}
 
-const TB_SCREENING_SYSTEM_PROMPT = `Anda adalah asisten AI skrining tuberkulosis (TB) yang membantu radiolog membuat DRAFT AWAL skrining foto rontgen thorax, bukan diagnosis final.
+const CHEST_SYSTEM_PROMPT = `Anda adalah asisten AI skrining tuberkulosis (TB) yang membantu radiolog membuat DRAFT AWAL skrining foto rontgen thorax, bukan diagnosis final.
 
 Aturan:
 - Hasil Anda akan selalu ditampilkan ke pengguna dengan label eksplisit sebagai "draft AI yang wajib ditinjau ulang oleh radiolog" — Anda tidak perlu menambahkan disclaimer itu sendiri di dalam teks, cukup fokus pada isi analisa.
@@ -159,6 +283,45 @@ Aturan:
 - Jangan berikan rekomendasi pengobatan, dosis obat, atau resep.
 - Tulis dalam Bahasa Indonesia, ringkas, dan gunakan istilah medis yang wajar dipakai radiolog Indonesia.
 - Jawab HANYA sesuai skema JSON yang diberikan.`;
+
+/** Prompt sistem untuk modalitas non-thorax (mis. USG Abdomen, Lumbo Sacral):
+ * setiap organ/kondisi pada `indicators` dinilai independen lewat "indikator",
+ * dan "areaTemuan" (bounding box, khusus foto rontgen thorax) selalu kosong. */
+function buildNonChestSystemPrompt(pemeriksaanLabel: string, indicators: readonly IndicatorSpec[]): string {
+  const daftar = indicators.map((ind) => ind.label).join(', ');
+  return `Anda adalah asisten AI yang membantu radiolog membuat DRAFT AWAL pembacaan foto ${pemeriksaanLabel}, bukan diagnosis final.
+
+Aturan:
+- Hasil Anda akan selalu ditampilkan ke pengguna dengan label eksplisit sebagai "draft AI yang wajib ditinjau ulang oleh radiolog" — Anda tidak perlu menambahkan disclaimer itu sendiri di dalam teks, cukup fokus pada isi analisa.
+- Nilai setiap indikator berikut secara independen berdasarkan temuan yang tampak pada foto: ${daftar}.
+- "diagnosis" diisi kesimpulan/impression singkat keseluruhan (mis. "Dalam batas normal" atau nama kondisi utama yang ditemukan), dan "confidenceScore" adalah skor keyakinan atas kesimpulan tersebut.
+- "areaTemuan" hanya berlaku untuk foto rontgen thorax — untuk pemeriksaan ${pemeriksaanLabel}, selalu kosongkan array ini.
+- Jika gambar buram, tidak jelas, atau bukan foto ${pemeriksaanLabel} yang valid, katakan itu secara eksplisit pada "ringkasan", dan beri skor 0 pada semua indikator alih-alih menebak-nebak.
+- Jangan berikan rekomendasi pengobatan, dosis obat, atau resep.
+- Tulis dalam Bahasa Indonesia, ringkas, dan gunakan istilah medis yang wajar dipakai radiolog Indonesia.
+- Jawab HANYA sesuai skema JSON yang diberikan.`;
+}
+
+const MODEL_PEMERIKSAAN_LABEL: Record<string, string> = {
+  'usg-abdomen': 'USG Abdomen',
+  lumbosacral: 'rontgen Lumbo Sacral',
+  cervikal: 'rontgen Cervikal',
+  cranium: 'rontgen Cranium',
+  bno: 'rontgen BNO',
+  femur: 'rontgen Femur',
+  cruris: 'rontgen Cruris',
+  anthebrachi: 'rontgen Anthebrachi',
+  genu: 'rontgen Genu',
+  knee: 'rontgen Genu (Knee)',
+  ankle: 'rontgen Ankle',
+};
+
+function buildSystemPrompt(model: string | undefined, indicators: readonly IndicatorSpec[]): string {
+  if (model && MODEL_PEMERIKSAAN_LABEL[model]) {
+    return buildNonChestSystemPrompt(MODEL_PEMERIKSAAN_LABEL[model]!, indicators);
+  }
+  return CHEST_SYSTEM_PROMPT;
+}
 
 const TB_SCREENING_MODEL_BY_VERSION: Record<string, string> = {
   v1: 'gemini-flash-latest',
@@ -360,6 +523,8 @@ export async function registerAnalisaFotoAiRoutes(app: FastifyInstance): Promise
       return badRequest(reply, 'Format foto tidak didukung. Gunakan JPEG, PNG, GIF, atau WEBP.');
     }
     const geminiModel = (model && TB_SCREENING_MODEL_BY_VERSION[model]) || TB_SCREENING_MODEL_BY_VERSION.v1!;
+    const indicators = getIndicatorSet(model);
+    const pemeriksaanLabel = (model && MODEL_PEMERIKSAAN_LABEL[model]) || 'rontgen thorax';
 
     try {
       const client = new GoogleGenAI({ apiKey });
@@ -371,15 +536,15 @@ export async function registerAnalisaFotoAiRoutes(app: FastifyInstance): Promise
             parts: [
               { inlineData: { mimeType: parsedImage.mediaType, data: parsedImage.data } },
               {
-                text: 'Lakukan skrining TB pada foto rontgen thorax di atas dan berikan draft diagnosis, skor keyakinan, ringkasan, serta indikator detail sesuai skema JSON.',
+                text: `Lakukan skrining pada foto ${pemeriksaanLabel} di atas dan berikan draft diagnosis, skor keyakinan, ringkasan, serta indikator detail sesuai skema JSON.`,
               },
             ],
           },
         ],
         config: {
-          systemInstruction: TB_SCREENING_SYSTEM_PROMPT,
+          systemInstruction: buildSystemPrompt(model, indicators),
           responseMimeType: 'application/json',
-          responseSchema: TB_SCREENING_RESPONSE_SCHEMA,
+          responseSchema: buildScreeningResponseSchema(indicators),
         },
       });
 
@@ -432,18 +597,7 @@ export async function registerAnalisaFotoAiRoutes(app: FastifyInstance): Promise
         confidenceScore: typeof parsed.confidenceScore === 'number' ? parsed.confidenceScore : 0,
         ringkasan: typeof parsed.ringkasan === 'string' ? parsed.ringkasan : '',
         areaTemuan,
-        indikator: {
-          infiltrate: toIndicator('infiltrate'),
-          consolidation: toIndicator('consolidation'),
-          cavity: toIndicator('cavity'),
-          effusion: toIndicator('effusion'),
-          fibrotic: toIndicator('fibrotic'),
-          calcification: toIndicator('calcification'),
-          bronchopneumonia: toIndicator('bronchopneumonia'),
-          bronchitis: toIndicator('bronchitis'),
-          cardiomegali: toIndicator('cardiomegali'),
-          pneumonia: toIndicator('pneumonia'),
-        },
+        indikator: indicators.map((ind) => ({ key: ind.key, label: ind.label, ...toIndicator(ind.key) })),
       };
     } catch (err) {
       req.log.error(err, 'Gagal memanggil AI vision untuk skrining TB');

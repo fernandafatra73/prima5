@@ -8,7 +8,7 @@ import {
 
 export type PrintRadiologyReportInput = Omit<
   RadiologyReportData,
-  'logoSrc' | 'signatureSrc' | 'includeSignature' | 'includeFrame'
+  'logoSrc' | 'signatureSrc' | 'includeSignature' | 'includeFrame' | 'templatBacaan'
 >;
 
 export interface RadiologyPdfPreview {
@@ -19,10 +19,10 @@ export interface RadiologyPdfPreview {
   readonly filename: string;
 }
 
-let openPreview: ((preview: RadiologyPdfPreview) => void) | null = null;
+let openPreview: ((preview: RadiologyPdfPreview, input: PrintRadiologyReportInput) => void) | null = null;
 
 export function registerPdfPreviewHandler(
-  handler: (preview: RadiologyPdfPreview) => void,
+  handler: (preview: RadiologyPdfPreview, input: PrintRadiologyReportInput) => void,
 ): () => void {
   openPreview = handler;
   return () => {
@@ -61,12 +61,13 @@ export async function generateRadiologyReportVersions(
     signatureSrc = undefined;
   }
 
-  const [withSignature, withoutSignature, withSignatureNoFrame, withoutSignatureNoFrame] = await Promise.all([
-    buildReportBlob(input, logoSrc, true, true, signatureSrc),
-    buildReportBlob(input, logoSrc, false, true),
-    buildReportBlob(input, logoSrc, true, false, signatureSrc),
-    buildReportBlob(input, logoSrc, false, false),
-  ]);
+  const [withSignature, withoutSignature, withSignatureNoFrame, withoutSignatureNoFrame] =
+    await Promise.all([
+      buildReportBlob(input, logoSrc, true, true, signatureSrc),
+      buildReportBlob(input, logoSrc, false, true),
+      buildReportBlob(input, logoSrc, true, false, signatureSrc),
+      buildReportBlob(input, logoSrc, false, false),
+    ]);
 
   const cleanName = input.nama.trim().replace(/[/\\?%*:|"<>]/g, '_') || 'pasien';
 
@@ -101,7 +102,7 @@ export async function printRadiologyReport(input: PrintRadiologyReportInput): Pr
   const versions = await generateRadiologyReportVersions(input);
 
   if (openPreview) {
-    openPreview(versions);
+    openPreview(versions, input);
     return;
   }
 

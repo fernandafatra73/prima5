@@ -901,6 +901,7 @@ model PendaftaranUmum {
   klinis         String?
   admin          String?
   foto           String?
+  ruangan        String?
   status         PendaftaranUmumStatus @default(MENUNGGU)
   createdAt      DateTime              @default(now())
   updatedAt      DateTime              @updatedAt

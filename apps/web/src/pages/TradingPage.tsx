@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import * as XLSX from 'xlsx';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
+import { withIndonesianVoice } from '../lib/speechVoice.ts';
 
 interface JadwalItem {
   readonly id: string;
@@ -184,20 +185,23 @@ const LEVEL_ALERT_TEXT =
  * diulang via callback onend karena harus dibunyikan 3 kali). */
 function speakLevelAlert(): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  let sisaPengulangan = 3;
-  const ucapkan = () => {
-    if (sisaPengulangan <= 0) return;
-    sisaPengulangan -= 1;
-    const utter = new SpeechSynthesisUtterance(LEVEL_ALERT_TEXT);
-    utter.lang = 'id-ID';
-    utter.rate = 0.95;
-    utter.pitch = 1;
-    utter.volume = 1;
-    utter.onend = ucapkan;
-    window.speechSynthesis.speak(utter);
-  };
-  ucapkan();
+  withIndonesianVoice((voice) => {
+    window.speechSynthesis.cancel();
+    let sisaPengulangan = 3;
+    const ucapkan = () => {
+      if (sisaPengulangan <= 0) return;
+      sisaPengulangan -= 1;
+      const utter = new SpeechSynthesisUtterance(LEVEL_ALERT_TEXT);
+      utter.lang = voice?.lang ?? 'id-ID';
+      utter.rate = 0.95;
+      utter.pitch = 1;
+      utter.volume = 1;
+      if (voice) utter.voice = voice;
+      utter.onend = ucapkan;
+      window.speechSynthesis.speak(utter);
+    };
+    ucapkan();
+  });
 }
 
 const MINPLUS_ALERT_TEXT = 'Santai, santai. Diteruskan atau dijual, sedang menunggu keputusan yang tepat.';
@@ -205,13 +209,16 @@ const MINPLUS_ALERT_TEXT = 'Santai, santai. Diteruskan atau dijual, sedang menun
 /** Ucapkan peringatan MinPlus (harga bergerak kelipatan $10 dari acuan). */
 function speakMinPlusAlert(): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(MINPLUS_ALERT_TEXT);
-  utter.lang = 'id-ID';
-  utter.rate = 0.95;
-  utter.pitch = 1;
-  utter.volume = 1;
-  window.speechSynthesis.speak(utter);
+  withIndonesianVoice((voice) => {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(MINPLUS_ALERT_TEXT);
+    utter.lang = voice?.lang ?? 'id-ID';
+    utter.rate = 0.95;
+    utter.pitch = 1;
+    utter.volume = 1;
+    if (voice) utter.voice = voice;
+    window.speechSynthesis.speak(utter);
+  });
 }
 
 const HARGA_BELI_ALERT_TEXT = 'Perhatian. Harga sudah menyentuh harga pembelian. Silakan lakukan pembelian sekarang.';
@@ -219,13 +226,16 @@ const HARGA_BELI_ALERT_TEXT = 'Perhatian. Harga sudah menyentuh harga pembelian.
 /** Ucapkan peringatan begitu harga live turun menyentuh target harga beli. */
 function speakHargaBeliAlert(): void {
   if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-  window.speechSynthesis.cancel();
-  const utter = new SpeechSynthesisUtterance(HARGA_BELI_ALERT_TEXT);
-  utter.lang = 'id-ID';
-  utter.rate = 0.95;
-  utter.pitch = 1;
-  utter.volume = 1;
-  window.speechSynthesis.speak(utter);
+  withIndonesianVoice((voice) => {
+    window.speechSynthesis.cancel();
+    const utter = new SpeechSynthesisUtterance(HARGA_BELI_ALERT_TEXT);
+    utter.lang = voice?.lang ?? 'id-ID';
+    utter.rate = 0.95;
+    utter.pitch = 1;
+    utter.volume = 1;
+    if (voice) utter.voice = voice;
+    window.speechSynthesis.speak(utter);
+  });
 }
 
 function chartSrc(interval: string): string {
