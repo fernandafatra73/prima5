@@ -1,10 +1,54 @@
 import { useState, type JSX } from 'react';
 import type { AppViewId } from '../config/navigation.ts';
+import { apiPost } from '../lib/api.ts';
 
 const BLUE = '#1d4ed8';
 const GREEN = '#16a34a';
 const RED = '#dc2626';
 const YELLOW = '#eab308';
+
+const AI_TIMEFRAMES = [
+  { id: '15', label: '15M' },
+  { id: '30', label: '30M' },
+  { id: '60', label: '1H' },
+  { id: '240', label: '4H' },
+  { id: 'D', label: '1D' },
+] as const;
+
+interface TradingAiPivot {
+  readonly pivot: number;
+  readonly r1: number;
+  readonly r2: number;
+  readonly r3: number;
+  readonly s1: number;
+  readonly s2: number;
+  readonly s3: number;
+  readonly signal: 'BELI' | 'JUAL' | 'NETRAL';
+  readonly alasan: string;
+}
+
+interface TradingAiAnalisaResult {
+  readonly timeframe: string;
+  readonly timeframeLabel: string;
+  readonly hargaSaatIni: number;
+  readonly hargaUpdatedAt: string;
+  readonly dataHarianTanggal: string;
+  readonly pivot: TradingAiPivot;
+  readonly bias: string;
+  readonly polaCandleDiperhatikan: string;
+  readonly entry: string;
+  readonly stopLoss: string;
+  readonly takeProfit: string;
+  readonly confidence: number;
+  readonly catatan: string;
+}
+
+function biasColor(bias: string): string {
+  const upper = bias.toUpperCase();
+  if (upper.includes('BULLISH')) return GREEN;
+  if (upper.includes('BEARISH')) return RED;
+  return YELLOW;
+}
 
 interface TopicButton {
   readonly id: AppViewId;
@@ -412,6 +456,26 @@ interface TradingCandlePageProps {
 export function TradingCandlePage({ onNavigate }: TradingCandlePageProps) {
   const [interval, setInterval_] = useState<string>('5');
 
+  const [aiTimeframe, setAiTimeframe] = useState<string>('15');
+  const [aiLoading, setAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+  const [aiResult, setAiResult] = useState<TradingAiAnalisaResult | null>(null);
+  const [showAiResult, setShowAiResult] = useState(false);
+
+  async function handleGenerateAi() {
+    setAiLoading(true);
+    setAiError(null);
+    try {
+      const res = await apiPost<TradingAiAnalisaResult>('/api/trading-ai-analisa', { timeframe: aiTimeframe });
+      setAiResult(res);
+      setShowAiResult(true);
+    } catch (err) {
+      setAiError(err instanceof Error ? err.message : 'Gagal memuat analisa AI');
+    } finally {
+      setAiLoading(false);
+    }
+  }
+
   return (
     <div>
       <h2 style={{ margin: '0 0 0.35rem' }}>🕯️ Trading Candle</h2>
@@ -496,8 +560,239 @@ export function TradingCandlePage({ onNavigate }: TradingCandlePageProps) {
       </div>
 
       <div style={{ ...cardStyle, marginBottom: '1.25rem' }}>
-        <div style={cardTitlebarStyle}>📊 CONTOH ANALISA XAU/USD — TIMEFRAME 5 MENIT (ILUSTRASI)</div>
+        <div style={cardTitlebarStyle}>
+          {showAiResult && aiResult
+            ? `🤖 ANALISA AI XAU/USD — TIMEFRAME ${aiResult.timeframeLabel} (LIVE)`
+            : '📊 CONTOH ANALISA XAU/USD — TIMEFRAME 5 MENIT (ILUSTRASI)'}
+        </div>
         <div style={{ padding: '1rem' }}>
+          <div
+            style={{
+              display: 'flex',
+              gap: '0.4rem',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              marginBottom: '0.85rem',
+              padding: '0.6rem',
+              borderRadius: '8px',
+              background: 'rgba(148, 163, 184, 0.08)',
+              border: '1px solid rgba(148, 163, 184, 0.2)',
+            }}
+          >
+            <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginRight: '0.2rem' }}>🤖 Ai Analisa:</span>
+            {AI_TIMEFRAMES.map((tf) => (
+              <button
+                key={tf.id}
+                type="button"
+                onClick={() => setAiTimeframe(tf.id)}
+                style={{
+                  padding: '0.3rem 0.7rem',
+                  borderRadius: '999px',
+                  border: `1px solid ${aiTimeframe === tf.id ? YELLOW : 'rgba(148, 163, 184, 0.4)'}`,
+                  background: aiTimeframe === tf.id ? YELLOW : 'transparent',
+                  color: aiTimeframe === tf.id ? '#1a1a1a' : '#e2e8f0',
+                  fontWeight: 700,
+                  fontSize: '0.72rem',
+                  cursor: 'pointer',
+                }}
+              >
+                {tf.label}
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => void handleGenerateAi()}
+              disabled={aiLoading}
+              style={{
+                padding: '0.3rem 0.8rem',
+                borderRadius: '999px',
+                border: `1px solid ${BLUE}`,
+                background: BLUE,
+                color: '#ffffff',
+                fontWeight: 700,
+                fontSize: '0.72rem',
+                cursor: aiLoading ? 'default' : 'pointer',
+                opacity: aiLoading ? 0.7 : 1,
+              }}
+            >
+              {aiLoading ? '⏳ Menganalisa…' : '🤖 Ai Analisa'}
+            </button>
+            {aiResult && (
+              <button
+                type="button"
+                onClick={() => setShowAiResult((v) => !v)}
+                style={{
+                  padding: '0.3rem 0.8rem',
+                  borderRadius: '999px',
+                  border: '1px solid rgba(148, 163, 184, 0.4)',
+                  background: 'transparent',
+                  color: '#e2e8f0',
+                  fontWeight: 700,
+                  fontSize: '0.72rem',
+                  cursor: 'pointer',
+                }}
+              >
+                {showAiResult ? '📊 Lihat Contoh Ilustrasi' : '🤖 Lihat Hasil AI'}
+              </button>
+            )}
+          </div>
+
+          {aiError && (
+            <div
+              style={{
+                marginBottom: '0.85rem',
+                padding: '0.65rem 0.85rem',
+                borderRadius: '6px',
+                background: 'rgba(220, 38, 38, 0.15)',
+                border: `1px solid ${RED}`,
+                color: '#fca5a5',
+                fontSize: '0.78rem',
+              }}
+            >
+              {aiError}
+            </div>
+          )}
+
+          {showAiResult && aiResult ? (
+            <div>
+              <p style={{ margin: '0 0 0.85rem', fontSize: '0.72rem', color: '#94a3b8' }}>
+                Estimasi AI berbasis harga spot live &amp; pivot point harian (data tanggal {aiResult.dataHarianTanggal}) — BUKAN
+                data candle intraday asli maupun sinyal trading real. Selalu gunakan manajemen risiko.
+              </p>
+
+              <div
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '1rem',
+                  flexWrap: 'wrap',
+                  padding: '0.85rem 1rem',
+                  borderRadius: '8px',
+                  marginBottom: '0.85rem',
+                  background: 'rgba(15, 23, 42, 0.6)',
+                  border: `1px solid ${biasColor(aiResult.bias)}`,
+                }}
+              >
+                <span style={{ fontWeight: 800, fontSize: '1.1rem', color: biasColor(aiResult.bias) }}>
+                  {aiResult.bias || 'NETRAL'}
+                </span>
+                <span style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>
+                  Harga saat ini: ${aiResult.hargaSaatIni.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+                </span>
+                <span style={{ fontSize: '0.78rem', color: '#cbd5e1', marginLeft: 'auto' }}>
+                  Confidence: <strong style={{ color: YELLOW }}>{aiResult.confidence}%</strong>
+                </span>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+                  gap: '0.75rem',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(148, 163, 184, 0.25)',
+                    background: 'rgba(148, 163, 184, 0.06)',
+                  }}
+                >
+                  <div style={{ color: '#38bdf8', fontWeight: 800, fontSize: '0.72rem', marginBottom: '0.4rem' }}>
+                    LEVEL PIVOT HARIAN
+                  </div>
+                  <div style={{ color: '#e2e8f0', fontSize: '0.75rem', lineHeight: 1.7 }}>
+                    <div>Resistance: R1 {aiResult.pivot.r1.toFixed(2)} · R2 {aiResult.pivot.r2.toFixed(2)} · R3{' '}
+                      {aiResult.pivot.r3.toFixed(2)}</div>
+                    <div>Pivot: {aiResult.pivot.pivot.toFixed(2)}</div>
+                    <div>Support: S1 {aiResult.pivot.s1.toFixed(2)} · S2 {aiResult.pivot.s2.toFixed(2)} · S3{' '}
+                      {aiResult.pivot.s3.toFixed(2)}</div>
+                  </div>
+                </div>
+                <div
+                  style={{
+                    padding: '0.75rem',
+                    borderRadius: '8px',
+                    border: '1px solid rgba(148, 163, 184, 0.25)',
+                    background: 'rgba(148, 163, 184, 0.06)',
+                  }}
+                >
+                  <div style={{ color: '#38bdf8', fontWeight: 800, fontSize: '0.72rem', marginBottom: '0.4rem' }}>
+                    POLA CANDLE DIPERHATIKAN
+                  </div>
+                  <div style={{ color: '#e2e8f0', fontSize: '0.75rem', lineHeight: 1.6 }}>
+                    {aiResult.polaCandleDiperhatikan}
+                  </div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))',
+                  gap: '0.75rem',
+                  marginBottom: '0.75rem',
+                }}
+              >
+                <div
+                  style={{
+                    padding: '0.65rem 0.75rem',
+                    borderRadius: '8px',
+                    border: `1px solid ${BLUE}`,
+                    background: 'rgba(29, 78, 216, 0.12)',
+                  }}
+                >
+                  <div style={{ color: '#93c5fd', fontWeight: 700, fontSize: '0.7rem', marginBottom: '0.2rem' }}>
+                    ENTRY
+                  </div>
+                  <div style={{ color: '#e2e8f0', fontSize: '0.8rem', fontWeight: 700 }}>{aiResult.entry}</div>
+                </div>
+                <div
+                  style={{
+                    padding: '0.65rem 0.75rem',
+                    borderRadius: '8px',
+                    border: `1px solid ${RED}`,
+                    background: 'rgba(220, 38, 38, 0.12)',
+                  }}
+                >
+                  <div style={{ color: '#fca5a5', fontWeight: 700, fontSize: '0.7rem', marginBottom: '0.2rem' }}>
+                    STOP LOSS
+                  </div>
+                  <div style={{ color: '#e2e8f0', fontSize: '0.8rem', fontWeight: 700 }}>{aiResult.stopLoss}</div>
+                </div>
+                <div
+                  style={{
+                    padding: '0.65rem 0.75rem',
+                    borderRadius: '8px',
+                    border: `1px solid ${GREEN}`,
+                    background: 'rgba(22, 163, 74, 0.12)',
+                  }}
+                >
+                  <div style={{ color: '#86efac', fontWeight: 700, fontSize: '0.7rem', marginBottom: '0.2rem' }}>
+                    TAKE PROFIT
+                  </div>
+                  <div style={{ color: '#e2e8f0', fontSize: '0.8rem', fontWeight: 700 }}>{aiResult.takeProfit}</div>
+                </div>
+              </div>
+
+              <div
+                style={{
+                  padding: '0.65rem 0.85rem',
+                  borderRadius: '6px',
+                  background: 'rgba(234, 179, 8, 0.12)',
+                  border: `1px solid ${YELLOW}`,
+                }}
+              >
+                <div style={{ color: YELLOW, fontWeight: 700, fontSize: '0.72rem', marginBottom: '0.2rem' }}>
+                  💡 CATATAN
+                </div>
+                <div style={{ color: '#e2e8f0', fontSize: '0.78rem', lineHeight: 1.5 }}>{aiResult.catatan}</div>
+              </div>
+            </div>
+          ) : (
+          <>
           <p style={{ margin: '0 0 0.75rem', fontSize: '0.72rem', color: '#94a3b8' }}>
             Contoh statis untuk latihan membaca chart — bukan data live maupun sinyal trading.
           </p>
@@ -646,6 +941,8 @@ export function TradingCandlePage({ onNavigate }: TradingCandlePageProps) {
               </ul>
             </div>
           </div>
+          </>
+          )}
         </div>
       </div>
 

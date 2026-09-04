@@ -11,8 +11,9 @@ import { calcTotalSharing, sumHarga } from '../lib/pasienFinance.js';
 import { hashPassword } from '../lib/password.js';
 import { nextPendaftaranUmumCode, nextRegCode } from '../lib/regCode.js';
 import { buildPaginationMeta, parsePagination } from '../lib/pagination.js';
-import { fetchXauSpotPrice } from '../lib/xausGoldPrice.js';
+import { fetchXauSpotPrice, fetchLatestXauDailyPoint } from '../lib/xausGoldPrice.js';
 import { fetchBinancePaxgPrice } from '../lib/binancePaxgPrice.js';
+import { computePivotLevels } from '../lib/dailyTradingPivotJob.js';
 import {
   absensiAdminKlinikListWhere,
   adminKlinikListWhere,
@@ -3581,6 +3582,162 @@ Aturan:
     } catch (err) {
       return reply.status(502).send({
         error: err instanceof Error ? err.message : 'Gagal mengambil harga Binance PAXGUSDT',
+      });
+    }
+  });
+
+  const TRADING_AI_TIMEFRAME_LABELS: Readonly<Record<string, string>> = {
+    '15': '15 Menit',
+    '30': '30 Menit',
+    '60': '1 Jam',
+    '240': '4 Jam',
+    D: '1 Hari',
+  };
+
+  const TRADING_AI_ANALISA_SCHEMA = {
+    type: Type.OBJECT,
+    properties: {
+      bias: {
+        type: Type.STRING,
+        description: 'Bias arah harga untuk timeframe ini: "BULLISH", "BEARISH", atau "NETRAL".',
+      },
+      polaCandleDiperhatikan: {
+        type: Type.STRING,
+        description:
+          'Pola candlestick yang perlu diperhatikan/dikonfirmasi trader di chart pada timeframe ini sebelum entry, dalam Bahasa Indonesia. Ini SARAN apa yang harus dicari, BUKAN klaim bahwa pola tersebut sudah muncul.',
+      },
+      entry: {
+        type: Type.STRING,
+        description: 'Rentang harga entry yang disarankan (USD), relatif terhadap level pivot/support/resistance yang diberikan.',
+      },
+      stopLoss: { type: Type.STRING, description: 'Level stop loss yang disarankan (USD).' },
+      takeProfit: { type: Type.STRING, description: 'Target take profit yang disarankan (USD), boleh 1-2 target.' },
+      confidence: {
+        type: Type.NUMBER,
+        description: 'Skor keyakinan estimasi ini, 0-100. Karena data terbatas (bukan candle intraday asli), jangan beri skor di atas 65.',
+      },
+      catatan: {
+        type: Type.STRING,
+        description:
+          'Catatan penting: jelaskan bahwa ini estimasi AI berbasis pivot harian & harga spot (bukan analisa candle intraday real), dan wajib pakai manajemen risiko/stop loss.',
+      },
+    },
+    required: ['bias', 'polaCandleDiperhatikan', 'entry', 'stopLoss', 'takeProfit', 'confidence', 'catatan'],
+  };
+
+  const TRADING_AI_SYSTEM_PROMPT = `Anda adalah asisten edukasi trading yang menyusun estimasi analisa teknikal XAU/USD (emas) untuk tujuan pembelajaran, BUKAN nasihat keuangan profesional.
+
+Aturan PENTING:
+- Anda hanya diberi harga spot saat ini serta High/Low/Close harian terakhir beserta level pivot point yang sudah dihitung dari data tersebut. Anda TIDAK memiliki data candle intraday asli untuk timeframe yang diminta.
+- JANGAN mengklaim melihat pola candle tertentu sudah terbentuk — sebutkan pola yang PERLU DIPERHATIKAN/dikonfirmasi sendiri oleh trader di chart.
+- Sesuaikan gaya saran (agresif/scalping untuk timeframe kecil vs swing untuk timeframe besar) dengan timeframe yang diminta, tapi level entry/stop loss/take profit harus tetap masuk akal relatif terhadap level pivot yang diberikan.
+- confidence maksimal 65 karena keterbatasan data.
+- Selalu ingatkan pentingnya stop loss & manajemen risiko di field catatan.
+- Tulis dalam Bahasa Indonesia, ringkas per field.
+- Jawab HANYA sesuai skema JSON yang diberikan.`;
+
+  app.post<{ Body: { timeframe?: string } }>('/api/trading-ai-analisa', async (req, reply) => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      return reply.status(503).send({
+        error: 'Fitur AI Analisa belum dikonfigurasi. Admin perlu mengatur GEMINI_API_KEY di server.',
+      });
+    }
+
+    const timeframe = req.body?.timeframe ?? '';
+    const timeframeLabel = TRADING_AI_TIMEFRAME_LABELS[timeframe];
+    if (!timeframeLabel) {
+      return badRequest(reply, 'timeframe wajib salah satu dari: 15, 30, 60, 240, D');
+    }
+
+    let spot: Awaited<ReturnType<typeof fetchXauSpotPrice>>;
+    let daily: Awaited<ReturnType<typeof fetchLatestXauDailyPoint>>;
+    try {
+      [spot, daily] = await Promise.all([fetchXauSpotPrice(), fetchLatestXauDailyPoint()]);
+    } catch (err) {
+      return reply.status(502).send({
+        error: err instanceof Error ? `Gagal mengambil data harga: ${err.message}` : 'Gagal mengambil data harga XAU/USD',
+      });
+    }
+    if (!daily) {
+      return reply.status(502).send({ error: 'Data High/Low/Close harian XAU/USD tidak tersedia saat ini.' });
+    }
+
+    const { pivot, r1, r2, r3, s1, s2, s3, signal, alasan } = computePivotLevels(daily.high, daily.low, daily.close);
+
+    try {
+      const client = new GoogleGenAI({ apiKey });
+      const response = await client.models.generateContent({
+        model: 'gemini-flash-latest',
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: [
+                  `Timeframe yang diminta: ${timeframeLabel}`,
+                  `Harga XAU/USD saat ini: $${spot.price}`,
+                  `Data harian terakhir (tanggal ${daily.date}): High=${daily.high}, Low=${daily.low}, Close=${daily.close}`,
+                  `Pivot Point terhitung: Pivot=${pivot.toFixed(2)}, R1=${r1.toFixed(2)}, R2=${r2.toFixed(2)}, R3=${r3.toFixed(2)}, S1=${s1.toFixed(2)}, S2=${s2.toFixed(2)}, S3=${s3.toFixed(2)}`,
+                  `Sinyal pivot harian: ${signal} — ${alasan}`,
+                  '',
+                  `Susun estimasi analisa teknikal untuk timeframe ${timeframeLabel} sesuai skema JSON.`,
+                ].join('\n'),
+              },
+            ],
+          },
+        ],
+        config: {
+          systemInstruction: TRADING_AI_SYSTEM_PROMPT,
+          responseMimeType: 'application/json',
+          responseSchema: TRADING_AI_ANALISA_SCHEMA,
+        },
+      });
+
+      const finishReason = response.candidates?.[0]?.finishReason;
+      if (finishReason === 'SAFETY' || finishReason === 'PROHIBITED_CONTENT') {
+        return reply.status(502).send({ error: 'AI menolak membuat analisa ini.' });
+      }
+
+      const text = response.text;
+      if (!text) {
+        return reply.status(502).send({ error: 'AI tidak mengembalikan hasil analisa yang valid.' });
+      }
+
+      let parsed: {
+        bias?: unknown;
+        polaCandleDiperhatikan?: unknown;
+        entry?: unknown;
+        stopLoss?: unknown;
+        takeProfit?: unknown;
+        confidence?: unknown;
+        catatan?: unknown;
+      };
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        return reply.status(502).send({ error: 'AI mengembalikan format hasil yang tidak valid.' });
+      }
+
+      return {
+        timeframe,
+        timeframeLabel,
+        hargaSaatIni: spot.price,
+        hargaUpdatedAt: spot.updatedAt,
+        dataHarianTanggal: daily.date,
+        pivot: { pivot, r1, r2, r3, s1, s2, s3, signal, alasan },
+        bias: typeof parsed.bias === 'string' ? parsed.bias : '',
+        polaCandleDiperhatikan: typeof parsed.polaCandleDiperhatikan === 'string' ? parsed.polaCandleDiperhatikan : '',
+        entry: typeof parsed.entry === 'string' ? parsed.entry : '',
+        stopLoss: typeof parsed.stopLoss === 'string' ? parsed.stopLoss : '',
+        takeProfit: typeof parsed.takeProfit === 'string' ? parsed.takeProfit : '',
+        confidence: typeof parsed.confidence === 'number' ? parsed.confidence : 0,
+        catatan: typeof parsed.catatan === 'string' ? parsed.catatan : '',
+      };
+    } catch (err) {
+      req.log.error(err, 'Gagal memanggil AI untuk trading AI analisa');
+      return reply.status(502).send({
+        error: err instanceof Error ? `Gagal menghubungi layanan AI: ${err.message}` : 'Gagal menghubungi layanan AI',
       });
     }
   });

@@ -9,7 +9,7 @@ const AUTO_TAG = '[Analisa Otomatis Harian]';
 const RUN_HOUR = 7;
 const RUN_MINUTE = 0;
 
-function computePivotLevels(high: number, low: number, close: number) {
+export function computePivotLevels(high: number, low: number, close: number) {
   const pivot = (high + low + close) / 3;
   const r1 = 2 * pivot - low;
   const s1 = 2 * pivot - high;
