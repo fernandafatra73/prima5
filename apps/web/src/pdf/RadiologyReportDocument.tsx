@@ -203,6 +203,14 @@ const styles = StyleSheet.create({
     width: '100%',
     paddingVertical: 8,
   },
+  /** Varian "tanpa kerangka" dicetak di atas kertas kop surat fisik: tidak
+   * boleh memakai flexGrow (yang mendorong TTD ke dasar halaman), supaya
+   * TTD tetap menempel tepat di bawah konten / kop surat, bukan meluncur
+   * ke bawah mengikuti tinggi halaman. */
+  bodyMiddleNoFrame: {
+    width: '100%',
+    paddingVertical: 8,
+  },
   clinicalRow: {
     flexDirection: 'row',
     alignItems: 'flex-start',
@@ -246,6 +254,13 @@ const styles = StyleSheet.create({
     // memengaruhi posisi akhir sama sekali di struktur baru ini (diserap
     // penuh oleh bodyMiddle), jadi dibiarkan kecil supaya aman dari overflow.
     paddingTop: 33.82,
+  },
+  /** Varian "tanpa kerangka": TTD mengikuti alur dokumen tepat di bawah
+   * Kesan/kop surat, tidak didorong ke dasar halaman seperti varian
+   * berkerangka. */
+  signatureWrapNoFrame: {
+    marginTop: 24,
+    alignItems: 'flex-end',
   },
   /** Varian "Cetak Lengkap": Klinis + templat bacaan sudah memakan banyak
    * ruang, jadi blok tanda tangan dinaikkan dari posisi signatureWrap biasa
@@ -417,7 +432,7 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
             </View>
           </View>
 
-          <View style={styles.bodyMiddle}>
+          <View style={includeFrame ? styles.bodyMiddle : styles.bodyMiddleNoFrame}>
             <View style={data.templatBacaan ? styles.kesanBlockNoOffset : styles.kesanBlock}>
               <View style={styles.clinicalRow}>
                 {includeFrame ? <Text style={styles.clinicalInlineLabel}>Kesan : </Text> : null}
@@ -430,7 +445,15 @@ export function RadiologyReportDocument({ data }: { readonly data: RadiologyRepo
             </View>
           </View>
 
-          <View style={data.templatBacaan ? styles.signatureWrapTight : styles.signatureWrap}>
+          <View
+            style={
+              !includeFrame
+                ? styles.signatureWrapNoFrame
+                : data.templatBacaan
+                  ? styles.signatureWrapTight
+                  : styles.signatureWrap
+            }
+          >
             <View style={styles.signature}>
               {includeFrame ? <Text style={styles.signatureLine}>Salam Sejawat,</Text> : null}
               {data.includeSignature && data.signatureSrc ? (
