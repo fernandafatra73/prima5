@@ -51,6 +51,7 @@ import { DaftarAkunPage } from './pages/DaftarAkunPage.tsx';
 import { ExpertisePage } from './pages/ExpertisePage.tsx';
 import { TradingPage } from './pages/TradingPage.tsx';
 import { TradingCandlePage } from './pages/TradingCandlePage.tsx';
+import { PlaceholderTopicPage } from './pages/PlaceholderTopicPage.tsx';
 import { VideoModulPage } from './pages/VideoModulPage.tsx';
 import { LoginPage } from './pages/LoginPage.tsx';
 import { PasienPage } from './pages/PasienPage.tsx';
@@ -297,6 +298,36 @@ function renderViewContent(
       return <TradingPage />;
     case 'trading-candle':
       return <TradingCandlePage />;
+    case 'bullish-engulfing':
+      return <PlaceholderTopicPage icon="🕯️" title="Bullish Engulfing" />;
+    case 'bearish-engulfing':
+      return <PlaceholderTopicPage icon="🕯️" title="Bearish Engulfing" />;
+    case 'hammer':
+      return <PlaceholderTopicPage icon="🔨" title="Hammer" />;
+    case 'shooting-star':
+      return <PlaceholderTopicPage icon="🌠" title="Shooting Star" />;
+    case 'morning-star':
+      return <PlaceholderTopicPage icon="🌅" title="Morning Star" />;
+    case 'evening-star':
+      return <PlaceholderTopicPage icon="🌆" title="Evening Star" />;
+    case 'doji':
+      return <PlaceholderTopicPage icon="➕" title="Doji" />;
+    case 'inside-bar':
+      return <PlaceholderTopicPage icon="📦" title="Inside Bar" />;
+    case 'breakout':
+      return <PlaceholderTopicPage icon="🚀" title="Breakout" />;
+    case 'support-resistance':
+      return <PlaceholderTopicPage icon="📏" title="Support/Resistance" />;
+    case 'trend':
+      return <PlaceholderTopicPage icon="📈" title="Trend" />;
+    case 'volume':
+      return <PlaceholderTopicPage icon="📊" title="Volume" />;
+    case 'rsi':
+      return <PlaceholderTopicPage icon="📉" title="RSI" />;
+    case 'macd':
+      return <PlaceholderTopicPage icon="〰️" title="MACD" />;
+    case 'bollinger-band':
+      return <PlaceholderTopicPage icon="🎯" title="Bollinger Band" />;
     case 'video-modul':
       return <VideoModulPage />;
     case 'rawat-jalan':

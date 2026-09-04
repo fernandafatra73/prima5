@@ -7,6 +7,30 @@ interface SosmedLink {
   readonly icon: string;
 }
 
+interface TopicButton {
+  readonly id: AppViewId;
+  readonly label: string;
+  readonly icon: string;
+}
+
+const CANDLE_TOPIC_BUTTONS: readonly TopicButton[] = [
+  { id: 'bullish-engulfing', label: 'Bullish Engulfing', icon: '🕯️' },
+  { id: 'bearish-engulfing', label: 'Bearish Engulfing', icon: '🕯️' },
+  { id: 'hammer', label: 'Hammer', icon: '🔨' },
+  { id: 'shooting-star', label: 'Shooting Star', icon: '🌠' },
+  { id: 'morning-star', label: 'Morning Star', icon: '🌅' },
+  { id: 'evening-star', label: 'Evening Star', icon: '🌆' },
+  { id: 'doji', label: 'Doji', icon: '➕' },
+  { id: 'inside-bar', label: 'Inside Bar', icon: '📦' },
+  { id: 'breakout', label: 'Breakout', icon: '🚀' },
+  { id: 'support-resistance', label: 'Support/Resistance', icon: '📏' },
+  { id: 'trend', label: 'Trend', icon: '📈' },
+  { id: 'volume', label: 'Volume', icon: '📊' },
+  { id: 'rsi', label: 'RSI', icon: '📉' },
+  { id: 'macd', label: 'MACD', icon: '〰️' },
+  { id: 'bollinger-band', label: 'Bollinger Band', icon: '🎯' },
+];
+
 const SOSMED_LINKS: readonly SosmedLink[] = [
   { id: 'youtube', label: 'YouTube', url: 'https://www.youtube.com/', icon: '▶️' },
   { id: 'snackvideo', label: 'SnackVideo', url: 'https://www.snackvideo.com/', icon: '🎬' },
@@ -76,6 +100,12 @@ export function SosmedPage({ onNavigate }: SosmedPageProps) {
           <span style={{ fontSize: '2rem' }}>🕯️</span>
           <span>Trading Candle</span>
         </button>
+        {CANDLE_TOPIC_BUTTONS.map((topic) => (
+          <button key={topic.id} type="button" onClick={() => onNavigate(topic.id)} style={cardStyle}>
+            <span style={{ fontSize: '2rem' }}>{topic.icon}</span>
+            <span>{topic.label}</span>
+          </button>
+        ))}
         <button type="button" onClick={() => onNavigate('video-modul')} style={cardStyle}>
           <span style={{ fontSize: '2rem' }}>🎬</span>
           <span>Video Modul</span>
