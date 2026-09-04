@@ -149,6 +149,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'daftar-akun', label: 'Daftar Akun', shortLabel: 'Daftar Akun' },
   { id: 'expertise', label: 'Expertise', shortLabel: 'Expertise' },
   { id: 'trading', label: 'Trading XAU/USD', shortLabel: 'Trading' },
+  { id: 'trading-candle', label: 'Trading Candle', shortLabel: 'Trading Candle' },
   { id: 'video-modul', label: 'Video Modul', shortLabel: 'Video Modul' },
   { id: 'pendaftaran', label: 'Pendaftaran', shortLabel: 'Pendaftaran' },
   { id: 'pendaftaran-umum', label: 'Pendaftaran Umum', shortLabel: 'Pendaftaran Umum' },

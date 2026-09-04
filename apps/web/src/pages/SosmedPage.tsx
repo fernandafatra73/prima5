@@ -72,6 +72,10 @@ export function SosmedPage({ onNavigate }: SosmedPageProps) {
           <span style={{ fontSize: '2rem' }}>🪙</span>
           <span>Trading XAU/USD</span>
         </button>
+        <button type="button" onClick={() => onNavigate('trading-candle')} style={cardStyle}>
+          <span style={{ fontSize: '2rem' }}>🕯️</span>
+          <span>Trading Candle</span>
+        </button>
         <button type="button" onClick={() => onNavigate('video-modul')} style={cardStyle}>
           <span style={{ fontSize: '2rem' }}>🎬</span>
           <span>Video Modul</span>

@@ -50,6 +50,7 @@ import { SosmedPage } from './pages/SosmedPage.tsx';
 import { DaftarAkunPage } from './pages/DaftarAkunPage.tsx';
 import { ExpertisePage } from './pages/ExpertisePage.tsx';
 import { TradingPage } from './pages/TradingPage.tsx';
+import { TradingCandlePage } from './pages/TradingCandlePage.tsx';
 import { VideoModulPage } from './pages/VideoModulPage.tsx';
 import { LoginPage } from './pages/LoginPage.tsx';
 import { PasienPage } from './pages/PasienPage.tsx';
@@ -294,6 +295,8 @@ function renderViewContent(
       return <ExpertisePage />;
     case 'trading':
       return <TradingPage />;
+    case 'trading-candle':
+      return <TradingCandlePage />;
     case 'video-modul':
       return <VideoModulPage />;
     case 'rawat-jalan':
