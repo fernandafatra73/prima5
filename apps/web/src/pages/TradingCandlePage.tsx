@@ -1,9 +1,33 @@
-import type { JSX } from 'react';
+import { useState, type JSX } from 'react';
 
 const BLUE = '#1d4ed8';
 const GREEN = '#16a34a';
 const RED = '#dc2626';
 const YELLOW = '#eab308';
+
+const TIMEFRAMES = [
+  { id: '15', label: '15 Menit' },
+  { id: '30', label: '30 Menit' },
+  { id: '60', label: '1 Jam' },
+  { id: 'D', label: '1 Hari' },
+  { id: 'W', label: '1 Minggu' },
+] as const;
+
+function chartSrc(interval: string): string {
+  const config = {
+    autosize: true,
+    symbol: 'OANDA:XAUUSD',
+    interval,
+    timezone: 'Asia/Jakarta',
+    theme: 'light',
+    style: '1',
+    locale: 'id',
+    toolbar_bg: '#f8fafc',
+    withdateranges: true,
+    hide_side_toolbar: false,
+  };
+  return `https://s.tradingview.com/embed-widget/advanced-chart/?locale=id#${encodeURIComponent(JSON.stringify(config))}`;
+}
 
 interface CandlePattern {
   readonly id: string;
@@ -120,14 +144,75 @@ const columnStyle: React.CSSProperties = {
   borderRight: '1px solid rgba(148, 163, 184, 0.2)',
 };
 
-/** Halaman Trading Candle — panduan pola candlestick bullish reversal. */
+const chartCardStyle: React.CSSProperties = {
+  border: `1px solid ${BLUE}`,
+  borderRadius: 'var(--radius-card)',
+  background: '#ffffff',
+  boxShadow: 'var(--shadow-card)',
+  overflow: 'hidden',
+  marginBottom: '1.25rem',
+};
+
+const chartCardTitlebarStyle: React.CSSProperties = {
+  padding: '0.6rem 1rem',
+  background: `linear-gradient(90deg, ${BLUE}, #3b82f6)`,
+  color: '#ffffff',
+  fontWeight: 700,
+  fontSize: '0.9rem',
+};
+
+/** Halaman Trading Candle — grafik live XAU/USD & panduan pola candlestick bullish reversal. */
 export function TradingCandlePage() {
+  const [interval, setInterval_] = useState<string>('5');
+
   return (
     <div>
       <h2 style={{ margin: '0 0 0.35rem' }}>🕯️ Trading Candle</h2>
       <p style={{ margin: '0 0 1.25rem', color: 'var(--color-text-muted)' }}>
         Panduan membaca pola candlestick untuk analisa XAU/USD.
       </p>
+
+      <div style={chartCardStyle}>
+        <div style={chartCardTitlebarStyle}>📈 Grafik Candlestick XAU/USD</div>
+        <div style={{ padding: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.4rem', marginBottom: '0.75rem', flexWrap: 'wrap' }}>
+            {TIMEFRAMES.map((tf) => (
+              <button
+                key={tf.id}
+                type="button"
+                onClick={() => setInterval_(tf.id)}
+                style={{
+                  padding: '0.35rem 0.9rem',
+                  borderRadius: '999px',
+                  border: `1px solid ${interval === tf.id ? YELLOW : 'var(--color-border)'}`,
+                  background: interval === tf.id ? YELLOW : 'transparent',
+                  color: interval === tf.id ? '#1a1a1a' : 'var(--color-text)',
+                  fontWeight: 700,
+                  fontSize: '0.8rem',
+                  cursor: 'pointer',
+                }}
+              >
+                {tf.label}
+              </button>
+            ))}
+          </div>
+          <div
+            style={{
+              height: 480,
+              border: '1px solid var(--color-border)',
+              borderRadius: '8px',
+              overflow: 'hidden',
+            }}
+          >
+            <iframe
+              key={interval}
+              title="Grafik Candlestick XAU/USD"
+              src={chartSrc(interval)}
+              style={{ width: '100%', height: '100%', border: 'none' }}
+            />
+          </div>
+        </div>
+      </div>
 
       <div style={cardStyle}>
         <div style={cardTitlebarStyle}>CONTOH POLA CANDLESTICK BULLISH REVERSAL</div>
