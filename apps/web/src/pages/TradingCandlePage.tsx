@@ -1,9 +1,34 @@
 import { useState, type JSX } from 'react';
+import type { AppViewId } from '../config/navigation.ts';
 
 const BLUE = '#1d4ed8';
 const GREEN = '#16a34a';
 const RED = '#dc2626';
 const YELLOW = '#eab308';
+
+interface TopicButton {
+  readonly id: AppViewId;
+  readonly label: string;
+  readonly icon: string;
+}
+
+const TOPIC_BUTTONS: readonly TopicButton[] = [
+  { id: 'bullish-engulfing', label: 'Bullish Engulfing', icon: '🕯️' },
+  { id: 'bearish-engulfing', label: 'Bearish Engulfing', icon: '🕯️' },
+  { id: 'hammer', label: 'Hammer', icon: '🔨' },
+  { id: 'shooting-star', label: 'Shooting Star', icon: '🌠' },
+  { id: 'morning-star', label: 'Morning Star', icon: '🌅' },
+  { id: 'evening-star', label: 'Evening Star', icon: '🌆' },
+  { id: 'doji', label: 'Doji', icon: '➕' },
+  { id: 'inside-bar', label: 'Inside Bar', icon: '📦' },
+  { id: 'breakout', label: 'Breakout', icon: '🚀' },
+  { id: 'support-resistance', label: 'Support/Resistance', icon: '📏' },
+  { id: 'trend', label: 'Trend', icon: '📈' },
+  { id: 'volume', label: 'Volume', icon: '📊' },
+  { id: 'rsi', label: 'RSI', icon: '📉' },
+  { id: 'macd', label: 'MACD', icon: '〰️' },
+  { id: 'bollinger-band', label: 'Bollinger Band', icon: '🎯' },
+];
 
 const TIMEFRAMES = [
   { id: '15', label: '15 Menit' },
@@ -380,7 +405,11 @@ const summaryColumnStyle: React.CSSProperties = {
 };
 
 /** Halaman Trading Candle — grafik live XAU/USD & panduan pola candlestick bullish reversal. */
-export function TradingCandlePage() {
+interface TradingCandlePageProps {
+  readonly onNavigate: (view: AppViewId) => void;
+}
+
+export function TradingCandlePage({ onNavigate }: TradingCandlePageProps) {
   const [interval, setInterval_] = useState<string>('5');
 
   return (
@@ -389,6 +418,40 @@ export function TradingCandlePage() {
       <p style={{ margin: '0 0 1.25rem', color: 'var(--color-text-muted)' }}>
         Panduan membaca pola candlestick untuk analisa XAU/USD.
       </p>
+
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))',
+          gap: '0.75rem',
+          marginBottom: '1.25rem',
+        }}
+      >
+        {TOPIC_BUTTONS.map((topic) => (
+          <button
+            key={topic.id}
+            type="button"
+            onClick={() => onNavigate(topic.id)}
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              gap: '0.4rem',
+              padding: '1rem',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-card)',
+              background: 'var(--color-bg-surface)',
+              boxShadow: 'var(--shadow-card)',
+              fontWeight: 600,
+              color: 'var(--color-text)',
+              cursor: 'pointer',
+            }}
+          >
+            <span style={{ fontSize: '1.75rem' }}>{topic.icon}</span>
+            <span style={{ fontSize: '0.85rem', textAlign: 'center' }}>{topic.label}</span>
+          </button>
+        ))}
+      </div>
 
       <div style={chartCardStyle}>
         <div style={chartCardTitlebarStyle}>📈 Grafik Candlestick XAU/USD</div>

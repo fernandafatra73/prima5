@@ -297,7 +297,7 @@ function renderViewContent(
     case 'trading':
       return <TradingPage />;
     case 'trading-candle':
-      return <TradingCandlePage />;
+      return <TradingCandlePage onNavigate={navigate} />;
     case 'bullish-engulfing':
       return <PlaceholderTopicPage icon="🕯️" title="Bullish Engulfing" />;
     case 'bearish-engulfing':
