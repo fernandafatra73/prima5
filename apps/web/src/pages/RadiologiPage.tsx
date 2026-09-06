@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { PasienPage } from './PasienPage.tsx';
 import { RadiologWorkPage } from './RadiologWorkPage.tsx';
+import { Radiologi2Page } from './Radiologi2Page.tsx';
 import { RadiologDuplikatPage } from './RadiologDuplikatPage.tsx';
 import { KwitansiRadiologiPage } from './KwitansiRadiologiPage.tsx';
 import { SharingArsipPage } from './SharingArsipPage.tsx';
@@ -22,6 +23,7 @@ import { PemakaianFilmPage } from './PemakaianFilmPage.tsx';
 const RADIOLOGI_TABS = [
   { id: 'pasien', label: 'Registrasi Radiologi' },
   { id: 'radiolog', label: 'Pekerjaan Radiolog' },
+  { id: 'radiologi2', label: 'Radiologi2' },
   { id: 'radiolog-duplikat', label: 'Duplikat Radiologi' },
   { id: 'kwitansi-radiologi', label: 'Kwitansi' },
   { id: 'sharing-radiologi', label: 'Sharing Radiologi' },
@@ -49,6 +51,8 @@ function renderTabContent(tabId: RadiologiTabId) {
       return <PasienPage />;
     case 'radiolog':
       return <RadiologWorkPage />;
+    case 'radiologi2':
+      return <Radiologi2Page />;
     case 'radiolog-duplikat':
       return <RadiologDuplikatPage />;
     case 'kwitansi-radiologi':
