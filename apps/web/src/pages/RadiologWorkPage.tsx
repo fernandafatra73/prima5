@@ -160,8 +160,8 @@ function RadiologTarifSummary({
   return (
     <div
       style={{
-        background: '#f8fafc',
-        border: '1px solid #cbd5e1',
+        background: 'var(--color-bg-surface)',
+        border: '1px solid var(--color-border)',
         borderRadius: '8px',
         padding: '0.75rem 1rem',
         marginBottom: '1rem',
@@ -174,12 +174,12 @@ function RadiologTarifSummary({
       }}
     >
       <div>
-        <span style={{ color: '#64748b' }}>Tarif Pemeriksaan Radiologi: </span>
-        <strong style={{ color: '#0f172a' }}>{formatRupiah(totalNum)}</strong>
+        <span style={{ color: 'var(--color-text-muted)' }}>Tarif Pemeriksaan Radiologi: </span>
+        <strong style={{ color: 'var(--color-text-heading)' }}>{formatRupiah(totalNum)}</strong>
       </div>
       <div>
-        <span style={{ color: '#64748b' }}>Estimasi Komisi Radiolog (30%): </span>
-        <strong style={{ color: '#0284c7' }}>{formatRupiah(sharingNum)}</strong>
+        <span style={{ color: 'var(--color-text-muted)' }}>Estimasi Komisi Radiolog (30%): </span>
+        <strong style={{ color: 'var(--color-primary)' }}>{formatRupiah(sharingNum)}</strong>
       </div>
     </div>
   );
@@ -220,6 +220,13 @@ function combinedPemeriksaan(item: AntreanItem): string {
 }
 
 export function RadiologWorkPage() {
+  // Warna halaman ini disamakan dengan Radiologi2 (tema gelap navy ala
+  // PACS/RIS) selagi tab ini aktif — lihat body.radiolog-work-dark-theme di ui.css.
+  useEffect(() => {
+    document.body.classList.add('radiolog-work-dark-theme');
+    return () => document.body.classList.remove('radiolog-work-dark-theme');
+  }, []);
+
   const { search, setSearch } = useListSearch();
   const [dateFilterMode, setDateFilterMode] = useState<DateFilterMode>('all');
   const [customStart, setCustomStart] = useState('');
@@ -642,7 +649,7 @@ export function RadiologWorkPage() {
           <form onSubmit={(e) => { e.preventDefault(); void simpanHasil(); }}>
             {/* Patient Info Card */}
             <div style={{
-              background: 'var(--color-surface-2, #f8fafc)',
+              background: 'var(--color-bg-surface)',
               border: '1px solid var(--color-border)',
               borderRadius: 'var(--radius-card)',
               padding: '0.85rem 1rem',
