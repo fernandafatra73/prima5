@@ -182,6 +182,21 @@ model TradingAnalisa {
   updatedAt   DateTime @updatedAt
 }
 
+/// Jejak alert pola candle yang sudah dikirim ke Telegram. Dipakai murni
+/// untuk dedup: satu pola hanya dikirim sekali per candle, sehingga bot tidak
+/// mengulang alert yang sama saat server restart (lihat candlePatternJob).
+model CandleAlert {
+  id         String   @id @default(cuid())
+  symbol     String
+  timeframe  String
+  candleOpen DateTime
+  pola       String
+  createdAt  DateTime @default(now())
+
+  @@unique([symbol, timeframe, candleOpen, pola])
+  @@index([createdAt])
+}
+
 /// Level Resistance/Support yang dipantau otomatis terhadap harga XAU/USD
 /// live di halaman Trading — begitu harga menyentuh salah satu level,
 /// peringatan suara diucapkan berulang di frontend (lihat TradingPage).
