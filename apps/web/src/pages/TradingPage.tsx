@@ -381,7 +381,11 @@ export function TradingPage() {
   const [error, setError] = useState<string | null>(null);
 
   const [hargaXau, setHargaXau] = useState<{ price: number; updatedAt: string } | null>(null);
-  const [hargaBinance, setHargaBinance] = useState<{ price: number; updatedAt: string } | null>(null);
+  const [hargaBinance, setHargaBinance] = useState<{
+    price: number;
+    updatedAt: string;
+    sumber?: string;
+  } | null>(null);
 
   async function loadJadwal() {
     try {
@@ -413,11 +417,13 @@ export function TradingPage() {
 
   async function loadHargaBinance() {
     try {
-      const res = await apiGet<{ price: number; updatedAt: string }>('/api/trading-harga-binance');
+      const res = await apiGet<{ price: number; updatedAt: string; sumber?: string }>(
+        '/api/trading-harga-binance',
+      );
       setHargaBinance(res);
     } catch {
-      // Binance memblokir sebagian IP datacenter/region — kalau gagal, badge
-      // ini disembunyikan saja, jangan ganggu bagian lain halaman.
+      // Kalau sumber harga sedang bermasalah, badge ini disembunyikan saja,
+      // jangan ganggu bagian lain halaman.
       setHargaBinance(null);
     }
   }
@@ -826,12 +832,12 @@ export function TradingPage() {
           <p style={{ margin: '0.15rem 0 0', fontSize: '0.85rem', color: 'rgba(255,255,255,0.9)' }}>
             Harga XAU/USD &amp; harga{' '}
             <a
-              href="https://www.binance.bh/en/futures/PAXGUSDT"
+              href="https://finance.yahoo.com/quote/GC=F/"
               target="_blank"
               rel="noopener noreferrer"
               style={{ color: '#ffffff', textDecoration: 'underline' }}
             >
-              Binance PAXGUSDT
+              emas berjangka COMEX
             </a>{' '}
             — update setiap saat.
           </p>
@@ -1009,7 +1015,9 @@ export function TradingPage() {
                 }}
                 title={`Update ${formatTanggalJamDisplay(hargaBinance.updatedAt)}`}
               >
-                <span style={{ fontWeight: 700, color: '#f0b90b' }}>🟡 Binance PAXGUSDT</span>
+                <span style={{ fontWeight: 700, color: '#f0b90b' }}>
+                  🟡 {hargaBinance.sumber ?? 'Emas Berjangka'}
+                </span>
                 <span style={{ fontWeight: 800 }}>
                   ${hargaBinance.price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </span>

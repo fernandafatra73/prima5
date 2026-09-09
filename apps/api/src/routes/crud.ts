@@ -12,7 +12,7 @@ import { hashPassword } from '../lib/password.js';
 import { nextPendaftaranUmumCode, nextRegCode } from '../lib/regCode.js';
 import { buildPaginationMeta, parsePagination } from '../lib/pagination.js';
 import { fetchXauSpotPrice, fetchLatestXauDailyPoint } from '../lib/xausGoldPrice.js';
-import { fetchBinancePaxgPrice } from '../lib/binancePaxgPrice.js';
+import { fetchGoldFuturesPrice } from '../lib/goldFuturesPrice.js';
 import { computePivotLevels } from '../lib/dailyTradingPivotJob.js';
 import {
   absensiAdminKlinikListWhere,
@@ -3600,13 +3600,15 @@ Aturan:
     }
   });
 
+  // Path dipertahankan apa adanya supaya tidak memutus frontend yang sudah
+  // memanggilnya, walau sumber datanya kini bukan Binance lagi.
   app.get('/api/trading-harga-binance', async (_req, reply) => {
     try {
-      const spot = await fetchBinancePaxgPrice();
+      const spot = await fetchGoldFuturesPrice();
       return spot;
     } catch (err) {
       return reply.status(502).send({
-        error: err instanceof Error ? err.message : 'Gagal mengambil harga Binance PAXGUSDT',
+        error: err instanceof Error ? err.message : 'Gagal mengambil harga emas berjangka',
       });
     }
   });
