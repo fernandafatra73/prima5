@@ -167,18 +167,18 @@ export const PAKET_PEMERIKSAAN_LAB: readonly LabPackage[] = [
     id: 'urinalisa',
     label: 'Urinalisa',
     items: [
-      { pemeriksaan: 'Warna', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: 'Kuning Muda - Kuning' },
-      { pemeriksaan: 'Kejernihan', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: 'Jernih' },
-      { pemeriksaan: 'LEU', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'NIT', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'PRO', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'URO', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: 'Normal' },
-      { pemeriksaan: 'pH', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: '4,5 - 8,0' },
-      { pemeriksaan: 'BLO', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'SG', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: '1,005 - 1,030' },
-      { pemeriksaan: 'KET', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'BIL', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'GLU', grup: 'Urinalisa - Urine Rutin - Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'Warna', grup: 'Urinalisa - Makroskopis', nilaiRujukan: 'Kuning Muda - Kuning' },
+      { pemeriksaan: 'Kejernihan', grup: 'Urinalisa - Makroskopis', nilaiRujukan: 'Jernih' },
+      { pemeriksaan: 'LEU', grup: 'Urinalisa - Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'NIT', grup: 'Urinalisa - Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'PRO', grup: 'Urinalisa - Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'URO', grup: 'Urinalisa - Makroskopis', nilaiRujukan: 'Normal' },
+      { pemeriksaan: 'pH', grup: 'Urinalisa - Makroskopis', nilaiRujukan: '4,5 - 8,0' },
+      { pemeriksaan: 'BLO', grup: 'Urinalisa - Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'SG', grup: 'Urinalisa - Makroskopis', nilaiRujukan: '1,005 - 1,030' },
+      { pemeriksaan: 'KET', grup: 'Urinalisa - Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'BIL', grup: 'Urinalisa - Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'GLU', grup: 'Urinalisa - Makroskopis', nilaiRujukan: 'Negatif' },
       { pemeriksaan: 'Sedimen Urine', grup: 'Urinalisa - Mikroskopis', nilaiRujukan: '-' },
       { pemeriksaan: 'Eritrosit (RBC)', grup: 'Urinalisa - Mikroskopis', nilaiRujukan: '0 - 2 /LPB' },
       { pemeriksaan: 'Leukosit (WBC)', grup: 'Urinalisa - Mikroskopis', nilaiRujukan: '0 - 5 /LPB' },
@@ -470,8 +470,8 @@ export function groupLabRowsForPdf(
     const klas = (row.klasifikasi || '').trim();
     if (klas && klas.toLowerCase() !== currentKlas) {
       currentKlas = klas.toLowerCase();
-      // Klasifikasi bisa berisi jenjang "Induk - Anak - Cucu" (mis.
-      // "Urinalisa - Urine Rutin - Makroskopis"). Setiap jenjang dicetak
+      // Klasifikasi bisa berisi beberapa jenjang "Induk - Anak" (mis.
+      // "Urinalisa - Makroskopis"). Setiap jenjang dicetak
       // sebagai baris judul terpisah dari atas ke bawah, dan judul induk
       // yang sama dengan grup sebelumnya tidak dicetak ulang.
       const levels = klas.split(' - ').map((s) => s.trim()).filter((s) => s !== '');

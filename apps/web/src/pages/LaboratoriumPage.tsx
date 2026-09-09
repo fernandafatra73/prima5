@@ -1026,8 +1026,8 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
                           }
                         });
 
-                        // Klasifikasi bisa berisi beberapa jenjang "Induk - Anak - Cucu"
-                        // (mis. "Urinalisa - Urine Rutin - Makroskopis"). Setiap jenjang
+                        // Klasifikasi bisa berisi beberapa jenjang "Induk - Anak"
+                        // (mis. "Urinalisa - Makroskopis"). Setiap jenjang
                         // ditampilkan sebagai baris judul sendiri (makin dalam jenjangnya,
                         // makin kecil & menjorok), dan hanya dicetak ulang saat berbeda
                         // dari grup sebelumnya (gaya breadcrumb) supaya judul induk yang
