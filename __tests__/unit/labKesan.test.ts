@@ -180,6 +180,24 @@ describe('lookupLabReference and groupLabRowsForPdf', () => {
       { name: 'SGOT', result: '25', reference: '< 35' },
     ]);
   });
+
+  test('groupLabRowsForPdf splits "Induk - Anak" klasifikasi into stacked header rows top-to-bottom', () => {
+    const rows = [
+      { id: '1', klasifikasi: 'Urinalisa - Urine Rutin - Makroskopis', pemeriksaan: 'LEU', hasil: 'Negatif', nilaiRujukan: 'Negatif' },
+      { id: '2', klasifikasi: 'Urinalisa - Urine Rutin - Makroskopis', pemeriksaan: 'pH', hasil: '6', nilaiRujukan: '4,5 - 8,0' },
+      { id: '3', klasifikasi: 'Urinalisa - Mikroskopis', pemeriksaan: 'Eritrosit (RBC)', hasil: '1', nilaiRujukan: '0 - 2 /LPB' },
+    ];
+    const grouped = groupLabRowsForPdf(rows);
+    expect(grouped).toEqual([
+      { name: 'URINALISA', result: '', reference: '', isHeader: true },
+      { name: 'URINE RUTIN', result: '', reference: '', isHeader: true },
+      { name: 'MAKROSKOPIS', result: '', reference: '', isHeader: true },
+      { name: 'LEU', result: 'Negatif', reference: 'Negatif' },
+      { name: 'pH', result: '6', reference: '4,5 - 8,0' },
+      { name: 'MIKROSKOPIS', result: '', reference: '', isHeader: true },
+      { name: 'Eritrosit (RBC)', result: '1', reference: '0 - 2 /LPB' },
+    ]);
+  });
 });
 
 describe('abnormal lab result asterisk formatting', () => {

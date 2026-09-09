@@ -465,15 +465,33 @@ export function groupLabRowsForPdf(
 ): { name: string; result: string; reference: string; isHeader?: boolean }[] {
   const output: { name: string; result: string; reference: string; isHeader?: boolean }[] = [];
   let currentKlas = '';
+  let lastLevels: string[] = [];
   for (const row of rows) {
-    if (row.klasifikasi && row.klasifikasi.trim() && row.klasifikasi.trim().toLowerCase() !== currentKlas) {
-      currentKlas = row.klasifikasi.trim().toLowerCase();
-      output.push({
-        name: row.klasifikasi.trim().toUpperCase(),
-        result: '',
-        reference: '',
-        isHeader: true,
-      });
+    const klas = (row.klasifikasi || '').trim();
+    if (klas && klas.toLowerCase() !== currentKlas) {
+      currentKlas = klas.toLowerCase();
+      // Klasifikasi bisa berisi jenjang "Induk - Anak - Cucu" (mis.
+      // "Urinalisa - Urine Rutin - Makroskopis"). Setiap jenjang dicetak
+      // sebagai baris judul terpisah dari atas ke bawah, dan judul induk
+      // yang sama dengan grup sebelumnya tidak dicetak ulang.
+      const levels = klas.split(' - ').map((s) => s.trim()).filter((s) => s !== '');
+      let diffFrom = 0;
+      while (
+        diffFrom < levels.length &&
+        diffFrom < lastLevels.length &&
+        levels[diffFrom].toLowerCase() === lastLevels[diffFrom].toLowerCase()
+      ) {
+        diffFrom++;
+      }
+      for (const levelText of levels.slice(diffFrom)) {
+        output.push({
+          name: levelText.toUpperCase(),
+          result: '',
+          reference: '',
+          isHeader: true,
+        });
+      }
+      lastLevels = levels;
     }
     output.push({
       name: row.pemeriksaan,
