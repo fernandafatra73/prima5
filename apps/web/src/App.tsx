@@ -313,7 +313,7 @@ function renderViewContent(
     case 'rsi':
     case 'macd':
     case 'bollinger-band':
-      return <TradingTopicPage topicId={viewId} />;
+      return <TradingTopicPage topicId={viewId} onClose={() => navigate('trading-candle')} />;
     case 'video-modul':
       return <VideoModulPage />;
     case 'rawat-jalan':

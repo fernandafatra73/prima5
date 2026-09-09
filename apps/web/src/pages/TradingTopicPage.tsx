@@ -475,10 +475,11 @@ const cardTitlebarStyle: React.CSSProperties = {
 
 interface TradingTopicPageProps {
   readonly topicId: string;
+  readonly onClose: () => void;
 }
 
 /** Halaman contoh untuk satu topik candlestick/indikator — diagram SVG + penjelasan singkat. */
-export function TradingTopicPage({ topicId }: TradingTopicPageProps) {
+export function TradingTopicPage({ topicId, onClose }: TradingTopicPageProps) {
   const content = TOPIC_CONTENT[topicId];
   if (!content) {
     return (
@@ -492,9 +493,28 @@ export function TradingTopicPage({ topicId }: TradingTopicPageProps) {
 
   return (
     <div>
-      <h2 style={{ margin: '0 0 1.25rem' }}>
-        {icon} {title}
-      </h2>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', margin: '0 0 1.25rem' }}>
+        <h2 style={{ margin: 0 }}>
+          {icon} {title}
+        </h2>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Tutup"
+          style={{
+            border: `1px solid ${RED}`,
+            borderRadius: '6px',
+            background: 'transparent',
+            color: RED,
+            fontWeight: 700,
+            fontSize: '0.8rem',
+            padding: '0.4rem 0.85rem',
+            cursor: 'pointer',
+          }}
+        >
+          ✕ Tutup
+        </button>
+      </div>
       <div style={cardStyle}>
         <div style={cardTitlebarStyle}>{title.toUpperCase()}</div>
         <div style={{ padding: '1.25rem' }}>
