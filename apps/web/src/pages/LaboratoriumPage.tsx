@@ -670,7 +670,7 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
   function applyPaketFromDB(p: PaketLabData) {
     const newRows: LabTableRow[] = p.items.map((it, i) => ({
       id: `db-${p.id}-${i}-${Date.now()}-${Math.random().toString(36).substring(2, 6)}`,
-      klasifikasi: p.nama,
+      klasifikasi: it.grup?.trim() || p.nama,
       pemeriksaan: it.pemeriksaan,
       hasil: '',
       nilaiRujukan: it.nilaiRujukan,
@@ -961,7 +961,7 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
                           urutan: 0,
                           items: p.items.map((it, idx) => ({
                             id: `${idx}`,
-                            grup: p.label,
+                            grup: it.grup?.trim() || p.label,
                             pemeriksaan: it.pemeriksaan,
                             nilaiRujukan: it.nilaiRujukan,
                             urutan: idx,

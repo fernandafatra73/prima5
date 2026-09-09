@@ -109,6 +109,7 @@ export function serializeLabKesan(
 export interface LabPackageItem {
   readonly pemeriksaan: string;
   readonly nilaiRujukan: string;
+  readonly grup?: string;
 }
 
 export interface LabPackage {
@@ -166,25 +167,28 @@ export const PAKET_PEMERIKSAAN_LAB: readonly LabPackage[] = [
     id: 'urinalisa',
     label: 'Urinalisa',
     items: [
-      { pemeriksaan: 'LEU', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'NIT', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'PRO', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'URO', nilaiRujukan: 'Normal' },
-      { pemeriksaan: 'pH', nilaiRujukan: '4,5 - 8,0' },
-      { pemeriksaan: 'BLO', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'SG', nilaiRujukan: '1,005 - 1,030' },
-      { pemeriksaan: 'KET', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'BIL', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'GLU', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'Eritrosit (RBC)', nilaiRujukan: '0 - 2 /LPB' },
-      { pemeriksaan: 'Leukosit (WBC)', nilaiRujukan: '0 - 5 /LPB' },
-      { pemeriksaan: 'Epitel', nilaiRujukan: 'Positif (+)' },
-      { pemeriksaan: 'Bakteri', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'Kristal', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'Silinder (Casts)', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'Jamur/Yeast', nilaiRujukan: 'Negatif' },
-      { pemeriksaan: 'Trichomonas', nilaiRujukan: 'Negatif (bila ditemukan)' },
-      { pemeriksaan: 'Mucus/Thread', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'Warna', grup: 'Makroskopis', nilaiRujukan: 'Kuning Muda - Kuning' },
+      { pemeriksaan: 'Kejernihan', grup: 'Makroskopis', nilaiRujukan: 'Jernih' },
+      { pemeriksaan: 'LEU', grup: 'Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'NIT', grup: 'Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'PRO', grup: 'Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'URO', grup: 'Makroskopis', nilaiRujukan: 'Normal' },
+      { pemeriksaan: 'pH', grup: 'Makroskopis', nilaiRujukan: '4,5 - 8,0' },
+      { pemeriksaan: 'BLO', grup: 'Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'SG', grup: 'Makroskopis', nilaiRujukan: '1,005 - 1,030' },
+      { pemeriksaan: 'KET', grup: 'Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'BIL', grup: 'Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'GLU', grup: 'Makroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'Sedimen Urine', grup: 'Mikroskopis', nilaiRujukan: '-' },
+      { pemeriksaan: 'Eritrosit (RBC)', grup: 'Mikroskopis', nilaiRujukan: '0 - 2 /LPB' },
+      { pemeriksaan: 'Leukosit (WBC)', grup: 'Mikroskopis', nilaiRujukan: '0 - 5 /LPB' },
+      { pemeriksaan: 'Epitel', grup: 'Mikroskopis', nilaiRujukan: 'Positif (+)' },
+      { pemeriksaan: 'Bakteri', grup: 'Mikroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'Kristal', grup: 'Mikroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'Silinder (Casts)', grup: 'Mikroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'Jamur/Yeast', grup: 'Mikroskopis', nilaiRujukan: 'Negatif' },
+      { pemeriksaan: 'Trichomonas', grup: 'Mikroskopis', nilaiRujukan: 'Negatif (bila ditemukan)' },
+      { pemeriksaan: 'Mucus/Thread', grup: 'Mikroskopis', nilaiRujukan: 'Negatif' },
     ],
   },
   {
