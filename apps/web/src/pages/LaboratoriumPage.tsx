@@ -1,4 +1,5 @@
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
+import type { CSSProperties } from 'react';
 import { PDFViewer, pdf } from '@react-pdf/renderer';
 import { ListPageShell } from '../components/ui/ListPageShell.tsx';
 import { Modal } from '../components/ui/Modal.tsx';
@@ -1025,52 +1026,64 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
                           }
                         });
 
-                        // Klasifikasi bisa berisi jenjang "Induk - Anak" (mis. "Urine Rutin - Makroskopis").
-                        // Judul induk ditampilkan sekali sebagai header besar saat berganti dari grup sebelumnya,
-                        // dan label anak ditampilkan sebagai sub-judul tepat di atas baris pemeriksaan grup itu.
-                        let lastSection = '';
+                        // Klasifikasi bisa berisi beberapa jenjang "Induk - Anak - Cucu"
+                        // (mis. "Urinalisa - Urine Rutin - Makroskopis"). Setiap jenjang
+                        // ditampilkan sebagai baris judul sendiri (makin dalam jenjangnya,
+                        // makin kecil & menjorok), dan hanya dicetak ulang saat berbeda
+                        // dari grup sebelumnya (gaya breadcrumb) supaya judul induk yang
+                        // sama tidak berulang-ulang.
+                        const headerStyleForDepth = (depth: number): CSSProperties =>
+                          depth === 0
+                            ? {
+                                padding: '0.4rem 0.4rem 0.1rem',
+                                fontWeight: 800,
+                                fontSize: '0.88rem',
+                                color: '#0c4a6e',
+                                background: '#e0f2fe',
+                                borderTop: '2px solid #38bdf8',
+                              }
+                            : depth === 1
+                              ? {
+                                  padding: '0.3rem 0.4rem 0.1rem 0.7rem',
+                                  fontWeight: 700,
+                                  fontSize: '0.84rem',
+                                  color: '#0369a1',
+                                  background: '#f0f9ff',
+                                }
+                              : {
+                                  padding: `0.15rem 0.4rem 0.2rem ${0.7 + depth * 0.35}rem`,
+                                  fontWeight: 600,
+                                  fontSize: '0.8rem',
+                                  color: '#0369a1',
+                                  fontStyle: 'italic',
+                                };
+
+                        let lastLevels: string[] = [];
                         return groups.map((group, gi) => {
-                          const sepIdx = group.klasifikasi.indexOf(' - ');
-                          const section = sepIdx >= 0 ? group.klasifikasi.slice(0, sepIdx).trim() : '';
-                          const subLabel = sepIdx >= 0 ? group.klasifikasi.slice(sepIdx + 3).trim() : '';
-                          const showSectionHeader = section !== '' && section.toLowerCase() !== lastSection.toLowerCase();
-                          lastSection = section;
+                          const levels = group.klasifikasi
+                            .split(' - ')
+                            .map((s) => s.trim())
+                            .filter((s) => s !== '');
+                          let diffFrom = 0;
+                          while (
+                            diffFrom < levels.length &&
+                            diffFrom < lastLevels.length &&
+                            levels[diffFrom].toLowerCase() === lastLevels[diffFrom].toLowerCase()
+                          ) {
+                            diffFrom++;
+                          }
+                          const headersToShow = levels.length > 1 ? levels.slice(diffFrom) : [];
+                          lastLevels = levels;
 
                           return (
                           <Fragment key={`${group.klasifikasi}-${gi}`}>
-                            {showSectionHeader && (
-                              <tr>
-                                <td
-                                  colSpan={5}
-                                  style={{
-                                    padding: '0.4rem 0.4rem 0.1rem',
-                                    fontWeight: 800,
-                                    fontSize: '0.88rem',
-                                    color: '#0c4a6e',
-                                    background: '#f0f9ff',
-                                    borderTop: '2px solid #38bdf8',
-                                  }}
-                                >
-                                  {section}
+                            {headersToShow.map((levelText, li) => (
+                              <tr key={`h-${diffFrom + li}`}>
+                                <td colSpan={5} style={headerStyleForDepth(diffFrom + li)}>
+                                  {levelText}
                                 </td>
                               </tr>
-                            )}
-                            {subLabel && (
-                              <tr>
-                                <td
-                                  colSpan={5}
-                                  style={{
-                                    padding: '0.1rem 0.4rem 0.2rem 0.9rem',
-                                    fontWeight: 600,
-                                    fontSize: '0.8rem',
-                                    color: '#0369a1',
-                                    fontStyle: 'italic',
-                                  }}
-                                >
-                                  {subLabel}
-                                </td>
-                              </tr>
-                            )}
+                            ))}
                             {group.entries.map(({ row, index }) => (
                               <tr key={row.id}>
                                 <td style={{ padding: '0.3rem 0.4rem' }}>
