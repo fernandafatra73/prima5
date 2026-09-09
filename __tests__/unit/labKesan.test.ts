@@ -49,7 +49,7 @@ describe('labKesan serialization and parsing', () => {
 });
 
 describe('PAKET_PEMERIKSAAN_LAB and applyLabPackage', () => {
-  test('defines the eight required lab packages', () => {
+  test('defines the nine required lab packages', () => {
     const ids = PAKET_PEMERIKSAAN_LAB.map((p) => p.id);
     expect(ids).toEqual([
       'hematologi',
@@ -60,6 +60,7 @@ describe('PAKET_PEMERIKSAAN_LAB and applyLabPackage', () => {
       'imunologi',
       'diffcount',
       'laju_endap_darah',
+      'widal',
     ]);
   });
 

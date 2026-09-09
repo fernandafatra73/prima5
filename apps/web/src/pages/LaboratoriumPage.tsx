@@ -1025,8 +1025,52 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
                           }
                         });
 
-                        return groups.map((group, gi) => (
+                        // Klasifikasi bisa berisi jenjang "Induk - Anak" (mis. "Urine Rutin - Makroskopis").
+                        // Judul induk ditampilkan sekali sebagai header besar saat berganti dari grup sebelumnya,
+                        // dan label anak ditampilkan sebagai sub-judul tepat di atas baris pemeriksaan grup itu.
+                        let lastSection = '';
+                        return groups.map((group, gi) => {
+                          const sepIdx = group.klasifikasi.indexOf(' - ');
+                          const section = sepIdx >= 0 ? group.klasifikasi.slice(0, sepIdx).trim() : '';
+                          const subLabel = sepIdx >= 0 ? group.klasifikasi.slice(sepIdx + 3).trim() : '';
+                          const showSectionHeader = section !== '' && section.toLowerCase() !== lastSection.toLowerCase();
+                          lastSection = section;
+
+                          return (
                           <Fragment key={`${group.klasifikasi}-${gi}`}>
+                            {showSectionHeader && (
+                              <tr>
+                                <td
+                                  colSpan={5}
+                                  style={{
+                                    padding: '0.4rem 0.4rem 0.1rem',
+                                    fontWeight: 800,
+                                    fontSize: '0.88rem',
+                                    color: '#0c4a6e',
+                                    background: '#f0f9ff',
+                                    borderTop: '2px solid #38bdf8',
+                                  }}
+                                >
+                                  {section}
+                                </td>
+                              </tr>
+                            )}
+                            {subLabel && (
+                              <tr>
+                                <td
+                                  colSpan={5}
+                                  style={{
+                                    padding: '0.1rem 0.4rem 0.2rem 0.9rem',
+                                    fontWeight: 600,
+                                    fontSize: '0.8rem',
+                                    color: '#0369a1',
+                                    fontStyle: 'italic',
+                                  }}
+                                >
+                                  {subLabel}
+                                </td>
+                              </tr>
+                            )}
                             {group.entries.map(({ row, index }) => (
                               <tr key={row.id}>
                                 <td style={{ padding: '0.3rem 0.4rem' }}>
@@ -1125,7 +1169,8 @@ export function LaboratoriumPage({ onNavigate }: LaboratoriumPageProps) {
                               </tr>
                             )}
                           </Fragment>
-                        ));
+                          );
+                        });
                       })()}
                     </tbody>
                   </table>
