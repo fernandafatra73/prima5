@@ -47,6 +47,7 @@ import { AiRadiologiPage } from './pages/AiRadiologiPage.tsx';
 import { AiRadiologiGrupPage } from './pages/AiRadiologiGrupPage.tsx';
 import { AiFotoPage } from './pages/AiFotoPage.tsx';
 import { SosmedPage } from './pages/SosmedPage.tsx';
+import { ProV5Page } from './pages/ProV5Page.tsx';
 import { DaftarAkunPage } from './pages/DaftarAkunPage.tsx';
 import { ExpertisePage } from './pages/ExpertisePage.tsx';
 import { TradingPage } from './pages/TradingPage.tsx';
@@ -290,6 +291,8 @@ function renderViewContent(
       return <AiFotoPage />;
     case 'sosmed':
       return <SosmedPage onNavigate={navigate} />;
+    case 'pro-v5':
+      return <ProV5Page />;
     case 'daftar-akun':
       return <DaftarAkunPage onClose={() => navigate('sosmed')} />;
     case 'expertise':

@@ -146,6 +146,7 @@ export const MAIN_NAV_ITEMS: readonly NavItem[] = [
   { id: 'pasien', label: 'Data & Registrasi Radiologi', shortLabel: 'Registrasi Radiologi' },
   { id: 'laboratorium', label: 'Laboratorium', shortLabel: 'Laboratorium' },
   { id: 'sosmed', label: 'Sosmed', shortLabel: 'Sosmed' },
+  { id: 'pro-v5', label: 'Pro-V5 Radiologi Reader', shortLabel: 'Pro-V5' },
   { id: 'daftar-akun', label: 'Daftar Akun', shortLabel: 'Daftar Akun' },
   { id: 'expertise', label: 'Expertise', shortLabel: 'Expertise' },
   { id: 'trading', label: 'Trading XAU/USD', shortLabel: 'Trading' },

@@ -56,6 +56,7 @@ const NAVBAR_SPECS: readonly NavbarSpec[] = [
   { type: 'link', id: 'ai-radiologi', label: 'AI Radiologi', icon: IconStethoscope },
   { type: 'link', id: 'hak-akses', label: 'Hak Akses', icon: IconShield },
   { type: 'link', id: 'sosmed', label: 'Sosmed', icon: IconShare },
+  { type: 'link', id: 'pro-v5', label: 'Pro-V5', icon: IconStethoscope },
   { type: 'link', id: 'expertise', label: 'Expertise', icon: IconClipboard },
 ];
 
