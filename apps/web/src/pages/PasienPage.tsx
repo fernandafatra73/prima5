@@ -19,6 +19,7 @@ import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
 import { isValidBirthDate } from '../lib/birthDate.ts';
 import { clampClinicalInput } from '../lib/clinicalText.ts';
 import { readFileAsDataUrl, validateFotoFile } from '../lib/fotoUpload.ts';
+import { formatAiFotoAnalisa } from '../lib/aiFotoAnalisa.ts';
 import {
   computeAutoSharingAmount,
   computeUmurYears,
@@ -274,6 +275,8 @@ export function PasienPage() {
   const [fotoEditFoto, setFotoEditFoto] = useState('');
   const [fotoEditSaving, setFotoEditSaving] = useState(false);
   const [fotoEditError, setFotoEditError] = useState<string | null>(null);
+  const [fotoEditAnalisa, setFotoEditAnalisa] = useState('');
+  const [fotoEditAnalyzing, setFotoEditAnalyzing] = useState(false);
   const [aiFotoOpen, setAiFotoOpen] = useState(false);
   const [aiFotoDataUrl, setAiFotoDataUrl] = useState('');
   const [aiFotoAnalyzing, setAiFotoAnalyzing] = useState(false);
@@ -740,6 +743,7 @@ export function PasienPage() {
     setFotoEditTarget({ id: p.id, nama: p.nama });
     setFotoEditFoto(p.foto ?? '');
     setFotoEditError(null);
+    setFotoEditAnalisa('');
   }
 
   async function handleFotoEditFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -756,6 +760,8 @@ export function PasienPage() {
     try {
       setFotoEditFoto(await readFileAsDataUrl(file));
       setFotoEditError(null);
+      // Analisa sebelumnya milik foto lama.
+      setFotoEditAnalisa('');
     } catch (err: unknown) {
       setFotoEditError(err instanceof Error ? err.message : 'Gagal membaca file foto');
     }
@@ -775,6 +781,22 @@ export function PasienPage() {
       setFotoEditError(err instanceof Error ? err.message : 'Gagal menyimpan foto');
     } finally {
       setFotoEditSaving(false);
+    }
+  }
+
+  async function handleFotoEditAnalyze() {
+    if (!fotoEditFoto) return;
+    setFotoEditAnalyzing(true);
+    setFotoEditError(null);
+    try {
+      const res = await apiPost<{ namaPenyakit: string; kesan: string }>('/api/analisa-foto-ai/analyze', {
+        fotoDataUrl: fotoEditFoto,
+      });
+      setFotoEditAnalisa(formatAiFotoAnalisa(res));
+    } catch (err: unknown) {
+      setFotoEditError(err instanceof Error ? err.message : 'Gagal menganalisa foto dengan AI');
+    } finally {
+      setFotoEditAnalyzing(false);
     }
   }
 
@@ -2430,48 +2452,81 @@ export function PasienPage() {
         open={fotoEditTarget !== null}
         title={`Edit³: Foto Pasien${fotoEditTarget ? ` — ${fotoEditTarget.nama}` : ''}`}
         onClose={() => setFotoEditTarget(null)}
-        size="lg"
+        size="xl"
         headerColor="orange"
       >
         <form onSubmit={(e) => void submitFotoEdit(e)} className="form-grid">
           {fotoEditError && <div className="alert alert--error form-grid--full">{fotoEditError}</div>}
-          <div className="form-field form-grid--full">
-            <label htmlFor="fe-foto">Foto (12 cm x 12 cm)</label>
-            {fotoEditFoto ? (
-              <img
-                src={fotoEditFoto}
-                alt={`Foto ${fotoEditTarget?.nama ?? 'pasien'}`}
-                className="pasien-foto-12cm"
-              />
-            ) : (
-              <div className="pasien-foto-12cm">Belum ada foto</div>
-            )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-              <label
-                htmlFor="fe-foto"
-                className="btn btn--xs btn--ghost"
-                style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap', cursor: 'pointer' }}
-                title="Pilih foto (JPEG, PNG, GIF, atau WEBP, maks. 10 MB)"
-              >
-                {fotoEditFoto ? '📤 Ganti foto' : '📤 Pilih foto'}
-              </label>
-              <input
-                id="fe-foto"
-                type="file"
-                accept="image/jpeg,image/png,image/gif,image/webp"
-                onChange={(e) => void handleFotoEditFileChange(e)}
-                style={{ display: 'none' }}
-              />
-              {fotoEditFoto && (
-                <button
-                  type="button"
-                  className="btn btn--xs btn--ghost"
-                  style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}
-                  onClick={() => setFotoEditFoto('')}
-                >
-                  🗑 Hapus foto
-                </button>
+          <div
+            className="form-grid--full"
+            style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap', alignItems: 'flex-start' }}
+          >
+            <div className="form-field">
+              <label htmlFor="fe-foto">Foto (12 cm x 12 cm)</label>
+              {fotoEditFoto ? (
+                <img
+                  src={fotoEditFoto}
+                  alt={`Foto ${fotoEditTarget?.nama ?? 'pasien'}`}
+                  className="pasien-foto-12cm"
+                />
+              ) : (
+                <div className="pasien-foto-12cm">Belum ada foto</div>
               )}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                <label
+                  htmlFor="fe-foto"
+                  className="btn btn--xs btn--ghost"
+                  style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                  title="Pilih foto (JPEG, PNG, GIF, atau WEBP, maks. 10 MB)"
+                >
+                  {fotoEditFoto ? '📤 Ganti foto' : '📤 Pilih foto'}
+                </label>
+                <input
+                  id="fe-foto"
+                  type="file"
+                  accept="image/jpeg,image/png,image/gif,image/webp"
+                  // Dinonaktifkan selama analisa supaya hasil AI tidak tertempel ke foto yang berbeda.
+                  disabled={fotoEditAnalyzing}
+                  onChange={(e) => void handleFotoEditFileChange(e)}
+                  style={{ display: 'none' }}
+                />
+                {fotoEditFoto && (
+                  <>
+                    <button
+                      type="button"
+                      className="btn btn--xs btn--ghost"
+                      style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}
+                      disabled={fotoEditAnalyzing}
+                      onClick={() => {
+                        setFotoEditFoto('');
+                        setFotoEditAnalisa('');
+                      }}
+                    >
+                      🗑 Hapus foto
+                    </button>
+                    <button
+                      type="button"
+                      className="aifoto-analyze-btn"
+                      style={{ padding: '0.35rem 0.8rem', fontSize: '0.78rem' }}
+                      disabled={fotoEditAnalyzing}
+                      onClick={() => void handleFotoEditAnalyze()}
+                    >
+                      {fotoEditAnalyzing ? '⏳ Menganalisa…' : '✨ Analisa AI'}
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+            <div className="form-field" style={{ flex: '1 1 260px', minWidth: 0 }}>
+              <label htmlFor="fe-analisa">Analisa</label>
+              <textarea
+                id="fe-analisa"
+                readOnly
+                value={fotoEditAnalisa}
+                placeholder={fotoEditFoto ? 'Klik "✨ Analisa AI" untuk menganalisa foto.' : 'Pilih foto terlebih dahulu.'}
+                style={{ minHeight: '12cm', resize: 'vertical' }}
+              />
+              <span className="form-hint">Draft AI — wajib ditinjau radiolog/dokter. Tidak disimpan.</span>
             </div>
           </div>
           <ModalFormFooter
