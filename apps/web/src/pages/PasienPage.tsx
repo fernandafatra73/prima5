@@ -65,6 +65,10 @@ interface PendaftaranUmumItem {
   readonly foto: string | null;
 }
 
+/** Kunci zoom pratinjau foto di modal Ubah Pendaftaran Umum. Berbagi state dengan
+ * foto di tabel (yang memakai id cuid baris), jadi dipilih nilai yang tidak mungkin bentrok. */
+const EDIT_PENDAFTARAN_FOTO_ZOOM_ID = 'edit-pendaftaran-foto';
+
 interface Staff {
   readonly id: string;
   readonly nama: string;
@@ -308,7 +312,9 @@ export function PasienPage() {
     alamat: '',
     dokterPengirim: '',
     admin: '',
+    foto: '',
   });
+  const [pendaftaranFotoError, setPendaftaranFotoError] = useState<string | null>(null);
   const [radiologId, setRadiologId] = useState('');
   const [hasilStatus, setHasilStatus] = useState<'MENUNGGU_HASIL' | 'SELESAI'>('MENUNGGU_HASIL');
   const [paymentStatus, setPaymentStatus] = useState<'BELUM_LUNAS' | 'LUNAS'>('BELUM_LUNAS');
@@ -418,7 +424,29 @@ export function PasienPage() {
       alamat: item.alamat || '',
       dokterPengirim: item.dokterPengirim || '',
       admin: item.admin || '',
+      foto: item.foto || '',
     });
+    setPendaftaranFotoError(null);
+  }
+
+  async function handleEditPendaftaranFotoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
+    // Dikosongkan supaya memilih file yang sama lagi tetap memicu onChange.
+    input.value = '';
+    if (!file) return;
+    const invalid = validateFotoFile(file);
+    if (invalid) {
+      setPendaftaranFotoError(invalid);
+      return;
+    }
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      setPendaftaranForm((prev) => ({ ...prev, foto: dataUrl }));
+      setPendaftaranFotoError(null);
+    } catch (err: unknown) {
+      setPendaftaranFotoError(err instanceof Error ? err.message : 'Gagal membaca file foto');
+    }
   }
 
   async function submitEditPendaftaran(e: FormEvent) {
@@ -434,7 +462,11 @@ export function PasienPage() {
         alamat: pendaftaranForm.alamat || undefined,
         dokterPengirim: pendaftaranForm.dokterPengirim || undefined,
         admin: pendaftaranForm.admin || undefined,
+        // Selalu dikirim: string kosong berarti foto dihapus (API menyimpannya sebagai null).
+        foto: pendaftaranForm.foto,
       });
+      // Form registrasi menyalin foto saat baris dipilih, jadi perbarui juga bila baris ini sedang dipilih.
+      if (selectedPendaftaranId === pendaftaranEditing.id) setFoto(pendaftaranForm.foto);
       setPendaftaranEditing(null);
       await loadMasters();
     } catch (err: unknown) {
@@ -2077,6 +2109,52 @@ export function PasienPage() {
                 </option>
               ))}
             </select>
+          </div>
+          <div className="form-field form-field--full">
+            <label htmlFor="pu-foto">Foto</label>
+            {pendaftaranFotoError && <div className="alert alert--error">{pendaftaranFotoError}</div>}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {pendaftaranForm.foto ? (
+                <img
+                  src={pendaftaranForm.foto}
+                  alt={`Foto ${pendaftaranForm.namaPasien}`}
+                  className={`pasien-foto-thumb${zoomedFotoId === EDIT_PENDAFTARAN_FOTO_ZOOM_ID ? ' pasien-foto-thumb--zoomed' : ''}`}
+                  onDoubleClick={() =>
+                    setZoomedFotoId((current) =>
+                      current === EDIT_PENDAFTARAN_FOTO_ZOOM_ID ? null : EDIT_PENDAFTARAN_FOTO_ZOOM_ID,
+                    )
+                  }
+                  title="Klik 2 kali untuk perbesar/perkecil"
+                />
+              ) : (
+                <span>Belum ada foto</span>
+              )}
+              <label
+                htmlFor="pu-foto"
+                className="btn btn--xs btn--ghost"
+                style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                title="Pilih foto (JPEG, PNG, GIF, atau WEBP, maks. 10 MB)"
+              >
+                {pendaftaranForm.foto ? '📤 Ganti foto' : '📤 Pilih foto'}
+              </label>
+              <input
+                id="pu-foto"
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={(e) => void handleEditPendaftaranFotoChange(e)}
+                style={{ display: 'none' }}
+              />
+              {pendaftaranForm.foto && (
+                <button
+                  type="button"
+                  className="btn btn--xs btn--ghost"
+                  style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}
+                  onClick={() => setPendaftaranForm((prev) => ({ ...prev, foto: '' }))}
+                >
+                  🗑 Hapus foto
+                </button>
+              )}
+            </div>
           </div>
           <ModalFormFooter
             onCancel={() => setPendaftaranEditing(null)}
