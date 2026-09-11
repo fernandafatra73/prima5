@@ -1861,25 +1861,37 @@ export function PasienPage() {
                 </div>
                 <div className="legacy-form-row">
                   <label htmlFor="pemeriksaan-select">Pemeriksaan</label>
-                  <select
-                    id="pemeriksaan-select"
-                    value={selectedJenis[0] ?? ''}
-                    onChange={(e) => {
-                      const val = e.target.value;
-                      setSelectedJenis(val ? [val] : []);
-                      const selected = jenis.find((j) => j.id === val);
-                      const hargaValue = selected?.harga ?? '0';
-                      setHargaManual(hargaValue);
-                      setHargaMode(hargaValue);
-                    }}
-                  >
-                    <option value="">Pilih pemeriksaan</option>
-                    {jenis.map((j) => (
-                      <option key={j.id} value={j.id}>
-                        {j.nama}
-                      </option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <select
+                      id="pemeriksaan-select"
+                      value={selectedJenis[0] ?? ''}
+                      style={{ flex: '1 1 auto' }}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setSelectedJenis(val ? [val] : []);
+                        const selected = jenis.find((j) => j.id === val);
+                        const hargaValue = selected?.harga ?? '0';
+                        setHargaManual(hargaValue);
+                        setHargaMode(hargaValue);
+                      }}
+                    >
+                      <option value="">Pilih pemeriksaan</option>
+                      {jenis.map((j) => (
+                        <option key={j.id} value={j.id}>
+                          {j.nama}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="btn btn--xs btn--primary"
+                      style={{ flex: '0 0 auto', whiteSpace: 'nowrap' }}
+                      onClick={openAddJenisModal}
+                      title="Tambah jenis pemeriksaan & harga baru"
+                    >
+                      + Tambah
+                    </button>
+                  </div>
                 </div>
               </div>
 
