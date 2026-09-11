@@ -18,6 +18,7 @@ import { usePaginatedList } from '../hooks/usePaginatedList.ts';
 import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
 import { isValidBirthDate } from '../lib/birthDate.ts';
 import { clampClinicalInput } from '../lib/clinicalText.ts';
+import { readFileAsDataUrl, validateFotoFile } from '../lib/fotoUpload.ts';
 import {
   computeAutoSharingAmount,
   computeUmurYears,
@@ -250,6 +251,7 @@ export function PasienPage() {
   const [formError, setFormError] = useState<string | null>(null);
   const [printingId, setPrintingId] = useState<string | null>(null);
   const [zoomedFotoId, setZoomedFotoId] = useState<string | null>(null);
+  const [fotoUploadingId, setFotoUploadingId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
   const [kwitansiItem, setKwitansiItem] = useState<PasienRow | null>(null);
   const [kesanItem, setKesanItem] = useState<PasienRow | null>(null);
@@ -454,6 +456,32 @@ export function PasienPage() {
       setError(err instanceof Error ? err.message : 'Gagal menghapus data pendaftaran');
     } finally {
       setPendaftaranSubmitting(false);
+    }
+  }
+
+  async function handleUploadPendaftaranFoto(item: PendaftaranUmumItem, e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
+    // Dikosongkan supaya memilih file yang sama lagi tetap memicu onChange.
+    input.value = '';
+    if (!file) return;
+    const invalid = validateFotoFile(file);
+    if (invalid) {
+      setFormError(invalid);
+      return;
+    }
+    setFotoUploadingId(item.id);
+    setFormError(null);
+    try {
+      const dataUrl = await readFileAsDataUrl(file);
+      await apiPatch(`/api/pendaftaran-umum/${item.id}`, { foto: dataUrl });
+      // Form registrasi menyalin foto saat baris dipilih, jadi perbarui juga bila baris ini sedang dipilih.
+      if (selectedPendaftaranId === item.id) setFoto(dataUrl);
+      await loadMasters();
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Gagal mengunggah foto');
+    } finally {
+      setFotoUploadingId(null);
     }
   }
 
@@ -1917,23 +1945,42 @@ export function PasienPage() {
                             />
                           </td>
                           <td>
-                            {p.foto ? (
-                              <img
-                                src={p.foto}
-                                alt={`Foto ${p.namaPasien}`}
-                                className={`pasien-foto-thumb${zoomedFotoId === p.id ? ' pasien-foto-thumb--zoomed' : ''}`}
-                                // Klik pada foto tidak ikut memilih baris, supaya memperbesar foto
-                                // tidak langsung mengisi form registrasi.
-                                onClick={(e) => e.stopPropagation()}
-                                onDoubleClick={(e) => {
-                                  e.stopPropagation();
-                                  setZoomedFotoId((current) => (current === p.id ? null : p.id));
+                            {/* Klik pada foto/tombol unggah tidak ikut memilih baris, supaya
+                                memperbesar atau mengunggah foto tidak langsung mengisi form registrasi. */}
+                            <div
+                              style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {p.foto ? (
+                                <img
+                                  src={p.foto}
+                                  alt={`Foto ${p.namaPasien}`}
+                                  className={`pasien-foto-thumb${zoomedFotoId === p.id ? ' pasien-foto-thumb--zoomed' : ''}`}
+                                  onDoubleClick={() => setZoomedFotoId((current) => (current === p.id ? null : p.id))}
+                                  title="Klik 2 kali untuk perbesar/perkecil"
+                                />
+                              ) : (
+                                '—'
+                              )}
+                              <label
+                                className="btn btn--xs btn--ghost"
+                                style={{
+                                  border: '1px solid var(--color-border)',
+                                  whiteSpace: 'nowrap',
+                                  cursor: fotoUploadingId !== null ? 'wait' : 'pointer',
                                 }}
-                                title="Klik 2 kali untuk perbesar/perkecil"
-                              />
-                            ) : (
-                              '—'
-                            )}
+                                title="Unggah foto (JPEG, PNG, GIF, atau WEBP, maks. 10 MB)"
+                              >
+                                {fotoUploadingId === p.id ? 'Mengunggah…' : p.foto ? '📤 Ganti foto' : '📤 Unggah foto'}
+                                <input
+                                  type="file"
+                                  accept="image/jpeg,image/png,image/gif,image/webp"
+                                  disabled={fotoUploadingId !== null}
+                                  onChange={(e) => void handleUploadPendaftaranFoto(p, e)}
+                                  style={{ display: 'none' }}
+                                />
+                              </label>
+                            </div>
                           </td>
                           <td>{p.noRegistrasi}</td>
                           <td>{p.namaPasien}</td>
