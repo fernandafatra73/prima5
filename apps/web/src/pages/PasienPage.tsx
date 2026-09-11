@@ -1169,9 +1169,20 @@ export function PasienPage() {
   const jenisPemeriksaanField = (
     <div className="form-field form-grid--span-3" style={{ marginTop: '0.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-        <label style={{ fontWeight: 600, color: '#0369a1' }}>
-          Tabel Jenis Pemeriksaan, Harga & Sharing
-        </label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+          <label style={{ fontWeight: 600, color: '#0369a1' }}>
+            Tabel Jenis Pemeriksaan, Harga & Sharing
+          </label>
+          {/* Tombol "+ Tambah" per baris tidak muncul saat daftar kosong, jadi sediakan juga di judul tabel. */}
+          <button
+            type="button"
+            className="btn btn--xs btn--primary"
+            onClick={openAddJenisModal}
+            title="Tambah jenis pemeriksaan baru"
+          >
+            + Tambah Pemeriksaan
+          </button>
+        </div>
         <span style={{ fontWeight: 600, color: '#0f172a' }}>
           Total Bayar: <span style={{ color: '#0284c7' }}>{formatRupiah(estimate.totalHarga)}</span>
         </span>
