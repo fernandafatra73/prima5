@@ -85,6 +85,7 @@ interface PasienRow {
   readonly paymentStatus: 'BELUM_LUNAS' | 'LUNAS';
   readonly klinis?: string | null;
   readonly kesan?: string | null;
+  readonly foto?: string | null;
   readonly createdAt: string;
 }
 
@@ -248,6 +249,7 @@ export function PasienPage() {
   const [saving, setSaving] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [printingId, setPrintingId] = useState<string | null>(null);
+  const [zoomedFotoId, setZoomedFotoId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string; label: string } | null>(null);
   const [kwitansiItem, setKwitansiItem] = useState<PasienRow | null>(null);
   const [kesanItem, setKesanItem] = useState<PasienRow | null>(null);
@@ -1561,6 +1563,7 @@ export function PasienPage() {
         <table className="data-table">
           <thead>
             <tr>
+              <th>Foto</th>
               <th>Nama</th>
               <th>Umur</th>
               <th>Pengirim</th>
@@ -1573,11 +1576,24 @@ export function PasienPage() {
           <tbody>
             {items.length === 0 ? (
               <tr>
-                <td colSpan={7}>Belum ada pasien.</td>
+                <td colSpan={8}>Belum ada pasien.</td>
               </tr>
             ) : (
               items.map((p) => (
                 <tr key={p.id}>
+                  <td>
+                    {p.foto ? (
+                      <img
+                        src={p.foto}
+                        alt={`Foto ${p.nama}`}
+                        className={`pasien-foto-thumb${zoomedFotoId === p.id ? ' pasien-foto-thumb--zoomed' : ''}`}
+                        onDoubleClick={() => setZoomedFotoId((current) => (current === p.id ? null : p.id))}
+                        title="Klik 2 kali untuk perbesar/perkecil"
+                      />
+                    ) : (
+                      '—'
+                    )}
+                  </td>
                   <td>{p.nama}</td>
                   <td>{formatUmurDetail(p.tanggalLahir)}</td>
                   <td>{p.pengirim.nama}</td>

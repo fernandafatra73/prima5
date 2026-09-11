@@ -1599,6 +1599,29 @@ body.radiolog-work-dark-theme .win-frame--blue .data-table tbody tr:not([style])
   cursor: zoom-out;
 }
 
+/* Foto pasien di tabel Registrasi Radiologi. Diperbesar lewat width/height
+   (bukan transform) supaya baris ikut melebar dan foto tidak terpotong oleh
+   wadah tabel yang bisa di-scroll. */
+.pasien-foto-thumb {
+  display: block;
+  width: 56px;
+  height: 56px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--color-border);
+  cursor: zoom-in;
+  transition: width 0.15s ease, height 0.15s ease;
+}
+
+.pasien-foto-thumb--zoomed {
+  width: 224px;
+  height: 224px;
+  object-fit: contain;
+  background: #fff;
+  box-shadow: 0 14px 30px rgba(15, 23, 42, 0.32);
+  cursor: zoom-out;
+}
+
 .aifoto-upload {
   display: flex;
   flex-direction: column;
