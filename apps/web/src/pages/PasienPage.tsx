@@ -1754,7 +1754,7 @@ export function PasienPage() {
                         type="button"
                         className="btn btn--xs btn--ghost"
                         onClick={() => openFotoEdit(p)}
-                        title="Edit foto pasien (6 cm x 6 cm)"
+                        title="Edit foto pasien (12 cm x 12 cm)"
                         style={{ border: '1px solid var(--color-border)' }}
                       >
                         Edit³
@@ -2412,20 +2412,21 @@ export function PasienPage() {
         open={fotoEditTarget !== null}
         title={`Edit³: Foto Pasien${fotoEditTarget ? ` — ${fotoEditTarget.nama}` : ''}`}
         onClose={() => setFotoEditTarget(null)}
+        size="lg"
         headerColor="orange"
       >
         <form onSubmit={(e) => void submitFotoEdit(e)} className="form-grid">
           {fotoEditError && <div className="alert alert--error form-grid--full">{fotoEditError}</div>}
           <div className="form-field form-grid--full">
-            <label htmlFor="fe-foto">Foto (6 cm x 6 cm)</label>
+            <label htmlFor="fe-foto">Foto (12 cm x 12 cm)</label>
             {fotoEditFoto ? (
               <img
                 src={fotoEditFoto}
                 alt={`Foto ${fotoEditTarget?.nama ?? 'pasien'}`}
-                className="pasien-foto-6cm"
+                className="pasien-foto-12cm"
               />
             ) : (
-              <div className="pasien-foto-6cm">Belum ada foto</div>
+              <div className="pasien-foto-12cm">Belum ada foto</div>
             )}
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
               <label

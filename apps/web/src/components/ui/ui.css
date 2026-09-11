@@ -1622,14 +1622,14 @@ body.radiolog-work-dark-theme .win-frame--blue .data-table tbody tr:not([style])
   cursor: zoom-out;
 }
 
-/* Kotak foto pasien 6 cm x 6 cm di modal Edit³ (Manajemen Pasien). `contain`
+/* Kotak foto pasien 12 cm x 12 cm di modal Edit³ (Manajemen Pasien). `contain`
    supaya seluruh foto terlihat tanpa terpotong. */
-.pasien-foto-6cm {
+.pasien-foto-12cm {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 6cm;
-  height: 6cm;
+  width: 12cm;
+  height: 12cm;
   object-fit: contain;
   border: 1px solid var(--color-border);
   border-radius: 8px;
