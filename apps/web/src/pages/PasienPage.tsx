@@ -297,6 +297,7 @@ export function PasienPage() {
   const [fotoEditAnalisa, setFotoEditAnalisa] = useState('');
   const [fotoEditAnalyzing, setFotoEditAnalyzing] = useState<'ai' | 'banding2' | null>(null);
   const [fotoEditTbModel, setFotoEditTbModel] = useState('');
+  const [fotoEditAnalisaCopied, setFotoEditAnalisaCopied] = useState(false);
   const [aiFotoOpen, setAiFotoOpen] = useState(false);
   const [aiFotoDataUrl, setAiFotoDataUrl] = useState('');
   const [aiFotoAnalyzing, setAiFotoAnalyzing] = useState(false);
@@ -839,6 +840,17 @@ export function PasienPage() {
       setFotoEditError(err instanceof Error ? err.message : 'Gagal menganalisa foto dengan AI Banding 2');
     } finally {
       setFotoEditAnalyzing(null);
+    }
+  }
+
+  async function handleCopyFotoEditAnalisa() {
+    if (!fotoEditAnalisa) return;
+    try {
+      await navigator.clipboard.writeText(fotoEditAnalisa);
+      setFotoEditAnalisaCopied(true);
+      setTimeout(() => setFotoEditAnalisaCopied(false), 1500);
+    } catch (err: unknown) {
+      setFotoEditError(err instanceof Error ? `Gagal menyalin analisa: ${err.message}` : 'Gagal menyalin analisa');
     }
   }
 
@@ -2604,6 +2616,31 @@ export function PasienPage() {
                 placeholder={fotoEditFoto ? 'Klik "✨ Analisa AI" untuk menganalisa foto.' : 'Pilih foto terlebih dahulu.'}
                 style={{ minHeight: '12cm', resize: 'vertical' }}
               />
+              <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                <button
+                  type="button"
+                  className="btn btn--xs btn--ghost"
+                  style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}
+                  disabled={!fotoEditAnalisa}
+                  onClick={() => void handleCopyFotoEditAnalisa()}
+                  title="Salin hasil analisa ke clipboard"
+                >
+                  {fotoEditAnalisaCopied ? '✓ Tersalin' : '📋 Salin'}
+                </button>
+                <button
+                  type="button"
+                  className="btn btn--xs btn--ghost"
+                  style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}
+                  disabled={!fotoEditAnalisa || fotoEditAnalyzing !== null}
+                  onClick={() => {
+                    setFotoEditAnalisa('');
+                    setFotoEditAnalisaCopied(false);
+                  }}
+                  title="Kosongkan kolom analisa"
+                >
+                  🗑 Hapus analisa
+                </button>
+              </div>
               <span className="form-hint">Draft AI — wajib ditinjau radiolog/dokter. Tidak disimpan.</span>
             </div>
           </div>
