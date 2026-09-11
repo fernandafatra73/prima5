@@ -197,14 +197,6 @@ const HASIL_TABS = [
 ] as const;
 
 export function PasienPage() {
-  // Warna halaman ini disamakan dengan Pekerjaan Radiolog (tema gelap navy) selagi
-  // halaman aktif — lihat body.radiolog-work-dark-theme di ui.css. Aman memakai
-  // add/remove biasa karena App hanya menampilkan satu halaman (WindowFrame) sekaligus.
-  useEffect(() => {
-    document.body.classList.add('radiolog-work-dark-theme');
-    return () => document.body.classList.remove('radiolog-work-dark-theme');
-  }, []);
-
   const { search, setSearch } = useListSearch();
   const [hasilTab, setHasilTab] = useState<string>('all');
   const [paymentFilter, setPaymentFilter] = useState('');
