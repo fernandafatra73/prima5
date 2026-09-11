@@ -1,5 +1,31 @@
 import { describe, expect, test } from 'vitest';
-import { formatAiFotoAnalisa } from '../../apps/web/src/lib/aiFotoAnalisa.ts';
+import { formatAiFotoAnalisa, formatTbScreeningAnalisa } from '../../apps/web/src/lib/aiFotoAnalisa.ts';
+
+describe('formatTbScreeningAnalisa', () => {
+  test('includes diagnosis with confidence, summary and indicator lines', () => {
+    expect(
+      formatTbScreeningAnalisa({
+        diagnosis: 'TBC Paru',
+        confidenceScore: 72,
+        ringkasan: 'Tampak infiltrat di apeks paru kanan.',
+        indikator: [
+          { label: 'Infiltrate', persen: 70, keterangan: 'Apeks kanan' },
+          { label: 'Cavity', persen: 10, keterangan: '' },
+        ],
+      }),
+    ).toBe(
+      'Kemungkinan: TBC Paru (Skor keyakinan: 72%)\n\n' +
+        'Tampak infiltrat di apeks paru kanan.\n\n' +
+        'Indikator:\n- Infiltrate: 70% — Apeks kanan\n- Cavity: 10%',
+    );
+  });
+
+  test('omits empty summary and indicator section', () => {
+    expect(
+      formatTbScreeningAnalisa({ diagnosis: ' Normal ', confidenceScore: 0, ringkasan: '  ', indikator: [] }),
+    ).toBe('Kemungkinan: Normal (Skor keyakinan: 0%)');
+  });
+});
 
 describe('formatAiFotoAnalisa', () => {
   test('combines disease name and kesan', () => {

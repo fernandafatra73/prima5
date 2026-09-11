@@ -19,7 +19,7 @@ import { apiDelete, apiGet, apiPatch, apiPost } from '../lib/api.ts';
 import { isValidBirthDate } from '../lib/birthDate.ts';
 import { clampClinicalInput } from '../lib/clinicalText.ts';
 import { readFileAsDataUrl, validateFotoFile } from '../lib/fotoUpload.ts';
-import { formatAiFotoAnalisa } from '../lib/aiFotoAnalisa.ts';
+import { formatAiFotoAnalisa, formatTbScreeningAnalisa } from '../lib/aiFotoAnalisa.ts';
 import {
   computeAutoSharingAmount,
   computeUmurYears,
@@ -191,6 +191,25 @@ function getAiBanding2Conditions(result: TbScreeningResult): readonly TbConditio
   return conditions;
 }
 
+/** Pilihan model AI Banding 2 (nilai `model` untuk /api/analisa-foto-ai/tb-screening),
+ * dipakai bersama oleh modal AI Banding 2 dan modal Edit³. */
+const AI_BANDING2_MODEL_OPTIONS: ReadonlyArray<{ readonly value: string; readonly label: string }> = [
+  { value: 'v1', label: 'Model Version 1' },
+  { value: 'v2', label: 'Model Version 2' },
+  { value: 'lumbosacral', label: 'Lumbo Sacral' },
+  { value: 'genu', label: 'Genu' },
+  { value: 'knee', label: 'Knee' },
+  { value: 'ankle', label: 'Ankle' },
+  { value: 'cranium', label: 'Cranium' },
+  { value: 'cervikal', label: 'Cervikal' },
+  { value: 'bno', label: 'BNO' },
+  { value: 'femur', label: 'Femur' },
+  { value: 'cruris', label: 'Cruris' },
+  { value: 'anthebrachi', label: 'Anthebrachi' },
+  { value: 'usg-abdomen', label: 'USG Abdomen' },
+  { value: 'usg-mammae', label: 'USG Mammae' },
+];
+
 const HASIL_TABS = [
   { id: 'all', label: 'Semua data' },
   { id: 'MENUNGGU_HASIL', label: 'Menunggu hasil' },
@@ -276,7 +295,8 @@ export function PasienPage() {
   const [fotoEditSaving, setFotoEditSaving] = useState(false);
   const [fotoEditError, setFotoEditError] = useState<string | null>(null);
   const [fotoEditAnalisa, setFotoEditAnalisa] = useState('');
-  const [fotoEditAnalyzing, setFotoEditAnalyzing] = useState(false);
+  const [fotoEditAnalyzing, setFotoEditAnalyzing] = useState<'ai' | 'banding2' | null>(null);
+  const [fotoEditTbModel, setFotoEditTbModel] = useState('');
   const [aiFotoOpen, setAiFotoOpen] = useState(false);
   const [aiFotoDataUrl, setAiFotoDataUrl] = useState('');
   const [aiFotoAnalyzing, setAiFotoAnalyzing] = useState(false);
@@ -744,6 +764,7 @@ export function PasienPage() {
     setFotoEditFoto(p.foto ?? '');
     setFotoEditError(null);
     setFotoEditAnalisa('');
+    setFotoEditTbModel('');
   }
 
   async function handleFotoEditFileChange(e: React.ChangeEvent<HTMLInputElement>) {
@@ -786,7 +807,7 @@ export function PasienPage() {
 
   async function handleFotoEditAnalyze() {
     if (!fotoEditFoto) return;
-    setFotoEditAnalyzing(true);
+    setFotoEditAnalyzing('ai');
     setFotoEditError(null);
     try {
       const res = await apiPost<{ namaPenyakit: string; kesan: string }>('/api/analisa-foto-ai/analyze', {
@@ -796,7 +817,28 @@ export function PasienPage() {
     } catch (err: unknown) {
       setFotoEditError(err instanceof Error ? err.message : 'Gagal menganalisa foto dengan AI');
     } finally {
-      setFotoEditAnalyzing(false);
+      setFotoEditAnalyzing(null);
+    }
+  }
+
+  async function handleFotoEditAiBanding2() {
+    if (!fotoEditFoto) return;
+    if (!fotoEditTbModel) {
+      setFotoEditError('Pilih model AI Banding 2 terlebih dahulu.');
+      return;
+    }
+    setFotoEditAnalyzing('banding2');
+    setFotoEditError(null);
+    try {
+      const res = await apiPost<TbScreeningResult>('/api/analisa-foto-ai/tb-screening', {
+        fotoDataUrl: fotoEditFoto,
+        model: fotoEditTbModel,
+      });
+      setFotoEditAnalisa(formatTbScreeningAnalisa(res));
+    } catch (err: unknown) {
+      setFotoEditError(err instanceof Error ? err.message : 'Gagal menganalisa foto dengan AI Banding 2');
+    } finally {
+      setFotoEditAnalyzing(null);
     }
   }
 
@@ -2498,7 +2540,7 @@ export function PasienPage() {
                   type="file"
                   accept="image/jpeg,image/png,image/gif,image/webp"
                   // Dinonaktifkan selama analisa supaya hasil AI tidak tertempel ke foto yang berbeda.
-                  disabled={fotoEditAnalyzing}
+                  disabled={fotoEditAnalyzing !== null}
                   onChange={(e) => void handleFotoEditFileChange(e)}
                   style={{ display: 'none' }}
                 />
@@ -2508,7 +2550,7 @@ export function PasienPage() {
                       type="button"
                       className="btn btn--xs btn--ghost"
                       style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}
-                      disabled={fotoEditAnalyzing}
+                      disabled={fotoEditAnalyzing !== null}
                       onClick={() => {
                         setFotoEditFoto('');
                         setFotoEditAnalisa('');
@@ -2520,10 +2562,34 @@ export function PasienPage() {
                       type="button"
                       className="aifoto-analyze-btn"
                       style={{ padding: '0.35rem 0.8rem', fontSize: '0.78rem' }}
-                      disabled={fotoEditAnalyzing}
+                      disabled={fotoEditAnalyzing !== null}
                       onClick={() => void handleFotoEditAnalyze()}
                     >
-                      {fotoEditAnalyzing ? '⏳ Menganalisa…' : '✨ Analisa AI'}
+                      {fotoEditAnalyzing === 'ai' ? '⏳ Menganalisa…' : '✨ Analisa AI'}
+                    </button>
+                    <select
+                      aria-label="Model AI Banding 2"
+                      value={fotoEditTbModel}
+                      disabled={fotoEditAnalyzing !== null}
+                      onChange={(e) => setFotoEditTbModel(e.target.value)}
+                      style={{ fontSize: '0.78rem', padding: '0.3rem' }}
+                    >
+                      <option value="">Model AI Banding 2</option>
+                      {AI_BANDING2_MODEL_OPTIONS.map((opt) => (
+                        <option key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="btn btn--xs btn--ghost"
+                      style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}
+                      disabled={fotoEditAnalyzing !== null || !fotoEditTbModel}
+                      onClick={() => void handleFotoEditAiBanding2()}
+                      title="Analisa TB X-Ray dengan AI (pilih model terlebih dahulu)"
+                    >
+                      {fotoEditAnalyzing === 'banding2' ? '⏳ Menganalisa…' : '🩻 AI Banding 2'}
                     </button>
                   </>
                 )}
@@ -2627,20 +2693,11 @@ export function PasienPage() {
               onChange={(e) => setAiBanding2Model(e.target.value)}
             >
               <option value="">Select Model Version</option>
-              <option value="v1">Model Version 1</option>
-              <option value="v2">Model Version 2</option>
-              <option value="lumbosacral">Lumbo Sacral</option>
-              <option value="genu">Genu</option>
-              <option value="knee">Knee</option>
-              <option value="ankle">Ankle</option>
-              <option value="cranium">Cranium</option>
-              <option value="cervikal">Cervikal</option>
-              <option value="bno">BNO</option>
-              <option value="femur">Femur</option>
-              <option value="cruris">Cruris</option>
-              <option value="anthebrachi">Anthebrachi</option>
-              <option value="usg-abdomen">USG Abdomen</option>
-              <option value="usg-mammae">USG Mammae</option>
+              {AI_BANDING2_MODEL_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
             </select>
           </div>
 
