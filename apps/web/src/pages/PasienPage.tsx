@@ -1805,7 +1805,14 @@ export function PasienPage() {
         </table>
       </ListPageShell>
 
-      <Modal open={addOpen} title="Registrasi Radiologi Baru" onClose={() => setAddOpen(false)} size="xl">
+      <Modal
+        open={addOpen}
+        title="Registrasi Radiologi Baru"
+        onClose={() => setAddOpen(false)}
+        size="xl"
+        // Hanya modal ini yang memakai warna Pekerjaan Radiolog; halamannya tetap terang.
+        className="radiolog-work-dark-scope"
+      >
         <form onSubmit={(e) => void onSubmitAdd(e)} style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
           <fieldset className="legacy-groupbox">
             <legend>Data Registrasi Radiologi</legend>

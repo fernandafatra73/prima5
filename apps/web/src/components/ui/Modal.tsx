@@ -8,9 +8,19 @@ interface ModalProps {
   readonly children: ReactNode;
   readonly size?: 'md' | 'lg' | 'xl';
   readonly headerColor?: 'default' | 'orange' | 'sky-red';
+  /** Class tambahan pada kotak modal, mis. untuk tema warna khusus satu modal. */
+  readonly className?: string;
 }
 
-export function Modal({ open, title, onClose, children, size = 'md', headerColor = 'default' }: ModalProps) {
+export function Modal({
+  open,
+  title,
+  onClose,
+  children,
+  size = 'md',
+  headerColor = 'default',
+  className,
+}: ModalProps) {
   useEffect(() => {
     if (!open) return;
     const onKey = (e: KeyboardEvent) => {
@@ -29,7 +39,7 @@ export function Modal({ open, title, onClose, children, size = 'md', headerColor
   return createPortal(
     <div className="modal-overlay" role="presentation" onClick={onClose}>
       <div
-        className={`modal modal--${size}`}
+        className={`modal modal--${size}${className ? ` ${className}` : ''}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="modal-title"
