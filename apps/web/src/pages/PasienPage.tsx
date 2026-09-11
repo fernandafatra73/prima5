@@ -1883,6 +1883,7 @@ export function PasienPage() {
                   <thead>
                     <tr>
                       <th>Pilih</th>
+                      <th>Foto</th>
                       <th>No Registrasi</th>
                       <th>Nama</th>
                       <th>Umur</th>
@@ -1892,7 +1893,7 @@ export function PasienPage() {
                   <tbody>
                     {pendaftaranList.length === 0 ? (
                       <tr>
-                        <td colSpan={5} style={{ textAlign: 'center', padding: '1rem' }}>
+                        <td colSpan={6} style={{ textAlign: 'center', padding: '1rem' }}>
                           Belum ada data pendaftaran umum.
                         </td>
                       </tr>
@@ -1914,6 +1915,25 @@ export function PasienPage() {
                               onChange={() => handlePendaftaranSelect(p.id)}
                               onClick={(e) => e.stopPropagation()}
                             />
+                          </td>
+                          <td>
+                            {p.foto ? (
+                              <img
+                                src={p.foto}
+                                alt={`Foto ${p.namaPasien}`}
+                                className={`pasien-foto-thumb${zoomedFotoId === p.id ? ' pasien-foto-thumb--zoomed' : ''}`}
+                                // Klik pada foto tidak ikut memilih baris, supaya memperbesar foto
+                                // tidak langsung mengisi form registrasi.
+                                onClick={(e) => e.stopPropagation()}
+                                onDoubleClick={(e) => {
+                                  e.stopPropagation();
+                                  setZoomedFotoId((current) => (current === p.id ? null : p.id));
+                                }}
+                                title="Klik 2 kali untuk perbesar/perkecil"
+                              />
+                            ) : (
+                              '—'
+                            )}
                           </td>
                           <td>{p.noRegistrasi}</td>
                           <td>{p.namaPasien}</td>
