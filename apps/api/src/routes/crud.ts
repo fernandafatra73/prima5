@@ -11,6 +11,7 @@ import { calcTotalSharing, sumHarga } from '../lib/pasienFinance.js';
 import { hashPassword } from '../lib/password.js';
 import { nextPendaftaranUmumCode, nextRegCode } from '../lib/regCode.js';
 import { buildPaginationMeta, parsePagination } from '../lib/pagination.js';
+import { normalizeSharingKeterangan, parseSharingNominal } from '../lib/pilihanSharing.js';
 import { fetchXauSpotPrice, fetchLatestXauDailyPoint } from '../lib/xausGoldPrice.js';
 import { fetchGoldFuturesPrice } from '../lib/goldFuturesPrice.js';
 import { computePivotLevels } from '../lib/dailyTradingPivotJob.js';
@@ -241,9 +242,22 @@ export async function registerCrudRoutes(app: FastifyInstance) {
     },
   );
 
-  app.delete<{ Params: { id: string } }>('/api/radiolog/:id', async (req) => {
-    await prisma.radiolog.delete({ where: { id: req.params.id } });
-    return { ok: true };
+  app.delete<{ Params: { id: string } }>('/api/radiolog/:id', async (req, reply) => {
+    try {
+      await prisma.radiolog.delete({ where: { id: req.params.id } });
+      return { ok: true };
+    } catch (err: unknown) {
+      // SharingRadiolog memakai ON DELETE RESTRICT; Pasien.radiologId otomatis dikosongkan (SET NULL).
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2003') {
+        return reply
+          .status(409)
+          .send({ error: 'Radiolog tidak bisa dihapus karena masih dipakai di data Sharing Radiolog' });
+      }
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+        return reply.status(404).send({ error: 'Radiolog tidak ditemukan' });
+      }
+      throw err;
+    }
   });
 
   app.patch<{ Params: { id: string }; Body: { nama?: string; noTelepon?: string } }>(
@@ -261,6 +275,71 @@ export async function registerCrudRoutes(app: FastifyInstance) {
       return { item };
     },
   );
+
+  app.get('/api/pilihan-sharing', async () => {
+    const items = await prisma.pilihanSharing.findMany({ orderBy: { nominal: 'asc' } });
+    return { items };
+  });
+
+  app.post<{ Body: { nominal?: unknown; keterangan?: unknown } }>('/api/pilihan-sharing', async (req, reply) => {
+    const nominal = parseSharingNominal(req.body.nominal);
+    if (nominal === null) return badRequest(reply, 'Nominal sharing harus angka bulat 0 atau lebih');
+    try {
+      const item = await prisma.pilihanSharing.create({
+        data: { nominal, keterangan: normalizeSharingKeterangan(req.body.keterangan) },
+      });
+      return reply.status(201).send({ item });
+    } catch (err: unknown) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
+        return badRequest(reply, `Pilihan sharing dengan nominal ${nominal} sudah ada`);
+      }
+      throw err;
+    }
+  });
+
+  app.patch<{ Params: { id: string }; Body: { nominal?: unknown; keterangan?: unknown } }>(
+    '/api/pilihan-sharing/:id',
+    async (req, reply) => {
+      const existing = await prisma.pilihanSharing.findUnique({ where: { id: req.params.id } });
+      if (!existing) return reply.status(404).send({ error: 'Pilihan sharing tidak ditemukan' });
+      let nominal = existing.nominal;
+      if (req.body.nominal !== undefined) {
+        const parsed = parseSharingNominal(req.body.nominal);
+        if (parsed === null) return badRequest(reply, 'Nominal sharing harus angka bulat 0 atau lebih');
+        nominal = parsed;
+      }
+      try {
+        const item = await prisma.pilihanSharing.update({
+          where: { id: req.params.id },
+          data: {
+            nominal,
+            keterangan:
+              req.body.keterangan !== undefined
+                ? normalizeSharingKeterangan(req.body.keterangan)
+                : existing.keterangan,
+          },
+        });
+        return { item };
+      } catch (err: unknown) {
+        if (err instanceof PrismaClientKnownRequestError && err.code === 'P2002') {
+          return badRequest(reply, `Pilihan sharing dengan nominal ${nominal} sudah ada`);
+        }
+        throw err;
+      }
+    },
+  );
+
+  app.delete<{ Params: { id: string } }>('/api/pilihan-sharing/:id', async (req, reply) => {
+    try {
+      await prisma.pilihanSharing.delete({ where: { id: req.params.id } });
+      return { ok: true };
+    } catch (err: unknown) {
+      if (err instanceof PrismaClientKnownRequestError && err.code === 'P2025') {
+        return reply.status(404).send({ error: 'Pilihan sharing tidak ditemukan' });
+      }
+      throw err;
+    }
+  });
 
   app.get<{ Querystring: ListQuery & { radiologId?: string; tanggal?: string } }>(
     '/api/sharing-radiolog',

@@ -20,6 +20,7 @@ import { isValidBirthDate } from '../lib/birthDate.ts';
 import { clampClinicalInput } from '../lib/clinicalText.ts';
 import { readFileAsDataUrl, validateFotoFile } from '../lib/fotoUpload.ts';
 import { formatAiFotoAnalisa, formatTbScreeningAnalisa } from '../lib/aiFotoAnalisa.ts';
+import { formatSharingShort } from '../lib/pilihanSharing.ts';
 import {
   computeAutoSharingAmount,
   computeUmurYears,
@@ -43,6 +44,29 @@ interface Dokter {
 interface Radiolog {
   readonly id: string;
   readonly nama: string;
+  readonly noTelepon?: string | null;
+}
+
+interface PilihanSharing {
+  readonly id: string;
+  readonly nominal: number;
+  readonly keterangan: string | null;
+}
+
+interface RadiologFormState {
+  readonly mode: 'add' | 'edit';
+  readonly id: string | null;
+  readonly nama: string;
+  readonly noTelepon: string;
+}
+
+interface SharingOptionFormState {
+  readonly mode: 'add' | 'edit';
+  readonly id: string | null;
+  /** Nominal sebelum diedit, untuk memindahkan pilihan yang sedang dipakai di form ke nominal barunya. */
+  readonly originalNominal: number | null;
+  readonly nominal: string;
+  readonly keterangan: string;
 }
 
 interface Jenis {
@@ -210,6 +234,13 @@ const AI_BANDING2_MODEL_OPTIONS: ReadonlyArray<{ readonly value: string; readonl
   { value: 'usg-mammae', label: 'USG Mammae' },
 ];
 
+/** Gaya tombol kecil ＋ ✎ 🗑 di samping dropdown master data pada modal Registrasi Radiologi Baru. */
+const MASTER_ACTION_BUTTON_STYLE = {
+  border: '1px solid var(--color-border)',
+  flex: '0 0 auto',
+  padding: '0.2rem 0.45rem',
+} as const;
+
 const HASIL_TABS = [
   { id: 'all', label: 'Semua data' },
   { id: 'MENUNGGU_HASIL', label: 'Menunggu hasil' },
@@ -263,6 +294,17 @@ export function PasienPage() {
   const reload = useMutationReload(reloadList);
   const [dokter, setDokter] = useState<Dokter[]>([]);
   const [radiologList, setRadiologList] = useState<Radiolog[]>([]);
+  const [pilihanSharingList, setPilihanSharingList] = useState<PilihanSharing[]>([]);
+  const [radiologForm, setRadiologForm] = useState<RadiologFormState | null>(null);
+  const [radiologFormError, setRadiologFormError] = useState<string | null>(null);
+  const [radiologSaving, setRadiologSaving] = useState(false);
+  const [radiologDeleteTarget, setRadiologDeleteTarget] = useState<Radiolog | null>(null);
+  const [radiologDeleting, setRadiologDeleting] = useState(false);
+  const [sharingOptionForm, setSharingOptionForm] = useState<SharingOptionFormState | null>(null);
+  const [sharingOptionError, setSharingOptionError] = useState<string | null>(null);
+  const [sharingOptionSaving, setSharingOptionSaving] = useState(false);
+  const [sharingOptionDeleteTarget, setSharingOptionDeleteTarget] = useState<PilihanSharing | null>(null);
+  const [sharingOptionDeleting, setSharingOptionDeleting] = useState(false);
   const [jenis, setJenis] = useState<Jenis[]>([]);
   const [pendaftaranList, setPendaftaranList] = useState<PendaftaranUmumItem[]>([]);
   const [staffList, setStaffList] = useState<Staff[]>([]);
@@ -418,18 +460,20 @@ export function PasienPage() {
   const loadMasters = useCallback(async () => {
     setMastersError(null);
     try {
-      const [dokterRes, jenisRes, radiologRes, pendaftaranRes, staffRes] = await Promise.all([
+      const [dokterRes, jenisRes, radiologRes, pendaftaranRes, staffRes, pilihanSharingRes] = await Promise.all([
         apiGet<PaginatedResponse<Dokter>>('/api/dokter?page=1&limit=200'),
         apiGet<PaginatedResponse<Jenis>>('/api/jenis-pemeriksaan?page=1&limit=200'),
         apiGet<PaginatedResponse<Radiolog>>('/api/radiolog?page=1&limit=200'),
         apiGet<PaginatedResponse<PendaftaranUmumItem>>('/api/pendaftaran-umum?page=1&limit=300').catch(() => ({ items: [] })),
         apiGet<PaginatedResponse<Staff>>('/api/admin-klinik?page=1&limit=200').catch(() => ({ items: [] })),
+        apiGet<{ items: PilihanSharing[] }>('/api/pilihan-sharing').catch(() => ({ items: [] })),
       ]);
       setDokter(dokterRes.items);
       setJenis(jenisRes.items.filter((j) => j.harga !== null));
       setRadiologList(radiologRes.items);
       setPendaftaranList(pendaftaranRes.items);
       setStaffList(staffRes.items);
+      setPilihanSharingList(pilihanSharingRes.items);
     } catch (err: unknown) {
       setMastersError(err instanceof Error ? err.message : 'Gagal memuat master data');
     }
@@ -516,6 +560,117 @@ export function PasienPage() {
       setError(err instanceof Error ? err.message : 'Gagal menghapus data pendaftaran');
     } finally {
       setPendaftaranSubmitting(false);
+    }
+  }
+
+  function openRadiologForm(mode: 'add' | 'edit') {
+    const target = mode === 'edit' ? radiologList.find((r) => r.id === radiologId) : undefined;
+    if (mode === 'edit' && !target) return;
+    setRadiologForm({
+      mode,
+      id: target?.id ?? null,
+      nama: target?.nama ?? '',
+      noTelepon: target?.noTelepon ?? '',
+    });
+    setRadiologFormError(null);
+  }
+
+  async function submitRadiologForm(e: FormEvent) {
+    e.preventDefault();
+    if (!radiologForm) return;
+    // PATCH /api/radiolog menyimpan nama kosong apa adanya, jadi dicegah di sini.
+    if (!radiologForm.nama.trim()) {
+      setRadiologFormError('Nama radiolog wajib diisi');
+      return;
+    }
+    setRadiologSaving(true);
+    setRadiologFormError(null);
+    try {
+      const body = { nama: radiologForm.nama.trim(), noTelepon: radiologForm.noTelepon };
+      if (radiologForm.mode === 'add') {
+        const res = await apiPost<{ item: Radiolog }>('/api/radiolog', body);
+        setRadiologId(res.item.id);
+      } else if (radiologForm.id) {
+        await apiPatch(`/api/radiolog/${radiologForm.id}`, body);
+      }
+      setRadiologForm(null);
+      await loadMasters();
+    } catch (err: unknown) {
+      setRadiologFormError(err instanceof Error ? err.message : 'Gagal menyimpan radiolog');
+    } finally {
+      setRadiologSaving(false);
+    }
+  }
+
+  async function confirmDeleteRadiolog() {
+    if (!radiologDeleteTarget) return;
+    setRadiologDeleting(true);
+    setFormError(null);
+    try {
+      await apiDelete(`/api/radiolog/${radiologDeleteTarget.id}`);
+      if (radiologId === radiologDeleteTarget.id) setRadiologId('');
+      await loadMasters();
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Gagal menghapus radiolog');
+    } finally {
+      setRadiologDeleting(false);
+      setRadiologDeleteTarget(null);
+    }
+  }
+
+  function openSharingOptionForm(mode: 'add' | 'edit') {
+    const target = mode === 'edit' ? pilihanSharingList.find((o) => String(o.nominal) === sharingMode) : undefined;
+    if (mode === 'edit' && !target) return;
+    setSharingOptionForm({
+      mode,
+      id: target?.id ?? null,
+      originalNominal: target?.nominal ?? null,
+      nominal: target ? String(target.nominal) : '',
+      keterangan: target?.keterangan ?? '',
+    });
+    setSharingOptionError(null);
+  }
+
+  async function submitSharingOptionForm(e: FormEvent) {
+    e.preventDefault();
+    if (!sharingOptionForm) return;
+    setSharingOptionSaving(true);
+    setSharingOptionError(null);
+    try {
+      // Nominal dikirim apa adanya; API yang memvalidasi (bilangan bulat, tidak negatif, tidak dobel).
+      const body = { nominal: sharingOptionForm.nominal, keterangan: sharingOptionForm.keterangan };
+      const res =
+        sharingOptionForm.mode === 'edit' && sharingOptionForm.id
+          ? await apiPatch<{ item: PilihanSharing }>(`/api/pilihan-sharing/${sharingOptionForm.id}`, body)
+          : await apiPost<{ item: PilihanSharing }>('/api/pilihan-sharing', body);
+      // Pilihan baru, atau pilihan yang sedang dipakai lalu diedit, langsung diterapkan ke form.
+      if (sharingOptionForm.mode === 'add' || sharingMode === String(sharingOptionForm.originalNominal)) {
+        setSharingMode(String(res.item.nominal));
+        setSharingAmount(String(res.item.nominal));
+      }
+      setSharingOptionForm(null);
+      await loadMasters();
+    } catch (err: unknown) {
+      setSharingOptionError(err instanceof Error ? err.message : 'Gagal menyimpan pilihan sharing');
+    } finally {
+      setSharingOptionSaving(false);
+    }
+  }
+
+  async function confirmDeleteSharingOption() {
+    if (!sharingOptionDeleteTarget) return;
+    setSharingOptionDeleting(true);
+    setFormError(null);
+    try {
+      await apiDelete(`/api/pilihan-sharing/${sharingOptionDeleteTarget.id}`);
+      // Nominal yang sudah terisi di form tetap dipakai; hanya pilihannya yang hilang dari daftar.
+      if (sharingMode === String(sharingOptionDeleteTarget.nominal)) setSharingMode('custom');
+      await loadMasters();
+    } catch (err: unknown) {
+      setFormError(err instanceof Error ? err.message : 'Gagal menghapus pilihan sharing');
+    } finally {
+      setSharingOptionDeleting(false);
+      setSharingOptionDeleteTarget(null);
     }
   }
 
@@ -1242,6 +1397,11 @@ export function PasienPage() {
     }
   }
 
+  const selectedPilihanSharing = pilihanSharingList.find((o) => String(o.nominal) === sharingMode);
+  // Nominal yang tidak ada lagi di daftar (mis. pilihannya sudah dihapus) ditampilkan sebagai Manual.
+  const sharingSelectValue =
+    sharingMode === 'auto' || sharingMode === 'custom' || selectedPilihanSharing ? sharingMode : 'custom';
+
   const jenisPemeriksaanField = (
     <div className="form-field form-grid--span-3" style={{ marginTop: '0.5rem' }}>
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
@@ -1466,7 +1626,7 @@ export function PasienPage() {
           </label>
           <select
             id="sharing-select"
-            value={sharingMode}
+            value={sharingSelectValue}
             onChange={(e) => {
               const val = e.target.value;
               setSharingMode(val);
@@ -1488,14 +1648,11 @@ export function PasienPage() {
             <option value="auto">
               ⚡ Otomatis ({formatRupiah(Number(autoSharingAmount) || 0)} — Sesuai Rumus Dokter, Umur &amp; Pemeriksaan)
             </option>
-            <option value="18000">Rp 18.000 — Thorax Anak (&lt; 10 th) — dr. Anna Diah</option>
-            <option value="20000">Rp 20.000 — Thorax Dewasa (≥ 10 th) — dr. Anna Diah</option>
-            <option value="33000">Rp 33.000 — Thorax Anak (&lt; 10 th) — dr. Eva / dr. Iman</option>
-            <option value="35000">Rp 35.000 — Thorax Dewasa (≥ 10 th) — dr. Eva / dr. Iman</option>
-            <option value="58000">Rp 58.000 — Shoulder Joint</option>
-            <option value="88000">Rp 88.000 — Lumbosacral</option>
-            <option value="50000">Rp 50.000 — Standar Dokter</option>
-            <option value="0">Rp 0 — Tanpa Sharing</option>
+            {pilihanSharingList.map((opt) => (
+              <option key={opt.id} value={String(opt.nominal)}>
+                {`${formatRupiah(opt.nominal)}${opt.keterangan ? ` — ${opt.keterangan}` : ''}`}
+              </option>
+            ))}
             <option value="custom">✎ Input Manual / Lainnya...</option>
           </select>
         </div>
@@ -1952,14 +2109,53 @@ export function PasienPage() {
               <div className="legacy-form-fields">
                 <div className="legacy-form-row">
                   <label htmlFor="radiolog">Radiolog</label>
-                  <select id="radiolog" value={radiologId} onChange={(e) => setRadiologId(e.target.value)}>
-                    <option value="">Pilih radiolog</option>
-                    {radiologList.map((r) => (
-                      <option key={r.id} value={r.id}>
-                        {r.nama}
-                      </option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', gap: '0.4rem' }}>
+                    <select
+                      id="radiolog"
+                      value={radiologId}
+                      style={{ flex: '1 1 auto' }}
+                      onChange={(e) => setRadiologId(e.target.value)}
+                    >
+                      <option value="">Pilih radiolog</option>
+                      {radiologList.map((r) => (
+                        <option key={r.id} value={r.id}>
+                          {r.nama}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      type="button"
+                      className="btn btn--xs btn--ghost"
+                      style={MASTER_ACTION_BUTTON_STYLE}
+                      onClick={() => openRadiologForm('add')}
+                      title="Tambah radiolog"
+                    >
+                      ＋
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--xs btn--ghost"
+                      style={MASTER_ACTION_BUTTON_STYLE}
+                      disabled={!radiologId}
+                      onClick={() => openRadiologForm('edit')}
+                      title="Edit radiolog yang dipilih"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--xs btn--ghost"
+                      style={MASTER_ACTION_BUTTON_STYLE}
+                      disabled={!radiologId}
+                      onClick={() => {
+                        const target = radiologList.find((r) => r.id === radiologId);
+                        if (target) setRadiologDeleteTarget(target);
+                      }}
+                      title="Hapus radiolog yang dipilih"
+                    >
+                      🗑
+                    </button>
+                  </div>
                 </div>
                 <div className="legacy-form-row">
                   <label htmlFor="harga">Harga</label>
@@ -2001,7 +2197,7 @@ export function PasienPage() {
                   <div style={{ display: 'flex', gap: '0.4rem' }}>
                     <select
                       id="sharing-select"
-                      value={sharingMode}
+                      value={sharingSelectValue}
                       style={{ flex: '0 0 auto', width: '2.4rem' }}
                       title="Pilihan nominal sharing"
                       onChange={(e) => {
@@ -2015,14 +2211,11 @@ export function PasienPage() {
                       }}
                     >
                       <option value="auto">⚡</option>
-                      <option value="18000">18rb</option>
-                      <option value="20000">20rb</option>
-                      <option value="33000">33rb</option>
-                      <option value="35000">35rb</option>
-                      <option value="58000">58rb</option>
-                      <option value="88000">88rb</option>
-                      <option value="50000">50rb</option>
-                      <option value="0">0</option>
+                      {pilihanSharingList.map((opt) => (
+                        <option key={opt.id} value={String(opt.nominal)} title={opt.keterangan ?? undefined}>
+                          {formatSharingShort(opt.nominal)}
+                        </option>
+                      ))}
                       <option value="custom">✎</option>
                     </select>
                     <input
@@ -2036,6 +2229,37 @@ export function PasienPage() {
                         setSharingMode('custom');
                       }}
                     />
+                    <button
+                      type="button"
+                      className="btn btn--xs btn--ghost"
+                      style={MASTER_ACTION_BUTTON_STYLE}
+                      onClick={() => openSharingOptionForm('add')}
+                      title="Tambah pilihan sharing"
+                    >
+                      ＋
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--xs btn--ghost"
+                      style={MASTER_ACTION_BUTTON_STYLE}
+                      disabled={!selectedPilihanSharing}
+                      onClick={() => openSharingOptionForm('edit')}
+                      title="Edit pilihan sharing yang dipilih"
+                    >
+                      ✎
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn--xs btn--ghost"
+                      style={MASTER_ACTION_BUTTON_STYLE}
+                      disabled={!selectedPilihanSharing}
+                      onClick={() => {
+                        if (selectedPilihanSharing) setSharingOptionDeleteTarget(selectedPilihanSharing);
+                      }}
+                      title="Hapus pilihan sharing yang dipilih"
+                    >
+                      🗑
+                    </button>
                   </div>
                 </div>
                 <div className="legacy-form-row" style={{ alignItems: 'flex-start' }}>
@@ -2990,6 +3214,106 @@ export function PasienPage() {
           />
         </form>
       </Modal>
+
+      <Modal
+        open={radiologForm !== null}
+        title={radiologForm?.mode === 'edit' ? 'Ubah Radiolog' : 'Tambah Radiolog'}
+        onClose={() => setRadiologForm(null)}
+      >
+        <form onSubmit={(e) => void submitRadiologForm(e)} className="form-grid">
+          {radiologFormError && <div className="alert alert--error form-grid--full">{radiologFormError}</div>}
+          <div className="form-field">
+            <label htmlFor="radiolog-form-nama">Nama *</label>
+            <input
+              id="radiolog-form-nama"
+              required
+              value={radiologForm?.nama ?? ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                setRadiologForm((prev) => (prev ? { ...prev, nama: value } : prev));
+              }}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="radiolog-form-telp">No HP</label>
+            <input
+              id="radiolog-form-telp"
+              value={radiologForm?.noTelepon ?? ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                setRadiologForm((prev) => (prev ? { ...prev, noTelepon: value } : prev));
+              }}
+            />
+          </div>
+          <ModalFormFooter
+            onCancel={() => setRadiologForm(null)}
+            submitLabel={radiologForm?.mode === 'edit' ? 'Simpan perubahan' : 'Tambah'}
+            loading={radiologSaving}
+          />
+        </form>
+      </Modal>
+
+      <ConfirmModal
+        open={radiologDeleteTarget !== null}
+        title="Hapus Radiolog"
+        message={`Hapus radiolog "${radiologDeleteTarget?.nama ?? ''}"? Pasien yang memakai radiolog ini akan kehilangan data radiolognya. Radiolog yang sudah punya data Sharing Radiolog tidak bisa dihapus.`}
+        confirmLabel="Hapus"
+        onConfirm={() => void confirmDeleteRadiolog()}
+        onClose={() => setRadiologDeleteTarget(null)}
+        loading={radiologDeleting}
+      />
+
+      <Modal
+        open={sharingOptionForm !== null}
+        title={sharingOptionForm?.mode === 'edit' ? 'Ubah Pilihan Sharing' : 'Tambah Pilihan Sharing'}
+        onClose={() => setSharingOptionForm(null)}
+      >
+        <form onSubmit={(e) => void submitSharingOptionForm(e)} className="form-grid">
+          {sharingOptionError && <div className="alert alert--error form-grid--full">{sharingOptionError}</div>}
+          <div className="form-field">
+            <label htmlFor="sharing-option-nominal">Nominal (Rp) *</label>
+            <input
+              id="sharing-option-nominal"
+              type="number"
+              min="0"
+              step="1"
+              required
+              value={sharingOptionForm?.nominal ?? ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSharingOptionForm((prev) => (prev ? { ...prev, nominal: value } : prev));
+              }}
+            />
+          </div>
+          <div className="form-field">
+            <label htmlFor="sharing-option-keterangan">Keterangan</label>
+            <input
+              id="sharing-option-keterangan"
+              placeholder="mis. Thorax Dewasa — dr. Anna Diah"
+              value={sharingOptionForm?.keterangan ?? ''}
+              onChange={(e) => {
+                const value = e.target.value;
+                setSharingOptionForm((prev) => (prev ? { ...prev, keterangan: value } : prev));
+              }}
+            />
+          </div>
+          <ModalFormFooter
+            onCancel={() => setSharingOptionForm(null)}
+            submitLabel={sharingOptionForm?.mode === 'edit' ? 'Simpan perubahan' : 'Tambah'}
+            loading={sharingOptionSaving}
+          />
+        </form>
+      </Modal>
+
+      <ConfirmModal
+        open={sharingOptionDeleteTarget !== null}
+        title="Hapus Pilihan Sharing"
+        message={`Hapus pilihan sharing ${formatRupiah(sharingOptionDeleteTarget?.nominal ?? 0)}${sharingOptionDeleteTarget?.keterangan ? ` (${sharingOptionDeleteTarget.keterangan})` : ''}? Nominal sharing pasien yang sudah tersimpan tidak berubah.`}
+        confirmLabel="Hapus"
+        onConfirm={() => void confirmDeleteSharingOption()}
+        onClose={() => setSharingOptionDeleteTarget(null)}
+        loading={sharingOptionDeleting}
+      />
 
       <Modal open={bhpModalOpen} title="Tambah Data BHP Radiologi" onClose={() => setBhpModalOpen(false)}>
         <form onSubmit={(e) => void handleBhpSubmit(e)} className="form-grid">
