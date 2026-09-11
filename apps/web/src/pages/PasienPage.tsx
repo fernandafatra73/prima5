@@ -270,6 +270,10 @@ export function PasienPage() {
   const [quickEditKesan, setQuickEditKesan] = useState('');
   const [quickEditSaving, setQuickEditSaving] = useState(false);
   const [quickEditError, setQuickEditError] = useState<string | null>(null);
+  const [fotoEditTarget, setFotoEditTarget] = useState<{ readonly id: string; readonly nama: string } | null>(null);
+  const [fotoEditFoto, setFotoEditFoto] = useState('');
+  const [fotoEditSaving, setFotoEditSaving] = useState(false);
+  const [fotoEditError, setFotoEditError] = useState<string | null>(null);
   const [aiFotoOpen, setAiFotoOpen] = useState(false);
   const [aiFotoDataUrl, setAiFotoDataUrl] = useState('');
   const [aiFotoAnalyzing, setAiFotoAnalyzing] = useState(false);
@@ -729,6 +733,48 @@ export function PasienPage() {
       setQuickEditError(err instanceof Error ? err.message : 'Gagal menyimpan perubahan');
     } finally {
       setQuickEditSaving(false);
+    }
+  }
+
+  function openFotoEdit(p: PasienRow) {
+    setFotoEditTarget({ id: p.id, nama: p.nama });
+    setFotoEditFoto(p.foto ?? '');
+    setFotoEditError(null);
+  }
+
+  async function handleFotoEditFileChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const input = e.currentTarget;
+    const file = input.files?.[0];
+    // Dikosongkan supaya memilih file yang sama lagi tetap memicu onChange.
+    input.value = '';
+    if (!file) return;
+    const invalid = validateFotoFile(file);
+    if (invalid) {
+      setFotoEditError(invalid);
+      return;
+    }
+    try {
+      setFotoEditFoto(await readFileAsDataUrl(file));
+      setFotoEditError(null);
+    } catch (err: unknown) {
+      setFotoEditError(err instanceof Error ? err.message : 'Gagal membaca file foto');
+    }
+  }
+
+  async function submitFotoEdit(e: FormEvent) {
+    e.preventDefault();
+    if (!fotoEditTarget) return;
+    setFotoEditSaving(true);
+    setFotoEditError(null);
+    try {
+      // String kosong berarti foto dihapus (API menyimpannya sebagai null).
+      await apiPatch(`/api/pasien/${fotoEditTarget.id}`, { foto: fotoEditFoto });
+      setFotoEditTarget(null);
+      await reload();
+    } catch (err: unknown) {
+      setFotoEditError(err instanceof Error ? err.message : 'Gagal menyimpan foto');
+    } finally {
+      setFotoEditSaving(false);
     }
   }
 
@@ -1707,6 +1753,15 @@ export function PasienPage() {
                       <button
                         type="button"
                         className="btn btn--xs btn--ghost"
+                        onClick={() => openFotoEdit(p)}
+                        title="Edit foto pasien (6 cm x 6 cm)"
+                        style={{ border: '1px solid var(--color-border)' }}
+                      >
+                        Edit³
+                      </button>
+                      <button
+                        type="button"
+                        className="btn btn--xs btn--ghost"
                         onClick={() => openKesan(p)}
                         title="Lihat & Edit Kesan Radiologi"
                         style={{ border: '1px solid var(--color-border)' }}
@@ -2349,6 +2404,61 @@ export function PasienPage() {
             onCancel={() => setQuickEditOpen(false)}
             submitLabel="Simpan"
             loading={quickEditSaving}
+          />
+        </form>
+      </Modal>
+
+      <Modal
+        open={fotoEditTarget !== null}
+        title={`Edit³: Foto Pasien${fotoEditTarget ? ` — ${fotoEditTarget.nama}` : ''}`}
+        onClose={() => setFotoEditTarget(null)}
+        headerColor="orange"
+      >
+        <form onSubmit={(e) => void submitFotoEdit(e)} className="form-grid">
+          {fotoEditError && <div className="alert alert--error form-grid--full">{fotoEditError}</div>}
+          <div className="form-field form-grid--full">
+            <label htmlFor="fe-foto">Foto (6 cm x 6 cm)</label>
+            {fotoEditFoto ? (
+              <img
+                src={fotoEditFoto}
+                alt={`Foto ${fotoEditTarget?.nama ?? 'pasien'}`}
+                className="pasien-foto-6cm"
+              />
+            ) : (
+              <div className="pasien-foto-6cm">Belum ada foto</div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+              <label
+                htmlFor="fe-foto"
+                className="btn btn--xs btn--ghost"
+                style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap', cursor: 'pointer' }}
+                title="Pilih foto (JPEG, PNG, GIF, atau WEBP, maks. 10 MB)"
+              >
+                {fotoEditFoto ? '📤 Ganti foto' : '📤 Pilih foto'}
+              </label>
+              <input
+                id="fe-foto"
+                type="file"
+                accept="image/jpeg,image/png,image/gif,image/webp"
+                onChange={(e) => void handleFotoEditFileChange(e)}
+                style={{ display: 'none' }}
+              />
+              {fotoEditFoto && (
+                <button
+                  type="button"
+                  className="btn btn--xs btn--ghost"
+                  style={{ border: '1px solid var(--color-border)', whiteSpace: 'nowrap' }}
+                  onClick={() => setFotoEditFoto('')}
+                >
+                  🗑 Hapus foto
+                </button>
+              )}
+            </div>
+          </div>
+          <ModalFormFooter
+            onCancel={() => setFotoEditTarget(null)}
+            submitLabel="Simpan"
+            loading={fotoEditSaving}
           />
         </form>
       </Modal>
