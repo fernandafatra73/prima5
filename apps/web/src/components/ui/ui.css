@@ -2747,3 +2747,15 @@ body.radiolog-work-dark-theme .win-frame--blue .data-table tbody tr:not([style])
   flex: 1;
 }
 
+
+/* Tabel lebar (mis. Rad2, 14 kolom): padding dan huruf lebih kecil supaya
+ * kolom paling kanan tetap terlihat tanpa harus menggeser tabel. */
+.data-table--compact {
+  font-size: 0.8rem;
+}
+
+.data-table--compact th,
+.data-table--compact td {
+  padding: 0.45rem 0.5rem;
+  vertical-align: top;
+}

@@ -55,7 +55,7 @@ interface EditFormState {
 type CetakALMode = 'amplop' | 'label';
 
 const moneyCellStyle: CSSProperties = { textAlign: 'right', whiteSpace: 'nowrap' };
-const longTextCellStyle: CSSProperties = { minWidth: '160px', maxWidth: '280px', whiteSpace: 'pre-wrap' };
+const longTextCellStyle: CSSProperties = { minWidth: '110px', maxWidth: '220px', whiteSpace: 'pre-wrap' };
 const smallBtnStyle: CSSProperties = { border: '1px solid var(--color-border)', whiteSpace: 'nowrap' };
 
 function toEditForm(row: Rad2Row): EditFormState {
@@ -176,7 +176,7 @@ export function Rad2Page() {
         onPageChange={setPage}
       >
         <div style={{ overflowX: 'auto' }}>
-          <table className="data-table">
+          <table className="data-table data-table--compact">
             <thead>
               <tr>
                 <th>No</th>
@@ -214,7 +214,7 @@ export function Rad2Page() {
                     <td style={longTextCellStyle}>{p.kesan || '—'}</td>
                     <td>{p.radiolog?.nama ?? '—'}</td>
                     <td>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '0.3rem' }}>
                         <TableRowActions
                           onPrint={() => void handlePrint(p.id)}
                           onEdit={() => {
@@ -224,22 +224,26 @@ export function Rad2Page() {
                           onDelete={() => setDeleteTarget(p)}
                           printLabel={printingId === p.id ? 'Membuat PDF…' : 'Cetak hasil radiologi'}
                         />
-                        <button
-                          type="button"
-                          className="btn btn--xs btn--ghost"
-                          style={smallBtnStyle}
-                          onClick={() => setCetakAL({ row: p, mode: 'amplop' })}
-                        >
-                          ✉ Cetak Amplop
-                        </button>
-                        <button
-                          type="button"
-                          className="btn btn--xs btn--ghost"
-                          style={smallBtnStyle}
-                          onClick={() => setCetakAL({ row: p, mode: 'label' })}
-                        >
-                          🏷 Cetak Label
-                        </button>
+                        <div style={{ display: 'flex', gap: '0.3rem' }}>
+                          <button
+                            type="button"
+                            className="btn btn--xs btn--ghost"
+                            style={smallBtnStyle}
+                            onClick={() => setCetakAL({ row: p, mode: 'amplop' })}
+                            title="Cetak Amplop"
+                          >
+                            ✉ Amplop
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn--xs btn--ghost"
+                            style={smallBtnStyle}
+                            onClick={() => setCetakAL({ row: p, mode: 'label' })}
+                            title="Cetak Label"
+                          >
+                            🏷 Label
+                          </button>
+                        </div>
                       </div>
                     </td>
                     <td style={moneyCellStyle}>{formatRupiah(p.totalHarga)}</td>
